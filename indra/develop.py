@@ -81,6 +81,7 @@ class PlatformSetup(object):
     distcc = True
     cmake_opts = []
     word_size = 32
+    opensim_rules = False #whether or not to use rules fit for opensim
     using_express = False
 
     def __init__(self):
@@ -124,6 +125,7 @@ class PlatformSetup(object):
             standalone=self.standalone,
             unattended=self.unattended,
             word_size=self.word_size,
+            opensim_rules=self.opensim_rules,
             type=self.build_type.upper(),
             )
         #if simple:
@@ -132,6 +134,7 @@ class PlatformSetup(object):
                 '-DSTANDALONE:BOOL=%(standalone)s '
                 '-DUNATTENDED:BOOL=%(unattended)s '
                 '-DWORD_SIZE:STRING=%(word_size)s '
+                '-DOPENSIM_RULES:BOOL=%(opensim_rules)s '
                 '-G %(generator)r %(opts)s %(dir)r' % args)
 
     def run_cmake(self, args=[]):
@@ -293,6 +296,7 @@ class LinuxSetup(UnixSetup):
             type=self.build_type.upper(),
             project_name=self.project_name,
             word_size=self.word_size,
+            opensim_rules=self.opensim_rules,
             )
         if not self.is_internal_tree():
             args.update({'cxx':'g++', 'server':'OFF', 'viewer':'ON'})
@@ -319,6 +323,7 @@ class LinuxSetup(UnixSetup):
                 '-DVIEWER:BOOL=%(viewer)s -DSTANDALONE:BOOL=%(standalone)s '
                 '-DUNATTENDED:BOOL=%(unattended)s '
                 '-DWORD_SIZE:STRING=%(word_size)s '
+                '-DOPENSIM_RULES:BOOL=%(opensim_rules)s '
                 '-DROOT_PROJECT_NAME:STRING=%(project_name)s '
                 '%(opts)s %(dir)r')
                % args)
@@ -432,6 +437,7 @@ class DarwinSetup(UnixSetup):
             unattended=self.unattended,
             project_name=self.project_name,
             universal=self.universal,
+            opensim_rules=self.opensim_rules,
             type=self.build_type.upper(),
             )
         if self.universal == 'ON':
@@ -443,6 +449,7 @@ class DarwinSetup(UnixSetup):
                 '-DSTANDALONE:BOOL=%(standalone)s '
                 '-DUNATTENDED:BOOL=%(unattended)s '
                 '-DWORD_SIZE:STRING=%(word_size)s '
+                '-DOPENSIM_RULES:BOOL=%(opensim_rules)s '
                 '-DROOT_PROJECT_NAME:STRING=%(project_name)s '
                 '%(universal)s '
                 '%(opts)s %(dir)r' % args)
@@ -531,6 +538,7 @@ class WindowsSetup(PlatformSetup):
             unattended=self.unattended,
             project_name=self.project_name,
             word_size=self.word_size,
+            opensim_rules=self.opensim_rules,
             )
         #if simple:
         #    return 'cmake %(opts)s "%(dir)s"' % args
@@ -538,6 +546,7 @@ class WindowsSetup(PlatformSetup):
                 '-DSTANDALONE:BOOL=%(standalone)s '
                 '-DUNATTENDED:BOOL=%(unattended)s '
                 '-DWORD_SIZE:STRING=%(word_size)s '
+                '-DOPENSIM_RULES:BOOL=%(opensim_rules)s '
                 '-DROOT_PROJECT_NAME:STRING=%(project_name)s '
                 '%(opts)s "%(dir)s"' % args)
 
@@ -689,6 +698,7 @@ class CygwinSetup(WindowsSetup):
             unattended=self.unattended,
             project_name=self.project_name,
             word_size=self.word_size,
+            opensim_rules=self.opensim_rules,
             )
         #if simple:
         #    return 'cmake %(opts)s "%(dir)s"' % args
@@ -696,6 +706,7 @@ class CygwinSetup(WindowsSetup):
                 '-DUNATTENDED:BOOl=%(unattended)s '
                 '-DSTANDALONE:BOOL=%(standalone)s '
                 '-DWORD_SIZE:STRING=%(word_size)s '
+                '-DOPENSIM_RULES:BOOL=%(opensim_rules)s '
                 '-DROOT_PROJECT_NAME:STRING=%(project_name)s '
                 '%(opts)s "%(dir)s"' % args)
 
