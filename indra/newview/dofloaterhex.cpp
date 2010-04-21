@@ -102,15 +102,19 @@ BOOL DOFloaterHex::postBuild(void)
 		setTitle(title);
 	}
 
-	if(mItem->getCreatorUUID() == gAgentID)
-	{
-		// Load the asset
-		editor->setVisible(FALSE);
-		childSetText("status_text", std::string("Loading..."));
-		DOInventoryBackup::download(mItem, this, imageCallback, assetCallback);
-	} else {
-		this->close(false);
-	}
+#if OPENSIM_RULES!=1
+ 	if(mItem->getCreatorUUID() == gAgentID)
+ 	{
+#endif /* OPENSIM_RULES!=1 */
+ 		// Load the asset
+ 		editor->setVisible(FALSE);
+ 		childSetText("status_text", std::string("Loading..."));
+ 		DOInventoryBackup::download(mItem, this, imageCallback, assetCallback);
+#if OPENSIM_RULES!=1
+ 	} else {
+ 		this->close(false);
+ 	}
+#endif /* OPENSIM_RULES!=1 */
 
 	return TRUE;
 }
