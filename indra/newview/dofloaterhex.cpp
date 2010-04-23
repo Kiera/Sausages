@@ -23,6 +23,7 @@
 #include "llinventorymodel.h" // gInventory.updateItem
 #include "llappviewer.h" // gLocalInventoryRoot
 #include "llfloaterperms.h" //get default perms
+#include "lllocalinventory.h"
 
 std::list<DOFloaterHex*> DOFloaterHex::sInstances;
 S32 DOFloaterHex::sUploadAmount = 10;
@@ -239,10 +240,10 @@ void DOFloaterHex::assetCallback(LLVFS *vfs,
 	}
 
 	// Never enable save if it's a pretend item
-	/* if(gInventory.isObjectDescendentOf(item->getUUID(), gLocalInventoryRoot))
+	if(gInventory.isObjectDescendentOf(item->getUUID(), gLocalInventoryRoot))
 	{
 		floater->childSetEnabled("save_btn", false);
-	} */
+	}
 }
 
 // static
@@ -279,7 +280,6 @@ void DOFloaterHex::onClickUpload(void* user_data)
 	if(item->getType() != LLAssetType::AT_GESTURE && item->getType() != LLAssetType::AT_LSL_TEXT
 		&& item->getType() != LLAssetType::AT_NOTECARD)
 	{
-		//U32 const std::string &display_name, LLAssetStorage::LLStoreAssetCallback  callback, S32  expected_upload_cost, void *userdata)
 		upload_new_resource(transaction_id, 
 			item->getType(), 
 			item->getName(), 
