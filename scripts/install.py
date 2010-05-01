@@ -135,7 +135,9 @@ class InstallFile(object):
         print "Downloading",self.url,"to local file",self.filename
         
         request = urllib2.Request(self.url)
-        request.add_header('User-agent', defaultUserAgent)
+        
+        if re.match("/^http:\/\/github.com/", self.url):
+            request.add_header('User-agent', defaultUserAgent)
         
         file(self.filename, 'wb').write(urllib2.urlopen(request).read())
         if self.md5sum and not self._is_md5sum_match():
