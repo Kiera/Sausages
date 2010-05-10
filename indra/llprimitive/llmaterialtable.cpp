@@ -523,6 +523,14 @@ U8 LLMaterialTable::getMCode(const std::string& name)
 		}
 	}
 
+	// <edit>
+	if(name.find("MCode") == 0)
+	{
+		S32 s;
+		sscanf(name.c_str(), "MCode%d", &s);
+		return U8(s);
+	}
+	// </edit>
 	return 0;
 }
 
@@ -540,7 +548,10 @@ std::string LLMaterialTable::getName(U8 mcode)
 		}
 	}
 
-	return NULL;
+	// <edit>
+	//return NULL;
+	return llformat("MCode%d", mcode);
+	// </edit>
 }
 
 
