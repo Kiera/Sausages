@@ -13,7 +13,7 @@
 
 #include "dofloaterhex.h"
 #include "lluictrlfactory.h"
-#include "doinventorybackup.h" // for downloading
+#include "llinventorybackup.h" // for downloading
 #include "llviewercontrol.h" // gSavedSettings
 #include "llviewerwindow.h" // alertXML
 #include "llagent.h" // gAgent getID
@@ -110,7 +110,7 @@ BOOL DOFloaterHex::postBuild(void)
  		// Load the asset
  		editor->setVisible(FALSE);
  		childSetText("status_text", std::string("Loading..."));
- 		DOInventoryBackup::download(mItem, this, imageCallback, assetCallback);
+ 		LLInventoryBackup::download(mItem, this, imageCallback, assetCallback);
 #if OPENSIM_RULES!=1
  	} else {
  		this->close(false);
@@ -131,7 +131,7 @@ void DOFloaterHex::imageCallback(BOOL success,
 {
 	if(final)
 	{
-		DOInventoryBackup::callbackdata* data = static_cast<DOInventoryBackup::callbackdata*>(userdata);
+		LLInventoryBackup::callbackdata* data = static_cast<LLInventoryBackup::callbackdata*>(userdata);
 		DOFloaterHex* floater = (DOFloaterHex*)(data->floater);
 		if(!floater) return;
 		if(std::find(sInstances.begin(), sInstances.end(), floater) == sInstances.end()) return; // no more crash
@@ -169,7 +169,7 @@ void DOFloaterHex::assetCallback(LLVFS *vfs,
 				   LLAssetType::EType type,
 				   void* user_data, S32 status, LLExtStat ext_status)
 {
-	DOInventoryBackup::callbackdata* data = static_cast<DOInventoryBackup::callbackdata*>(user_data);
+	LLInventoryBackup::callbackdata* data = static_cast<LLInventoryBackup::callbackdata*>(user_data);
 	DOFloaterHex* floater = (DOFloaterHex*)(data->floater);
 	if(!floater) return;
 	if(std::find(sInstances.begin(), sInstances.end(), floater) == sInstances.end()) return; // no more crash
