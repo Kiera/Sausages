@@ -23,7 +23,6 @@
 #include "llinventorymodel.h" // gInventory.updateItem
 #include "llappviewer.h" // gLocalInventoryRoot
 #include "llfloaterperms.h" //get default perms
-#include "lllocalinventory.h"
 
 std::list<DOFloaterHex*> DOFloaterHex::sInstances;
 S32 DOFloaterHex::sUploadAmount = 10;
@@ -66,25 +65,14 @@ BOOL DOFloaterHex::postBuild(void)
 {
 	DOHexEditor* editor = getChild<DOHexEditor>("hex");
 	mEditor = editor;
-
+#ifndef COLUMN_SPAN
 	// Set number of columns
 	U8 columns = U8(gSavedSettings.getU32("HexEditorColumns"));
 	editor->setColumns(columns);
 	// Reflect clamped U8ness in settings
 	gSavedSettings.setU32("HexEditorColumns", U32(columns));
-
-	// Reshape a little based on columns
-	S32 min_width = S32(editor->getSuggestedWidth()) + 20;
-	setResizeLimits(min_width, getMinHeight());
-	if(getRect().getWidth() < min_width)
-	{
-		//LLRect rect = getRect();
-		//rect.setOriginAndSize(rect.mLeft, rect.mBottom, min_width, rect.getHeight());
-		//setRect(rect);
-
-		reshape(min_width, getRect().getHeight(), FALSE);
-		editor->reshape(editor->getRect().getWidth(), editor->getRect().getHeight(), TRUE);
-	}
+#endif
+	handleSizing();
 
 	childSetEnabled("upload_btn", false);
 	childSetLabelArg("upload_btn", "[UPLOAD]", std::string("Upload"));
@@ -102,19 +90,18 @@ BOOL DOFloaterHex::postBuild(void)
 		}
 		setTitle(title);
 	}
-
 #if OPENSIM_RULES!=1
- 	if(mItem->getCreatorUUID() == gAgentID)
- 	{
+	if(mItem->getCreatorUUID() == gAgentID)
+	{
 #endif /* OPENSIM_RULES!=1 */
- 		// Load the asset
- 		editor->setVisible(FALSE);
- 		childSetText("status_text", std::string("Loading..."));
- 		LLInventoryBackup::download(mItem, this, imageCallback, assetCallback);
+		// Load the asset
+		editor->setVisible(FALSE);
+		childSetText("status_text", std::string("Loading..."));
+		LLInventoryBackup::download(mItem, this, imageCallback, assetCallback);
 #if OPENSIM_RULES!=1
- 	} else {
- 		this->close(false);
- 	}
+	} else {
+		this->close(false);
+	}
 #endif /* OPENSIM_RULES!=1 */
 
 	return TRUE;
@@ -410,6 +397,34 @@ void DOFloaterHex::onSaveComplete(const LLUUID& asset_uuid, void* user_data, S32
 		LLSD args;
 		args["ERROR_MESSAGE"] = llformat("Upload failed with status %d, also %d", status, ext_status);
 		LLNotifications::instance().add("ErrorMessage", args);
+	}
+}
+
+void DOFloaterHex::onCommitColumnCount(LLUICtrl *control, void *user_data)
+{
+	if(control && user_data)
+	{
+		DOFloaterHex *instance = (DOFloaterHex *)user_data;
+		U8 columns = llclamp<U8>((U8)llfloor(control->getValue().asReal()), 0x00, 0xFF);
+		instance->mEditor->setColumns(columns);
+		gSavedSettings.setU32("HexEditorColumns", (U32)instance->mEditor->getColumns());
+		instance->handleSizing();
+	}
+}
+
+void DOFloaterHex::handleSizing()
+{
+	// Reshape a little based on columns
+	S32 min_width = S32(mEditor->getSuggestedWidth(MIN_COLS)) + 20;
+	setResizeLimits(min_width, getMinHeight());
+	if(getRect().getWidth() < min_width)
+	{
+		//LLRect rect = getRect();
+		//rect.setOriginAndSize(rect.mLeft, rect.mBottom, min_width, rect.getHeight());
+		//setRect(rect);
+
+		reshape(min_width, getRect().getHeight(), FALSE);
+		mEditor->reshape(mEditor->getRect().getWidth(), mEditor->getRect().getHeight(), TRUE);
 	}
 }
 
