@@ -233,6 +233,7 @@
 #include "hgfloatertexteditor.h"
 #include "llfloatermessagelog.h"
 #include "llfloatermessagebuilder.h"
+#include "llao.h"
 #include "llfloaterexportregion.h"
 // </edit>
 
@@ -400,6 +401,7 @@ void handle_close_all_notifications(void*);
 void handle_reopen_with_hex_editor(void*);
 void handle_open_message_log(void*);
 void handle_open_message_builder(void*);
+void handle_edit_ao(void*);
 // </edit>
 
 BOOL is_inventory_visible( void* user_data );
@@ -1047,8 +1049,15 @@ void init_client_menu(LLMenuGL* menu)
 											&handle_reopen_with_hex_editor, NULL));	
 										
 		sub->append(new LLMenuItemCallGL(  "Message Log", &handle_open_message_log, NULL));
-		sub->append(new LLMenuItemCallGL(  "Message Builder", &handle_open_message_builder, NULL));
-	
+		sub->append(new LLMenuItemCallGL(  "Message Builder", &handle_open_message_builder, NULL));	
+		
+		sub->append(new LLMenuItemCheckGL( "Enable AO",
+										&menu_toggle_control,
+										NULL,
+										&menu_check_control,
+										(void*)"AO.Enabled"));
+		sub->append(new LLMenuItemCallGL(  "Edit AO...",  
+										&handle_edit_ao, NULL));
 		sub->append(new LLMenuItemCheckGL( "Nimble",
 											&menu_toggle_control,
 											NULL,
@@ -3069,6 +3078,11 @@ void handle_open_message_log(void*)
 void handle_open_message_builder(void*)
 {
 	LLFloaterMessageBuilder::show("");
+}
+
+void handle_edit_ao(void*)
+{
+	LLFloaterAO::show();
 }
 
 void handle_close_all_notifications(void*)
@@ -6754,6 +6768,37 @@ void menu_toggle_control( void* user_data )
                 // Doubleclick actions - there can be only one
                 gSavedSettings.setBOOL( "DoubleClickAutoPilot", FALSE );
         }
+	// <edit>
+	else if(std::string(static_cast<char*>(user_data)) == "AO.Enabled")
+	{
+		LLVOAvatar* avatarp = gAgent.getAvatarObject();
+		if (avatarp)
+		{
+			for ( LLVOAvatar::AnimIterator anim_it =
+					  avatarp->mPlayingAnimations.begin();
+				  anim_it != avatarp->mPlayingAnimations.end();
+				  anim_it++)
+			{
+				if(LLAO::mOverrides.find(anim_it->first) != LLAO::mOverrides.end())
+				{
+					// this is an override anim
+					if(checked)
+					{
+						// make override stop
+						avatarp->stopMotion(anim_it->first);
+						gAgent.sendAnimationRequest(anim_it->first, ANIM_REQUEST_STOP);
+					}
+					else
+					{
+						// make override start
+						gSavedSettings.setBOOL("AO.Enabled", TRUE);
+						avatarp->startMotion(anim_it->first);
+					}
+				}
+			}
+		}
+	}
+	// </edit>
         gSavedSettings.setBOOL(setting, !checked);
 }
 
