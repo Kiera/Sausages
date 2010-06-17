@@ -2609,7 +2609,7 @@ bool idle_startup()
 		LLRect window(0, gViewerWindow->getWindowHeight(), gViewerWindow->getWindowWidth(), 0);
 		gViewerWindow->adjustControlRectanglesForFirstUse(window);
 
-		if(gSavedSettings.getBOOL("ShowMiniMap"))
+		if (gSavedSettings.getBOOL("ShowMiniMap"))
 		{
 			LLFloaterMap::showInstance();
 		}
@@ -2617,6 +2617,12 @@ bool idle_startup()
 		{
 			LLFloaterAvatarList::showInstance();
 		}
+		// <edit>
+		else if (gSavedSettings.getBOOL("RadarKeepOpen"))
+		{
+			LLFloaterAvatarList::createInstance(false);
+		}
+		// </edit>
 		if (gSavedSettings.getBOOL("ShowCameraControls"))
 		{
 			LLFloaterCamera::showInstance();
