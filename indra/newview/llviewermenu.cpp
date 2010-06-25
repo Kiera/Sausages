@@ -940,7 +940,7 @@ void init_client_menu(LLMenuGL* menu)
 	{
 		sub_menu = new LLMenuGL("Interop");
 		sub_menu->append(new LLMenuItemCallGL("Teleport Region...", 
-			&LLFloaterTeleport::show, NULL, NULL, 'R', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
+			&LLFloaterTeleport::show, NULL, NULL));
 		menu->appendMenu(sub_menu);
 	}
 	sub_menu = new LLMenuGL("UI");
