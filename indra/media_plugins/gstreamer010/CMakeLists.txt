@@ -2,10 +2,6 @@
 
 project(media_plugin_gstreamer010)
 
-if(WORD_SIZE EQUAL 64)
-    set(REQUIRE_PIC)
-endif(WORD_SIZE EQUAL 64)
-
 include(00-Common)
 include(LLCommon)
 include(LLImage)
@@ -33,14 +29,6 @@ include_directories(
 )
 
 ### media_plugin_gstreamer010
-
-if(WORD_SIZE EQUAL 64)
-	if(WINDOWS)
-		add_definitions(/FIXED:NO)
-	else(WINDOWS) # not windows therefore gcc LINUX and DARWIN
-		add_definitions(-fPIC)
-	endif(WINDOWS)
-endif (WORD_SIZE EQUAL 64)
 
 set(media_plugin_gstreamer010_SOURCE_FILES
     media_plugin_gstreamer010.cpp

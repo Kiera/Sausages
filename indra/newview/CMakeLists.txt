@@ -1443,18 +1443,29 @@ if (INSTALL)
 endif (INSTALL)
 
 # Add tests
-if (NOT STANDALONE)
-	ADD_VIEWER_BUILD_TEST(llagentaccess viewer)
-	ADD_VIEWER_BUILD_TEST(llworldmap viewer)
-	ADD_VIEWER_BUILD_TEST(llworldmipmap viewer)
-	ADD_VIEWER_BUILD_TEST(lltextureinfo viewer)
-	ADD_VIEWER_BUILD_TEST(lltextureinfodetails viewer)
-	ADD_VIEWER_BUILD_TEST(lltexturestatsuploader viewer)
-	#ADD_VIEWER_COMM_BUILD_TEST(lltranslate viewer "")
-endif (NOT STANDALONE)
+#ADD_VIEWER_BUILD_TEST(llagentaccess viewer)
+#ADD_VIEWER_BUILD_TEST(llworldmap viewer)
+#ADD_VIEWER_BUILD_TEST(llworldmipmap viewer)
+#ADD_VIEWER_BUILD_TEST(lltextureinfo viewer)
+#ADD_VIEWER_BUILD_TEST(lltextureinfodetails viewer)
+#ADD_VIEWER_BUILD_TEST(lltexturestatsuploader viewer)
+#ADD_VIEWER_COMM_BUILD_TEST(lltranslate viewer "")
 
 # Don't do these for DARWIN or LINUX here -- they're taken care of by viewer_manifest.py
 if (WINDOWS)
+
+  get_target_property(BUILT_LLCOMMON llcommon LOCATION)
+  add_custom_command(
+      TARGET ${VIEWER_BINARY_NAME} POST_BUILD
+      COMMAND ${CMAKE_COMMAND}
+      ARGS
+      -E
+      copy_if_different
+      ${BUILT_LLCOMMON}
+      ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}
+      COMMENT "Copying llcommon.dll to the runtime folder."
+      )
+
   get_target_property(BUILT_SLPLUGIN SLPlugin LOCATION)
   add_custom_command(
       TARGET ${VIEWER_BINARY_NAME} POST_BUILD
