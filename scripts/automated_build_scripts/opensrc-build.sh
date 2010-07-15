@@ -100,7 +100,7 @@ s3_available()
 
 build_dir_Darwin()
 {
-  echo build-darwin-universal
+  echo build-darwin-i386
 }
 
 build_dir_Linux()
