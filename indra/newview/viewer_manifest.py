@@ -201,6 +201,14 @@ class WindowsManifest(ViewerManifest):
         # For using FMOD for sound... DJS
         self.path("fmod.dll")
 
+        # Get llcommon and deps.
+        if self.prefix(src=self.args['configuration'], dst=""):
+            self.path('libapr-1.dll')
+            self.path('libaprutil-1.dll')
+            self.path('libapriconv-1.dll')
+            self.path('llcommon.dll')
+            self.end_prefix()
+
         # For textures
         if self.prefix(src="../../libraries/i686-win32/lib/release", dst=""):
             self.path("openjpeg.dll")
