@@ -9,7 +9,9 @@ export INSTALL_USE_HTTP_FOR_SCP=true
 export PATH=/bin:/usr/bin:$PATH
 arch=`uname | cut -b-6`
 here=`echo $0 | sed 's:[^/]*$:.:'`
-year=`date +%Y`
+# Hack : in the case of Snowglobe 1.x trunk and releases, we continue to use 2009 as the year so to separate them from Snowglobe 2.x trunk and releases
+#year=`date +%Y`
+year="2009"
 branch=`svn info | grep '^URL:' | sed 's:.*/::'`
 revision=`svn info | grep '^Revision:' | sed 's/.*: //'`
 top=`cd "$here/../../.." && pwd`
@@ -24,29 +26,24 @@ top=`cd "$here/../../.." && pwd`
 # Make sure command worked and bail out if not, reporting failure to parabuild
 fail()
 {
-  release_lock
   echo "BUILD FAILED" $@
   exit 1
 }
   
 pass() 
 { 
-  release_lock
   echo "BUILD SUCCESSFUL"
   exit 0
 }
 
 # Locking to avoid contention with u-s-c
-LOCK_CREATE=/usr/bin/lockfile-create
-LOCK_TOUCH=/usr/bin/lockfile-touch
-LOCK_REMOVE=/usr/bin/lockfile-remove
 LOCK_PROCESS=
 
 locking_available()
 {
-  test -x "$LOCK_CREATE"\
-    -a -x "$LOCK_TOUCH"\
-    -a -x "$LOCK_REMOVE"
+  test -n "$LOCK_CREATE" -a -x "$LOCK_CREATE"\
+    -a -n "$LOCK_TOUCH"  -a -x "$LOCK_TOUCH"\
+    -a -n "$LOCK_REMOVE" -a -x "$LOCK_REMOVE"
 }
 
 acquire_lock()
@@ -217,7 +214,6 @@ Linux)
 	  fi
 	fi
   fi
-  acquire_lock
   variants="Debug RelWithDebInfo Release"
   #variants="Release"
   cmake_generator="Unix Makefiles"
@@ -267,6 +263,9 @@ Linux)
 
 *) fail undefined $arch ;;
 esac
+
+acquire_lock
+trap release_lock EXIT
 
 get_asset "http://www.fmod.org/files/fmod3/$fmod_tar"
 
@@ -409,7 +408,7 @@ then
          "$S3GET_URL/$branch/$revision/$arch"\
           $other_archs > message
     then
-      subject="Successful Build for $branch ($revision)"
+      subject="Successful Build for $year/$branch ($revision)"
     fi
   else
     true s3 is not available
@@ -419,7 +418,7 @@ else
   then
     "$s3put" build.log "$S3PUT_URL/$branch/$revision/failed-build.$arch" text/plain public-read\
        || fail Uploading build.log
-    subject="Failed Build for $branch ($revision) on $arch"
+    subject="Failed Build for $year/$branch ($revision) on $arch"
     cat >message <<EOF
 Build for $branch ($revision) failed for $arch.
 Please see the build log for details:
