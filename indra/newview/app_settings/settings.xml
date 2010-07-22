@@ -790,7 +790,7 @@
       <key>Comment</key>
       <string>Socks 5 Username</string>
       <key>Persist</key>
-      <integer>0</integer>
+      <integer>1</integer>
       <key>Type</key>
       <string>String</string>
       <key>Value</key>
@@ -801,7 +801,7 @@
       <key>Comment</key>
       <string>Socks 5 Password</string>
       <key>Persist</key>
-      <integer>0</integer>
+      <integer>1</integer>
       <key>Type</key>
       <string>String</string>
       <key>Value</key>
@@ -812,7 +812,7 @@
       <key>Comment</key>
       <string>Selected Auth mechanism for Socks5</string>
       <key>Persist</key>
-      <integer>0</integer>
+      <integer>1</integer>
       <key>Type</key>
       <string>String</string>
       <key>Value</key>

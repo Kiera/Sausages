@@ -4374,30 +4374,22 @@ void apply_udp_blacklist(const std::string& csv)
 
 bool LLStartUp::handleSocksProxy(bool reportOK)
 {
-	bool use_http_proxy = gSavedSettings.getBOOL("BrowserProxyEnabled");
-	if (use_http_proxy)
-	{
-		std::string httpProxyType = gSavedSettings.getString("Socks5HttpProxyType");
+	std::string httpProxyType = gSavedSettings.getString("Socks5HttpProxyType");
 
-		// Determine the http proxy type (if any)
-		if (httpProxyType.compare("Web") == 0)
-		{
-			LLHost httpHost;
-			httpHost.setHostByName(gSavedSettings.getString("BrowserProxyAddress"));
-			httpHost.setPort(gSavedSettings.getS32("BrowserProxyPort"));
-			LLSocks::getInstance()->EnableHttpProxy(httpHost,LLPROXY_HTTP);
-		}
-		else if (httpProxyType.compare("Socks") == 0)
-		{
-			LLHost httpHost;
-			httpHost.setHostByName(gSavedSettings.getString("Socks5ProxyHost"));
-			httpHost.setPort(gSavedSettings.getS32("Socks5ProxyPort"));
-			LLSocks::getInstance()->EnableHttpProxy(httpHost,LLPROXY_SOCKS);
-		}
-		else
-		{
-			LLSocks::getInstance()->DisableHttpProxy();
-		}
+	// Determine the http proxy type (if any)
+	if ((httpProxyType.compare("Web") == 0) && gSavedSettings.getBOOL("BrowserProxyEnabled"))
+	{
+		LLHost httpHost;
+		httpHost.setHostByName(gSavedSettings.getString("BrowserProxyAddress"));
+		httpHost.setPort(gSavedSettings.getS32("BrowserProxyPort"));
+		LLSocks::getInstance()->EnableHttpProxy(httpHost,LLPROXY_HTTP);
+	}
+	else if ((httpProxyType.compare("Socks") == 0) && gSavedSettings.getBOOL("Socks5ProxyEnabled"))
+	{
+		LLHost httpHost;
+		httpHost.setHostByName(gSavedSettings.getString("Socks5ProxyHost"));
+		httpHost.setPort(gSavedSettings.getU32("Socks5ProxyPort"));
+		LLSocks::getInstance()->EnableHttpProxy(httpHost,LLPROXY_SOCKS);
 	}
 	else
 	{

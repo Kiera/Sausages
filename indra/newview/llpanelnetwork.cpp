@@ -74,7 +74,6 @@ BOOL LLPanelNetwork::postBuild()
 
 	//Socks 5 proxy settings, saved data
 	childSetValue("socks5_proxy_enabled",   gSavedSettings.getBOOL("Socks5ProxyEnabled"));
-	//childSetValue("socks5_http_enabled",   gSavedSettings.getBOOL("Socks5HttpEnabled"));
 	childSetValue("socks5_http_proxy_type", gSavedSettings.getString("Socks5HttpProxyType"));
 
 	childSetValue("socks5_proxy_host",     gSavedSettings.getString("Socks5ProxyHost"));
@@ -109,8 +108,7 @@ void LLPanelNetwork::apply()
 	gSavedSettings.setBOOL("ConnectionPortEnabled", childGetValue("connection_port_enabled"));
 	gSavedSettings.setU32("ConnectionPort", childGetValue("connection_port").asInteger());
 
-	gSavedSettings.setBOOL("Socks5ProxyEnabled", childGetValue("socks5_proxy_enabled"));
-	//gSavedSettings.setBOOL("Socks5HttpEnabled", childGetValue("socks5_http_enabled"));		
+	gSavedSettings.setBOOL("Socks5ProxyEnabled", childGetValue("socks5_proxy_enabled"));		
 	gSavedSettings.setString("Socks5HttpProxyType", childGetValue("socks5_http_proxy_type"));
 	gSavedSettings.setString("Socks5ProxyHost", childGetValue("socks5_proxy_host"));
 	gSavedSettings.setU32("Socks5ProxyPort", childGetValue("socks5_proxy_port").asInteger());
@@ -233,7 +231,6 @@ void LLPanelNetwork::updateProxyEnabled(LLPanelNetwork * self, bool enabled, std
 {
 	// Manage all the enable/disable of the socks5 options from this single function
 	// to avoid code duplication
-
 
 	// Update all socks labels and controls except auth specific ones
 	self->childSetEnabled("socks5_proxy_port",  enabled);
