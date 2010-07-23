@@ -1491,6 +1491,7 @@ bool idle_startup()
 		requested_options.push_back("buddy-list");
 		requested_options.push_back("ui-config");
 #endif
+		requested_options.push_back("map-server-url");
 		requested_options.push_back("tutorial_setting");
 		requested_options.push_back("login-flags");
 		requested_options.push_back("global-textures");
@@ -2110,6 +2111,11 @@ bool idle_startup()
 			sInitialOutfitGender = LLUserAuth::getInstance()->mResult["initial-outfit"]["gender"].asString();
 			gAgent.setGenderChosen(TRUE); // OGPX TODO: remove this once we start sending back gendered flag
 
+			std::string map_server_url = LLUserAuth::getInstance()->mResult["map-server-url"].asString();
+			if(!map_server_url.empty())
+			{
+				gSavedSettings.setString("MapServerURL", map_server_url);
+			}
 		}
 
 		// XML-RPC successful login path here
@@ -2371,6 +2377,11 @@ bool idle_startup()
 				}
 			}
 
+			std::string map_server_url = LLUserAuth::getInstance()->getResponse("map-server-url");
+			if(!map_server_url.empty())
+			{
+				gSavedSettings.setString("MapServerURL", map_server_url);
+			}
 		}
 
 		// OGPX : successful login path common to OGP and XML-RPC
