@@ -4,11 +4,4 @@
 #   svn propset svn:ignore -F .svnignore .
 #
 
-build-*
-viewer-linux-*
-.distcc
-
-#
-#
-# Installed by SNOW-173 patch
-cwdebug
+bin
