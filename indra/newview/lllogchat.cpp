@@ -36,13 +36,14 @@
 #include "lllogchat.h"
 #include "llappviewer.h"
 #include "llfloaterchat.h"
+#include "llviewercontrol.h"
 
 const S32 LOG_RECALL_SIZE = 2048;
 
 //static
 std::string LLLogChat::makeLogFileName(std::string filename)
 {
-	if( gSavedPerAccountSettings.getBOOL("LogFileNamewithDate") )
+	if (gSavedPerAccountSettings.getBOOL("LogFileNamewithDate"))
 	{
 		time_t now; 
 		time(&now); 
