@@ -32,6 +32,7 @@
 
 #include "llviewerprecompiledheaders.h"
 
+#include <ctime>
 #include "lllogchat.h"
 #include "llappviewer.h"
 #include "llfloaterchat.h"
@@ -41,6 +42,21 @@ const S32 LOG_RECALL_SIZE = 2048;
 //static
 std::string LLLogChat::makeLogFileName(std::string filename)
 {
+	if( gSavedPerAccountSettings.getBOOL("LogFileNamewithDate") )
+	{
+		time_t now; 
+		time(&now); 
+		char dbuffer[20];               /* Flawfinder: ignore */ 
+		if (filename == "chat") 
+		{ 
+			strftime(dbuffer, 20, "-%Y-%m-%d", localtime(&now)); 
+		} 
+		else 
+		{ 
+			strftime(dbuffer, 20, "-%Y-%m", localtime(&now)); 
+		} 
+		filename += dbuffer; 
+	}
 	filename = cleanFileName(filename);
 	filename = gDirUtilp->getExpandedFilename(LL_PATH_PER_ACCOUNT_CHAT_LOGS,filename);
 	filename += ".txt";

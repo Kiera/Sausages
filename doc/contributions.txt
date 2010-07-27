@@ -79,6 +79,7 @@ Aleric Inglewood
 	SNOW-751
 	SNOW-752
 	SNOW-753
+	SNOW-772
 Alissa Sabre
 	VWR-81
 	VWR-83
@@ -766,6 +767,9 @@ Whoops Babii
 	VWR-8298
 Wilton Lundquist
 	VWR-7682
+Wolfpup Lowenhar
+	SNOW-622
+	SNOW-772
 Zarkonnen Decosta
 	VWR-253
 Zi Ree
