@@ -1122,7 +1122,15 @@ bool LLTextureFetchWorker::doWork(S32 param)
 		else
 		{
 			setPriority(LLWorkerThread::PRIORITY_LOW | mWorkPriority);
-			return true;
+
+			if(mDecodedDiscard<=0)
+			{	
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 	}
 	
