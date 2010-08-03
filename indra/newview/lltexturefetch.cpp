@@ -919,11 +919,19 @@ bool LLTextureFetchWorker::doWork(S32 param)
 
 					//roll back to try UDP
 					if(mCanUseNET)
-				{
+					{
+						llinfos << "Falling back to UDP fetch for texture " << mID << llendl;
 						mState = INIT ;
 						mCanUseHTTP = false ;
 						setPriority(LLWorkerThread::PRIORITY_HIGH | mWorkPriority);
 						return false ;
+					}
+					else
+					{
+						// UDP is not an option, we are dead
+						llwarns << "No UDP fallback available for texture " << mID << llendl;
+						resetFormattedData();
+						return true; // failed
 					}
 				}
 				else if (mGetStatus == HTTP_SERVICE_UNAVAILABLE)
@@ -936,7 +944,7 @@ bool LLTextureFetchWorker::doWork(S32 param)
 					LL_INFOS_ONCE("Texture") << "Texture server busy (503): " << mUrl << LL_ENDL;
 				}
 				else
-					{
+				{
 					const S32 HTTP_MAX_RETRY_COUNT = 3;
 					max_attempts = HTTP_MAX_RETRY_COUNT + 1;
 					++mHTTPFailCount;
@@ -947,7 +955,8 @@ bool LLTextureFetchWorker::doWork(S32 param)
 
 				if (mHTTPFailCount >= max_attempts)
 				{
-					if (cur_size > 0)
+					// Make max_attempts attempt at decoding what data we have, then bail forever on this image
+					if (cur_size > 0 && (mHTTPFailCount < (max_attempts+1)) )
 					{
 						// Use available data
 						mLoadedDiscard = mFormattedImage->getDiscardLevel();
@@ -956,8 +965,22 @@ bool LLTextureFetchWorker::doWork(S32 param)
 					}
 					else
 					{
-						resetFormattedData();
-						return true; // failed
+						//roll back to try UDP
+						if(mCanUseNET)
+						{
+							llinfos << "Falling back to UDP fetch for texture " << mID << llendl;
+							mState = INIT ;
+							mCanUseHTTP = false ;
+							setPriority(LLWorkerThread::PRIORITY_HIGH | mWorkPriority);
+							return false ;
+						}
+						else
+						{
+							// UDP is not an option, we are dead
+							llwarns << "No UDP fallback available for texture " << mID << llendl;
+							resetFormattedData();
+							return true; // failed
+						}
 					}
 				}
 				else
