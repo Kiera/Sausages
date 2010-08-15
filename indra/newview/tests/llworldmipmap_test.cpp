@@ -65,7 +65,7 @@ void LLViewerImage::setBoostLevel(S32 level) { }
 
 LLControlGroup::LLControlGroup() { }
 LLControlGroup::~LLControlGroup() { }
-std::string	LLControlGroup::getString(const std::string& name) const { return LLStringUtil::null; }
+std::string	LLControlGroup::getString(const std::string& name) { return LLStringUtil::null; }
 std::string	LLControlGroup::getText(const std::string& name) { return LLStringUtil::null; }
 BOOL		LLControlGroup::getBOOL(const std::string& name) { return FALSE; }
 S32			LLControlGroup::getS32(const std::string& name) { return 0;}
