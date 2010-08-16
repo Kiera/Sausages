@@ -97,11 +97,18 @@ MACRO(ADD_BUILD_TEST_INTERNAL name parent libraries source_files)
 
     #MESSAGE(STATUS "ADD_BUILD_TEST_INTERNAL ${name} test_cmd  = ${TEST_CMD}")
     #MESSAGE(STATUS "CMAKE_BINARY_DIR = \"${CMAKE_BINARY_DIR}\"")
+    SET(LD_LIBRARY_PATH "${CMAKE_BINARY_DIR}/llcommon:/usr/lib:/usr/local/lib")
+    IF (NOT "${ARCH_PREBUILT_DIRS}" STREQUAL "")
+      SET(LD_LIBRARY_PATH "${ARCH_PREBUILT_DIRS}:${LD_LIBRARY_PATH}")
+    ENDIF (NOT "${ARCH_PREBUILT_DIRS}" STREQUAL "")
+    IF (NOT "$ENV{LD_LIBRARY_PATH}" STREQUAL "")
+      SET(LD_LIBRARY_PATH "$ENV{LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}")
+    ENDIF (NOT "$ENV{LD_LIBRARY_PATH}" STREQUAL "")
     ADD_CUSTOM_COMMAND(
         OUTPUT ${TEST_OUTPUT}
         COMMAND
           ${CMAKE_COMMAND}
-            "-DLD_LIBRARY_PATH=\$\(LD_LIBRARY_PATH\):${ARCH_PREBUILT_DIRS}:${CMAKE_BINARY_DIR}/llcommon:/usr/lib:/usr/local/lib"
+            "-DLD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
             "-DTEST_CMD:STRING=${TEST_CMD}"
             -P ${CMAKE_SOURCE_DIR}/cmake/RunBuildTest.cmake
         DEPENDS ${name}_test
