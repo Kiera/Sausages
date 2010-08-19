@@ -1507,7 +1507,7 @@ LLTextureFetch::~LLTextureFetch()
 }
 
 bool LLTextureFetch::createRequest(const std::string& url, const LLUUID& id, const LLHost& host, F32 priority,
-								   S32 w, S32 h, S32 c, S32 desired_discard, bool needs_aux)
+								   S32 w, S32 h, S32 c, S32 desired_discard, bool needs_aux, bool can_use_http)
 {
 	if (mDebugPause)
 	{
@@ -1569,6 +1569,7 @@ bool LLTextureFetch::createRequest(const std::string& url, const LLUUID& id, con
 		worker->lockWorkMutex();
 		worker->setImagePriority(priority);
 		worker->setDesiredDiscard(desired_discard, desired_size);
+		worker->setCanUseHTTP(can_use_http) ;
 		worker->unlockWorkMutex();
 		if (!worker->haveWork())
 		{
