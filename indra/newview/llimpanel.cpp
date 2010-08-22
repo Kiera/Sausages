@@ -1290,6 +1290,9 @@ BOOL LLFloaterIMPanel::postBuild()
 		mInputEditor->setReplaceNewlinesWithSpaces( FALSE );
 
 		childSetAction("profile_callee_btn", onClickProfile, this);
+		//<edit>
+		childSetAction("teleport_btn", onClickTeleport, this);
+		//</edit>
 		childSetAction("group_info_btn", onClickGroupInfo, this);
 
 		childSetAction("start_call_btn", onClickStartCall, this);
@@ -1390,6 +1393,17 @@ void LLFloaterIMPanel::draw()
 	childSetVisible("start_call_btn", LLVoiceClient::voiceEnabled() && mVoiceChannel->getState() < LLVoiceChannel::STATE_CALL_STARTED);
 	childSetEnabled("start_call_btn", enable_connect);
 	childSetEnabled("send_btn", !childGetValue("chat_editor").asString().empty());
+
+	//<edit>
+	// hide/show profile and teleport buttons using friend and online status
+	bool can_offer_teleport = false;
+	const LLRelationship* friend_status = NULL;
+	friend_status = LLAvatarTracker::instance().getBuddyInfo(getOtherParticipantID());
+
+	if (friend_status) can_offer_teleport = friend_status->isOnline(); // This should also safely exclude groups.
+
+	childSetEnabled("teleport_btn", can_offer_teleport);
+	//</edit>
 	
 	LLPointer<LLSpeaker> self_speaker = mSpeakers->findSpeaker(gAgent.getID());
 	if(!mTextIMPossible)
@@ -1775,6 +1789,16 @@ void LLFloaterIMPanel::onClickProfile( void* userdata )
 		LLFloaterAvatarInfo::showFromDirectory(self->getOtherParticipantID());
 	}
 }
+
+//<edit>
+// static
+void LLFloaterIMPanel::onClickTeleport( void* userdata )
+{
+	// Offer teleport
+	LLFloaterIMPanel* self = (LLFloaterIMPanel*) userdata;
+	handle_lure(self->getOtherParticipantID());
+}
+//</edit>
 
 // static
 void LLFloaterIMPanel::onClickGroupInfo( void* userdata )
