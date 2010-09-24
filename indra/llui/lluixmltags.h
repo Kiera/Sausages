@@ -127,5 +127,6 @@ char const* const LL_FLYOUT_BUTTON_ITEM_TAG = "flyout_button_item";
 char const* const LL_SIMPLE_TEXT_EDITOR_TAG = "simple_text_editor";
 char const* const LL_RADIO_ITEM_TAG = "radio_item";
 char const* const LL_PROGRESS_BAR_TAG = "progress_bar";
+char const* const DO_HEX_EDITOR_TAG = "hex_editor";
 
 #endif
