@@ -1,0 +1,15 @@
+/installed.xml
+/indra/bin
+/indra/bin-release
+/bin
+/bin-release
+/indra/viewer-*
+/indra/newview/vivox-runtime/
+/libraries/
+*.pyc
+*.orig
+*.rej
+*.bak
+*~
+/edited-files.txt
+qtcreator-build/
