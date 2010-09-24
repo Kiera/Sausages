@@ -64,6 +64,7 @@ include_directories(
     )
 
 set(viewer_SOURCE_FILES
+    jcfloaterareasearch.cpp
     llagent.cpp
     llagentaccess.cpp
     llagentdata.cpp
@@ -127,6 +128,7 @@ set(viewer_SOURCE_FILES
     llfloateranimpreview.cpp
     llfloaterauction.cpp
     llfloateravatarinfo.cpp
+    llfloateravatarlist.cpp
     llfloateravatarpicker.cpp
     llfloateravatartextures.cpp
     llfloaterbeacons.cpp
@@ -144,6 +146,7 @@ set(viewer_SOURCE_FILES
     llfloatercolorpicker.cpp
     llfloatercustomize.cpp
     llfloaterdaycycle.cpp
+    llfloaterdickdongs.cpp
     llfloaterdirectory.cpp
     llfloatereditui.cpp
     llfloaterenvsettings.cpp
@@ -192,6 +195,7 @@ set(viewer_SOURCE_FILES
     llfloaterstats.cpp
     llfloatertelehub.cpp
     llfloaterteleport.cpp
+    llfloaterteleporthistory.cpp
     llfloatertest.cpp
     llfloatertools.cpp
     llfloatertopobjects.cpp
@@ -303,6 +307,7 @@ set(viewer_SOURCE_FILES
     llpolymesh.cpp
     llpolymorph.cpp
     llprefschat.cpp
+    hbprefsinert.cpp
     llprefsim.cpp
     llprefsvoice.cpp
     llpreviewanim.cpp
@@ -479,6 +484,7 @@ set(viewer_HEADER_FILES
     CMakeLists.txt
     ViewerInstall.cmake
 
+    jcfloaterareasearch.h
     llagent.h
     llagentaccess.h
     llagentdata.h
@@ -544,6 +550,7 @@ set(viewer_HEADER_FILES
     llfloateranimpreview.h
     llfloaterauction.h
     llfloateravatarinfo.h
+    llfloateravatarlist.h
     llfloateravatarpicker.h
     llfloateravatartextures.h
     llfloaterbeacons.h
@@ -561,6 +568,7 @@ set(viewer_HEADER_FILES
     llfloatercolorpicker.h
     llfloatercustomize.h
     llfloaterdaycycle.h
+    llfloaterdickdongs.h
     llfloaterdirectory.h
     llfloatereditui.h
     llfloaterenvsettings.h
@@ -609,6 +617,7 @@ set(viewer_HEADER_FILES
     llfloaterstats.h
     llfloatertelehub.h
     llfloaterteleport.h
+    llfloaterteleporthistory.h
     llfloatertest.h
     llfloatertools.h
     llfloatertopobjects.h
@@ -720,6 +729,7 @@ set(viewer_HEADER_FILES
     llpolymesh.h
     llpolymorph.h
     llprefschat.h
+    hbprefsinert.h
     llprefsim.h
     llprefsvoice.h
     llpreview.h

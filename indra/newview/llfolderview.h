@@ -340,6 +340,9 @@ protected:
 
 	std::string					mLabel;
 	std::string					mSearchableLabel;
+	std::string					mSearchableLabelDesc;
+	std::string					mSearchableLabelCreator;
+	std::string					mSearchable;
 	std::string					mType;
 	S32							mLabelWidth;
 	U32							mCreationDate;
@@ -463,7 +466,7 @@ public:
 	// viewed. This method will ask the viewed object itself.
 	const std::string& getName( void ) const;
 
-	const std::string& getSearchableLabel( void ) const;
+	std::string& getSearchableLabel( void );
 
 	// This method returns the label displayed on the view. This
 	// method was primarily added to allow sorting on the folder
@@ -766,6 +769,9 @@ public:
 	BOOL isFilterModified() { return mFilter.isNotDefault(); }
 	BOOL getAllowMultiSelect() { return mAllowMultiSelect; }
 
+	U32 toggleSearchType(std::string toggle);
+	U32 getSearchType() const;
+
 	// Close all folders in the view
 	void closeAllFolders();
 	void openFolder(const std::string& foldername);
@@ -925,6 +931,7 @@ protected:
 	
 	BOOL							mDebugFilters;
 	U32								mSortOrder;
+	U32								mSearchType;
 	LLDepthStack<LLFolderViewFolder>	mAutoOpenItems;
 	LLFolderViewFolder*				mAutoOpenCandidate;
 	LLFrameTimer					mAutoOpenTimer;

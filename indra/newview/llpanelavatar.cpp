@@ -1416,6 +1416,11 @@ void LLPanelAvatar::setAvatarID(const LLUUID &avatar_id, const std::string &name
 			childSetVisible("Pay...",TRUE);
 			childSetEnabled("Pay...",FALSE);
 		}
+		LLNameEditor* avatar_key = getChild<LLNameEditor>("avatar_key");
+		if (avatar_key)
+		{
+			avatar_key->setText(avatar_id.asString());
+		}
 	}
 	
 	BOOL is_god = FALSE;
@@ -1729,6 +1734,15 @@ void LLPanelAvatar::processAvatarPropertiesReply(LLMessageSystem *msg, void**)
 		msg->getStringFast(_PREHASH_PropertiesData, _PREHASH_BornOn, born_on);
 		msg->getString("PropertiesData","ProfileURL", profile_url);
 		msg->getU32Fast(_PREHASH_PropertiesData, _PREHASH_Flags, flags);
+
+		tm t;
+		if (sscanf(born_on.c_str(), "%u/%u/%u", &t.tm_mon, &t.tm_mday, &t.tm_year) == 3 && t.tm_year > 1900)
+		{
+			t.tm_year -= 1900;
+			t.tm_mon--;
+			t.tm_hour = t.tm_min = t.tm_sec = 0;
+			timeStructToFormattedString(&t, gSavedSettings.getString("ShortDateFormat"), born_on);
+		}
 
 		identified = (flags & AVATAR_IDENTIFIED);
 		transacted = (flags & AVATAR_TRANSACTED);

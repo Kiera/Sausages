@@ -227,7 +227,7 @@ BOOL LLModalDialog::handleKeyHere(KEY key, MASK mask )
 		// don't process escape key until message box has been on screen a minimal amount of time
 		// to avoid accidentally destroying the message box when user is hitting escape at the time it appears
 		BOOL enough_time_elapsed = mVisibleTime.getElapsedTimeF32() > 1.0f;
-		if (enough_time_elapsed && key == KEY_ESCAPE)
+		if (enough_time_elapsed && key == KEY_ESCAPE && mask == MASK_NONE)
 		{
 			close();
 			return TRUE;

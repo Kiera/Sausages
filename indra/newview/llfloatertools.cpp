@@ -232,6 +232,8 @@ BOOL	LLFloaterTools::postBuild()
 	childSetValue("checkbox uniform",(BOOL)gSavedSettings.getBOOL("ScaleUniform"));
 	mCheckStretchTexture = getChild<LLCheckBoxCtrl>("checkbox stretch textures");
 	childSetValue("checkbox stretch textures",(BOOL)gSavedSettings.getBOOL("ScaleStretchTextures"));
+	mCheckLimitDrag = getChild<LLCheckBoxCtrl>("checkbox limit drag distance");
+	childSetValue("checkbox limit drag distance",(BOOL)gSavedSettings.getBOOL("LimitDragDistance"));
 	mTextGridMode = getChild<LLTextBox>("text ruler mode");
 	mComboGridMode = getChild<LLComboBox>("combobox grid mode");
 	childSetCommitCallback("combobox grid mode",commit_grid_mode, this);
@@ -367,6 +369,7 @@ LLFloaterTools::LLFloaterTools()
 	mComboGridMode(NULL),
 	mCheckStretchUniform(NULL),
 	mCheckStretchTexture(NULL),
+	mCheckLimitDrag(NULL),
 
 	mBtnRotateLeft(NULL),
 	mBtnRotateReset(NULL),
@@ -643,6 +646,7 @@ void LLFloaterTools::updatePopup(LLCoordGL center, MASK mask)
 	//mCheckSelectLinked	->setVisible( edit_visible );
 	if (mCheckStretchUniform) mCheckStretchUniform->setVisible( edit_visible );
 	if (mCheckStretchTexture) mCheckStretchTexture->setVisible( edit_visible );
+	if (mCheckLimitDrag) mCheckLimitDrag->setVisible( edit_visible );
 
 	// Create buttons
 	BOOL create_visible = (tool == LLToolCompCreate::getInstance());

@@ -1255,7 +1255,18 @@ std::string LLViewerTextEditor::appendTime(bool prepend_newline)
 	// it's daylight savings time there.
 	timep = utc_to_pacific_time(utc_time, gPacificDaylightTime);
 
-	std::string text = llformat("[%02d:%02d]  ", timep->tm_hour, timep->tm_min);
+	std::string format = "";
+	if (gSavedSettings.getBOOL("SecondsInChatAndIMs"))
+	{
+		format = gSavedSettings.getString("LongTimeFormat");
+	}
+	else
+	{
+		format = gSavedSettings.getString("ShortTimeFormat");
+	}
+	std::string text;
+	timeStructToFormattedString(timep, format, text);
+	text = "[" + text + "]  ";
 	appendColoredText(text, false, prepend_newline, LLColor4::grey);
 
 	return text;

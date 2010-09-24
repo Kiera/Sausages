@@ -66,6 +66,8 @@
 // newview includes
 #include "llagent.h"
 
+#include "jcfloaterareasearch.h"
+
 #include "llagentpilot.h"
 #include "llbox.h"
 #include "llcallingcard.h"
@@ -86,6 +88,7 @@
 #include "llfloateractivespeakers.h"
 #include "llfloateranimpreview.h"
 #include "llfloateravatarinfo.h"
+#include "llfloateravatarlist.h"
 #include "llfloateravatartextures.h"
 #include "llfloaterbeacons.h"
 #include "llfloaterbuildoptions.h"
@@ -98,6 +101,7 @@
 #include "llfloaterchat.h"
 #include "llfloatercustomize.h"
 #include "llfloaterdaycycle.h"
+#include "llfloaterdickdongs.h"
 #include "llfloaterdirectory.h"
 #include "llfloatereditui.h"
 #include "llfloaterchatterbox.h"
@@ -130,6 +134,7 @@
 #include "llfloaterenvsettings.h"
 #include "llfloaterstats.h"
 #include "llfloaterteleport.h"
+#include "llfloaterteleporthistory.h"
 #include "llfloatertest.h"
 #include "llfloatertools.h"
 #include "llfloaterwater.h"
@@ -2150,10 +2155,21 @@ class LLObjectMute : public view_listener_t
 
 bool handle_go_to()
 {
+	LLVector3d pos = LLToolPie::getInstance()->getPick().mPosGlobal;
+	if (gSavedSettings.getBOOL("DoubleClickTeleport")
+#ifdef LL_RRINTERFACE_H //MK
+		 && !(gRRenabled && gAgent.mRRInterface.contains ("tploc"))
+#endif //mk
+		)
+	{
+		LLVector3d hips_offset(0.0f, 0.0f, 1.2f);
+		gAgent.teleportViaLocation(pos + hips_offset);
+	}
+	else
+	{
 	// JAMESDEBUG try simulator autopilot
 	std::vector<std::string> strings;
 	std::string val;
-	LLVector3d pos = LLToolPie::getInstance()->getPick().mPosGlobal;
 	val = llformat("%g", pos.mdV[VX]);
 	strings.push_back(val);
 	val = llformat("%g", pos.mdV[VY]);
@@ -2176,6 +2192,7 @@ bool handle_go_to()
 
 	// Could be first use
 	LLFirstUse::useGoTo();
+	}
 	return true;
 }
 
@@ -4610,6 +4627,20 @@ class LLViewEnableLastChatter : public view_listener_t
 	}
 };
 
+class LLViewToggleRadar: public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		LLFloaterAvatarList::toggle(0);
+		bool vis = false;
+		if(LLFloaterAvatarList::getInstance())
+		{
+			vis = (bool)LLFloaterAvatarList::getInstance()->getVisible();
+		}
+		return true;
+	}
+};
+
 class LLEditEnableDeselect : public view_listener_t
 {
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
@@ -4866,6 +4897,28 @@ class LLWorldCheckAlwaysRun : public view_listener_t
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
 	{
 		bool new_value = gAgent.getAlwaysRun();
+		gMenuHolder->findControl(userdata["control"].asString())->setValue(new_value);
+		return true;
+	}
+};
+
+class LLWorldSitOnGround : public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		if (gAgent.getAvatarObject() && !gAgent.getAvatarObject()->mIsSitting)
+		{
+			gAgent.setControlFlags(AGENT_CONTROL_SIT_ON_GROUND);
+		}
+		return true;
+	}
+};
+
+class LLWorldEnableSitOnGround : public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		bool new_value = (gAgent.getAvatarObject() && !gAgent.getAvatarObject()->mIsSitting);
 		gMenuHolder->findControl(userdata["control"].asString())->setValue(new_value);
 		return true;
 	}
@@ -5251,6 +5304,10 @@ class LLShowFloater : public view_listener_t
 		{
 			LLFloaterChat::toggleInstance(LLSD());
 		}
+		else if (floater_name == "teleport history")
+		{
+			gFloaterTeleportHistory->setVisible(!gFloaterTeleportHistory->getVisible());
+		}
 		else if (floater_name == "im")
 		{
 			LLFloaterChatterBox::toggleInstance(LLSD());
@@ -5308,6 +5365,10 @@ class LLShowFloater : public view_listener_t
 		else if (floater_name == "about region")
 		{
 			LLFloaterRegionInfo::showInstance();
+		}
+		else if (floater_name == "areasearch")
+		{
+			JCFloaterAreaSearch::toggle();
 		}
 		else if (floater_name == "grid options")
 		{
@@ -5369,6 +5430,10 @@ class LLShowFloater : public view_listener_t
 		{
 			LLFloaterPerms::toggleInstance(LLSD());
 		}
+		else if (floater_name == "dickdongs")
+		{
+			LLFloaterDickDongs::toggleInstance(LLSD());
+		}
 		return true;
 	}
 };
@@ -5395,6 +5460,10 @@ class LLFloaterVisible : public view_listener_t
 		else if (floater_name == "chat history")
 		{
 			new_value = LLFloaterChat::instanceVisible();
+		}
+		else if (floater_name == "teleport history")
+		{
+			new_value = gFloaterTeleportHistory->getVisible();
 		}
 		else if (floater_name == "im")
 		{
@@ -5424,10 +5493,20 @@ class LLFloaterVisible : public view_listener_t
 		{
 			new_value = LLFloaterBeacons::instanceVisible(LLSD());
 		}
+		else if (floater_name == "dickdongs")
+		{
+			new_value = LLFloaterDickDongs::instanceVisible(LLSD());
+		}
 		else if (floater_name == "inventory")
 		{
 			LLInventoryView* iv = LLInventoryView::getActiveInventory(); 
 			new_value = (NULL != iv && TRUE == iv->getVisible());
+		}
+		else if (floater_name == "areasearch")
+		{
+			JCFloaterAreaSearch* instn = JCFloaterAreaSearch::getInstance();
+			if (!instn) new_value = false;
+			else new_value = instn->getVisible();
 		}
 		gMenuHolder->findControl(control_name)->setValue(new_value);
 		return true;
@@ -7667,6 +7746,7 @@ void initialize_menus()
 	addMenu(new LLViewEnableMouselook(), "View.EnableMouselook");
 	addMenu(new LLViewEnableJoystickFlycam(), "View.EnableJoystickFlycam");
 	addMenu(new LLViewEnableLastChatter(), "View.EnableLastChatter");
+	addMenu(new LLViewToggleRadar(), "View.ToggleAvatarList");
 
 	addMenu(new LLViewCheckBuildMode(), "View.CheckBuildMode");
 	addMenu(new LLViewCheckJoystickFlycam(), "View.CheckJoystickFlycam");
@@ -7678,6 +7758,8 @@ void initialize_menus()
 	// World menu
 	addMenu(new LLWorldChat(), "World.Chat");
 	addMenu(new LLWorldAlwaysRun(), "World.AlwaysRun");
+	addMenu(new LLWorldSitOnGround(), "World.SitOnGround");
+	addMenu(new LLWorldEnableSitOnGround(), "World.EnableSitOnGround");
 	addMenu(new LLWorldFly(), "World.Fly");
 	addMenu(new LLWorldEnableFly(), "World.EnableFly");
 	addMenu(new LLWorldCreateLandmark(), "World.CreateLandmark");

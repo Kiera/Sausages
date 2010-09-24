@@ -445,7 +445,7 @@ BOOL LLSpinCtrl::handleKeyHere(KEY key, MASK mask)
 {
 	if (mEditor->hasFocus())
 	{
-		if(key == KEY_ESCAPE)
+		if (key == KEY_ESCAPE && mask == MASK_NONE)
 		{
 			// text editors don't support revert normally (due to user confusion)
 			// but not allowing revert on a spinner seems dangerous

@@ -83,6 +83,7 @@
 
 #include "llagent.h"
 #include "llagentpilot.h"
+#include "llfloateravatarlist.h"
 #include "llfloateravatarpicker.h"
 #include "llcallbacklist.h"
 #include "llcallingcard.h"
@@ -189,6 +190,7 @@
 #include "llwaterparammanager.h"
 #include "llagentlanguage.h"
 #include "llsocks5.h"
+#include "jcfloaterareasearch.h"
 
 #if LL_WINDOWS
 #include "llwindebug.h"
@@ -2551,7 +2553,10 @@ bool idle_startup()
 		{
 			LLFloaterMap::showInstance();
 		}
-
+		if (gSavedSettings.getBOOL("ShowRadar"))
+		{
+			LLFloaterAvatarList::showInstance();
+		}
 		if (gSavedSettings.getBOOL("ShowCameraControls"))
 		{
 			LLFloaterCamera::showInstance();
@@ -3138,6 +3143,16 @@ bool idle_startup()
 		gRenderStartTime.reset();
 		gForegroundTime.reset();
 
+		if (gSavedSettings.getBOOL("FetchInventoryOnLogin")
+#ifdef LL_RRINTERFACE_H //MK
+			|| gRRenabled
+#endif //mk
+			)
+		{
+			// Fetch inventory in the background
+			gInventory.startBackgroundFetch();
+		}
+
 		// HACK: Inform simulator of window size.
 		// Do this here so it's less likely to race with RegisterNewAgent.
 		// TODO: Put this into RegisterNewAgent
@@ -3373,6 +3388,16 @@ bool idle_startup()
 		LLUserAuth::getInstance()->reset();
 
 		LLStartUp::setStartupState( STATE_STARTED );
+
+		if (gSavedSettings.getBOOL("SpeedRez"))
+		{
+			// Speed up rezzing if requested.
+			F32 dist1 = gSavedSettings.getF32("RenderFarClip");
+			F32 dist2 = gSavedSettings.getF32("SavedRenderFarClip");
+			gSavedDrawDistance = (dist1 >= dist2 ? dist1 : dist2);
+			gSavedSettings.setF32("SavedRenderFarClip", gSavedDrawDistance);
+			gSavedSettings.setF32("RenderFarClip", 32.0f);
+		}
 
 		// Unmute audio if desired and setup volumes.
 		// Unmute audio if desired and setup volumes.
@@ -3901,6 +3926,13 @@ void use_circuit_callback(void**, S32 result)
 	}
 }
 
+void pass_processObjectPropertiesFamily(LLMessageSystem *msg, void**)
+{
+	// Send the result to the corresponding requesters.
+	LLSelectMgr::processObjectPropertiesFamily(msg, NULL);
+	JCFloaterAreaSearch::processObjectPropertiesFamily(msg, NULL);
+}
+
 void register_viewer_callbacks(LLMessageSystem* msg)
 {
 	msg->setHandlerFuncFast(_PREHASH_LayerData,				process_layer_data );
@@ -3944,7 +3976,7 @@ void register_viewer_callbacks(LLMessageSystem* msg)
 	msg->setHandlerFuncFast(_PREHASH_ImprovedInstantMessage,	process_improved_im);
 	msg->setHandlerFuncFast(_PREHASH_ScriptQuestion,			process_script_question);
 	msg->setHandlerFuncFast(_PREHASH_ObjectProperties,			LLSelectMgr::processObjectProperties, NULL);
-	msg->setHandlerFuncFast(_PREHASH_ObjectPropertiesFamily,	LLSelectMgr::processObjectPropertiesFamily, NULL);
+	msg->setHandlerFuncFast(_PREHASH_ObjectPropertiesFamily,	pass_processObjectPropertiesFamily, NULL);
 	msg->setHandlerFunc("ForceObjectSelect", LLSelectMgr::processForceObjectSelect);
 
 	msg->setHandlerFuncFast(_PREHASH_MoneyBalanceReply,		process_money_balance_reply,	NULL);

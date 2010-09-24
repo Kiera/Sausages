@@ -489,6 +489,10 @@ void LLInventoryView::init(LLInventoryModel* inventory)
 	addBoolControl("Inventory.SystemFoldersToTop", TRUE);
 	updateSortControls();
 
+	addBoolControl("Inventory.SearchName", TRUE);
+	addBoolControl("Inventory.SearchDesc", FALSE);
+	addBoolControl("Inventory.SearchCreator", FALSE);
+
 	mSavedFolderState = new LLSaveFolderState();
 	mSavedFolderState->setApply(FALSE);
 

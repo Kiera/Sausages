@@ -65,6 +65,7 @@
 #include "llprefschat.h"
 #include "llprefsvoice.h"
 #include "llprefsim.h"
+#include "hbprefsinert.h"
 #include "llresizehandle.h"
 #include "llresmgr.h"
 #include "llassetstorage.h"
@@ -132,7 +133,8 @@ LLPreferenceCore::LLPreferenceCore(LLTabContainer* tab_container, LLButton * def
 	mAudioPanel(NULL),
 	mMsgPanel(NULL),
 	mSkinsPanel(NULL),
-	mLCDPanel(NULL)
+	mLCDPanel(NULL),
+	mPrefsInert(NULL)
 {
 	mGeneralPanel = new LLPanelGeneral();
 	mTabContainer->addTabPanel(mGeneralPanel, mGeneralPanel->getLabel(), FALSE, onTabChanged, mTabContainer);
@@ -191,6 +193,10 @@ LLPreferenceCore::LLPreferenceCore(LLTabContainer* tab_container, LLButton * def
 	mSkinsPanel = new LLPanelSkins();
 	mTabContainer->addTabPanel(mSkinsPanel, mSkinsPanel->getLabel(), FALSE, onTabChanged, mTabContainer);
 	mSkinsPanel->setDefaultBtn(default_btn);
+
+	mPrefsInert = new LLPrefsInert();
+	mTabContainer->addTabPanel(mPrefsInert->getPanel(), mPrefsInert->getPanel()->getLabel(), FALSE, onTabChanged, mTabContainer);
+	mPrefsInert->getPanel()->setDefaultBtn(default_btn);
 
 	if (!mTabContainer->selectTab(gSavedSettings.getS32("LastPrefTab")))
 	{
@@ -251,6 +257,11 @@ LLPreferenceCore::~LLPreferenceCore()
 		delete mSkinsPanel;
 		mSkinsPanel = NULL;
 	}
+	if (mPrefsInert)
+	{
+		delete mPrefsInert;
+		mPrefsInert = NULL;
+	}
 
 }
 
@@ -267,6 +278,7 @@ void LLPreferenceCore::apply()
 	mPrefsIM->apply();
 	mMsgPanel->apply();
 	mSkinsPanel->apply();
+	mPrefsInert->apply();
 
 	// hardware menu apply
 	LLFloaterHardwareSettings::instance()->apply();
@@ -295,6 +307,7 @@ void LLPreferenceCore::cancel()
 	mPrefsIM->cancel();
 	mMsgPanel->cancel();
 	mSkinsPanel->cancel();
+	mPrefsInert->cancel();
 
 	// cancel hardware menu
 	LLFloaterHardwareSettings::instance()->cancel();

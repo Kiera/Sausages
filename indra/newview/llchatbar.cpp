@@ -183,7 +183,7 @@ BOOL LLChatBar::handleKeyHere( KEY key, MASK mask )
 		}
 	}
 	// only do this in main chatbar
-	else if ( KEY_ESCAPE == key && gChatBar == this)
+	else if (KEY_ESCAPE == key && mask == MASK_NONE && gChatBar == this)
 	{
 		stopChat();
 

@@ -69,6 +69,13 @@
 		</menu_item_call>
 		<menu_item_separator bottom="-194" enabled="true" height="8" label="-----------" left="0"
 		     mouse_opaque="true" name="separator4" width="243" />
+		<menu_item_check bottom="-384" enabled="true" height="19" label="SEE FOREVER" left="0"
+			mouse_opaque="true" name="dickdongs" width="211">
+			<on_click function="ShowFloater" userdata="dickdongs" />
+			<on_check function="FloaterVisible" userdata="dickdongs" />
+		</menu_item_check>
+		<menu_item_separator bottom="-194" enabled="true" height="8" label="-----------" left="0"
+		     mouse_opaque="true" name="separator4" width="243" />
 		<menu_item_call bottom="-259" enabled="true" height="19" label="Quit" left="0"
 		     mouse_opaque="true" name="Quit" shortcut="control|Q" width="243">
 			<on_click function="File.Quit" userdata="" />
@@ -293,6 +300,11 @@
 			<on_click function="ShowFloater" userdata="mute list" />
 			<on_check function="FloaterVisible" userdata="mute list" />
 		</menu_item_check>
+		<menu_item_check bottom="189" enabled="true" height="19" label="Teleport History" left="0"
+						 mouse_opaque="true" name="Teleport History" shortcut="" width="211">
+			<on_click function="ShowFloater" userdata="teleport history" />
+			<on_check function="FloaterVisible" userdata="teleport history" />
+		</menu_item_check>
 		<menu_item_separator bottom="-197" enabled="true" height="8" label="-----------" left="0"
 		     mouse_opaque="true" name="separator2" width="211" />
 		<menu_item_check bottom="-216" enabled="true" height="19" label="Camera Controls" left="0"
@@ -315,6 +327,11 @@
 			<on_click function="ShowFloater" userdata="mini map" />
 			<on_check control="ShowMiniMap" />
 		</menu_item_check>
+		<menu_item_check bottom="-273" enabled="true" height="19" label="Radar" left="0"
+		     mouse_opaque="true" name="Radar" shortcut="control|alt|shift|R" width="211">
+			<on_click function="View.ToggleAvatarList" userdata="radar" />
+			<on_check control="ShowRadar" />
+		</menu_item_check>
 		<menu_item_separator bottom="-281" enabled="true" height="8" label="-----------" left="0"
 		     mouse_opaque="true" name="separator3" width="211" />
 		<menu_item_check bottom="-300" enabled="true" height="19" label="Statistics Bar" left="0"
@@ -322,6 +339,13 @@
 		     width="211">
 			<on_click function="ShowFloater" userdata="stat bar" />
 			<on_check function="FloaterVisible" userdata="stat bar" />
+		</menu_item_check>
+		<menu_item_separator bottom="-300" enabled="true" height="8" label="-----------" left="0"
+		     mouse_opaque="true" name="separator100" width="211" />
+		<menu_item_check bottom="-300" enabled="false" height="20" label="Area Search" left="0"
+		     mouse_opaque="true" name="Area Search" shortcut="control|shift|A" width="155">
+			<on_click function="ShowFloater" userdata="areasearch" />
+			<on_check function="FloaterVisible" userdata="areasearch" />
 		</menu_item_check>
 		<menu_item_check bottom="-319" enabled="true" height="19" label="Property Lines" left="0"
 		     mouse_opaque="true" name="Property Lines" shortcut="control|alt|shift|P"
@@ -424,6 +448,11 @@
 			<on_click function="World.AlwaysRun" userdata="" />
 			<on_check function="World.CheckAlwaysRun" userdata="" />
 		</menu_item_check>
+		<menu_item_call bottom="-67" enabled="true" height="19" label="Sit on Ground" left="0"
+		     mouse_opaque="true" name="Sit on Ground" shortcut="control|alt|shift|S" width="185">
+			<on_click function="World.SitOnGround" userdata="" />
+			<on_enable function="World.EnableSitOnGround" userdata="" />
+		</menu_item_call>
 		<menu_item_check bottom="-86" enabled="true" height="19" label="Fly" left="0"
 		     mouse_opaque="true" name="Fly" shortcut="Home" width="185">
 			<on_click function="World.Fly" userdata="" />

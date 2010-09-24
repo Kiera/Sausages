@@ -41,7 +41,7 @@
 
 LLFloaterBeacons::LLFloaterBeacons(const LLSD& seed)
 {
-	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_beacons.xml");
+	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_dickdongs.xml");
 
 	// Initialize pipeline states from saved settings.
 	// OK to do at floater constructor time because beacons do not display unless the floater is open

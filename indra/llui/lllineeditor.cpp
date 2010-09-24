@@ -1246,7 +1246,7 @@ BOOL LLLineEditor::handleSpecialKey(KEY key, MASK mask)
 		break;
 
 	case KEY_ESCAPE:
-	    if (mRevertOnEsc && mText.getString() != mPrevText)
+	    if (mask == MASK_NONE && mRevertOnEsc && mText.getString() != mPrevText)
 		{
 			setText(mPrevText);
 			// Note, don't set handled, still want to loose focus (won't commit becase text is now unchanged)

@@ -737,7 +737,7 @@ BOOL LLToolDragAndDrop::handleHover( S32 x, S32 y, MASK mask )
 
 BOOL LLToolDragAndDrop::handleKey(KEY key, MASK mask)
 {
-	if (key == KEY_ESCAPE)
+	if (key == KEY_ESCAPE && mask == MASK_NONE)
 	{
 		// cancel drag and drop operation
 		endDrag();
@@ -851,6 +851,12 @@ void LLToolDragAndDrop::dragOrDrop( S32 x, S32 y, MASK mask, BOOL drop,
 		for (mCurItemIndex = 0; mCurItemIndex < (S32)mCargoIDs.size(); mCurItemIndex++)
 		{
 			LLInventoryObject* cargo = locateInventory(item, cat);
+
+			if (!cargo) 
+			{
+				handled = FALSE;
+				break;
+			}
 
 			EAcceptance item_acceptance = ACCEPT_NO;
 			handled = handled && root_view->handleDragAndDrop(x, y, mask, FALSE,

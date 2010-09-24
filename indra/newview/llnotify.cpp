@@ -267,10 +267,12 @@ LLNotifyBox::LLNotifyBox(LLNotificationPtr notification,
 
 	if (mIsTip)
 	{
+		if (!gSavedSettings.getBOOL("HideNotificationsInChat")) {
 		// TODO: Make a separate archive for these.
 		LLChat chat(mMessage);
 		chat.mSourceType = CHAT_SOURCE_SYSTEM;
 		LLFloaterChat::getInstance(LLSD())->addChatHistory(chat);
+	}
 	}
 	else
 	{

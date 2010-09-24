@@ -86,6 +86,7 @@
 #include "llfloatermute.h"
 #include "llfloaterpostcard.h"
 #include "llfloaterpreference.h"
+#include "llfloaterteleporthistory.h"
 #include "llfollowcam.h"
 #include "llgroupnotify.h"
 #include "llhudeffect.h"
@@ -886,9 +887,9 @@ void open_offer(const std::vector<LLUUID>& items, const std::string& from_name)
 		//if we are throttled, don't display them
 		if (check_offer_throttle(from_name, false))
 		{
-			// I'm not sure this is a good idea.
-			bool show_keep_discard = item->getPermissions().getCreator() != gAgent.getID();
-			//bool show_keep_discard = true;
+			// I'm not sure this is a good idea - Definitely a bad idea. HB
+			//bool show_keep_discard = item->getPermissions().getCreator() != gAgent.getID();
+			bool show_keep_discard = true;
 			switch(asset_type)
 			{
 			case LLAssetType::AT_NOTECARD:
@@ -2395,6 +2396,36 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 		is_owned_by_me = chatter->permYouOwner();
 	}
 
+	U32 links_for_chatting_objects = gSavedSettings.getU32("LinksForChattingObjects");
+	if (links_for_chatting_objects != 0 && chatter && chat.mSourceType == CHAT_SOURCE_OBJECT &&
+#ifdef LL_RRINTERFACE_H //MK
+		(!gRRenabled || !gAgent.mRRInterface.mContainsShownames) &&
+#endif //mk
+		(!is_owned_by_me || links_for_chatting_objects == 2))
+	{
+		LLSD query_string;
+		query_string["name"]  = from_name;
+		query_string["owner"] = owner_id;
+#ifdef LL_RRINTERFACE_H //MK
+		if (!gRRenabled || !gAgent.mRRInterface.mContainsShowloc)
+		{
+#endif //mk
+			// Compute the object SLURL.
+			LLVector3 pos = chatter->getPositionRegion();
+			S32 x = llround((F32)fmod((F64)pos.mV[VX], (F64)REGION_WIDTH_METERS));
+			S32 y = llround((F32)fmod((F64)pos.mV[VY], (F64)REGION_WIDTH_METERS));
+			S32 z = llround((F32)pos.mV[VZ]);
+			std::ostringstream location;
+			location << chatter->getRegion()->getName() << "/" << x << "/" << y << "/" << z;
+			query_string["slurl"] = location.str();
+#ifdef LL_RRINTERFACE_H //MK
+		}
+#endif //mk
+		std::ostringstream link;
+		link << "secondlife:///app/objectim/" << from_id << LLURI::mapToQueryString(query_string);
+		chat.mURL = link.str();
+	}
+
 	if (is_audible)
 	{
 		BOOL visible_in_chat_bubble = FALSE;
@@ -2939,6 +2970,9 @@ void process_agent_movement_complete(LLMessageSystem* msg, void**)
 		{
 			gAgent.setTeleportState( LLAgent::TELEPORT_NONE );
 		}
+
+		// add teleport destination to the list of visited places
+		gFloaterTeleportHistory->addEntry(regionp->getName(),(S16)agent_pos.mV[0],(S16)agent_pos.mV[1],(S16)agent_pos.mV[2]);
 	}
 	else
 	{
@@ -4980,8 +5014,10 @@ void container_inventory_arrived(LLViewerObject* object,
 // method to format the time.
 std::string formatted_time(const time_t& the_time)
 {
+	std::string timestr;
+	timeToFormattedString(the_time, gSavedSettings.getString("TimestampFormat"), timestr);
 	char buffer[30]; /* Flawfinder: ignore */
-	LLStringUtil::copy(buffer, ctime(&the_time), 30);
+	LLStringUtil::copy(buffer, timestr.c_str(), 30);
 	buffer[24] = '\0';
 	return std::string(buffer);
 }

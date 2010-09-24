@@ -104,6 +104,7 @@
 #include "llfloaternamedesc.h"
 #include "llfloaterpreference.h"
 #include "llfloatersnapshot.h"
+#include "llfloaterteleporthistory.h"
 #include "llfloatertools.h"
 #include "llfloaterworldmap.h"
 #include "llfocusmgr.h"
@@ -1930,6 +1931,10 @@ void LLViewerWindow::initWorldUI()
 		gFloaterWorldMap = new LLFloaterWorldMap();
 		gFloaterWorldMap->setVisible(FALSE);
 
+		// open teleport history floater and hide it initially
+		gFloaterTeleportHistory = new LLFloaterTeleportHistory();
+		gFloaterTeleportHistory->setVisible(FALSE);
+
 		//
 		// Tools for building
 		//
@@ -2459,6 +2464,13 @@ BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 	    && ('5' == key))
 	{
 		LLFloaterNotificationConsole::showInstance();
+		return TRUE;
+	}
+
+	// handle shift-escape key (reset camera view)
+	if (key == KEY_ESCAPE && mask == MASK_SHIFT)
+	{
+		handle_reset_view();
 		return TRUE;
 	}
 

@@ -670,7 +670,7 @@ BOOL LLToolPie::handleDoubleClick(S32 x, S32 y, MASK mask)
 		llinfos << "LLToolPie handleDoubleClick (becoming mouseDown)" << llendl;
 	}
 
-	if (gSavedSettings.getBOOL("DoubleClickAutoPilot"))
+	if (gSavedSettings.getBOOL("DoubleClickAutoPilot") || gSavedSettings.getBOOL("DoubleClickTeleport"))
 	{
 		if (mPick.mPickType == LLPickInfo::PICK_LAND
 			&& !mPick.mPosGlobal.isExactlyZero())
@@ -682,10 +682,14 @@ BOOL LLToolPie::handleDoubleClick(S32 x, S32 y, MASK mask)
 				 && !mPick.mPosGlobal.isExactlyZero())
 		{
 			// Hit an object
+			// Do not go to attachments...
+			if (!mPick.getObject()->isHUDAttachment())
+			{
 			// HACK: Call the last hit position the point we hit on the object
 			//gLastHitPosGlobal += gLastHitObjectOffset;
 			handle_go_to();
 			return TRUE;
+		}
 		}
 	} else
 	/* code added to support double click teleports */

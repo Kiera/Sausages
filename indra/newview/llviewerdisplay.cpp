@@ -94,6 +94,7 @@ const F32 TELEPORT_LOCAL_DELAY = 1.0f; // Delay to prevent teleports after start
 BOOL		 gTeleportDisplay = FALSE;
 LLFrameTimer gTeleportDisplayTimer;
 LLFrameTimer gTeleportArrivalTimer;
+F32			 gSavedDrawDistance = 0.0f;
 const F32		RESTORE_GL_TIME = 5.f;	// Wait this long while reloading textures before we raise the curtain
 
 BOOL gForceRenderLandFence = FALSE;
@@ -189,6 +190,13 @@ void display_update_camera()
 // Write some stats to llinfos
 void display_stats()
 {
+	if (gNoRender || !gViewerWindow->mWindow->getVisible() || !gFocusMgr.getAppHasFocus())
+	{
+		// Do not keep FPS statistics while yielding cooperatively
+		// (i;e. when not running as foreground window)
+		gRecentFrameCount = 0;
+		gRecentFPSTime.reset();
+	}
 	F32 fps_log_freq = gSavedSettings.getF32("FPSLogFrequency");
 	if (fps_log_freq > 0.f && gRecentFPSTime.getElapsedTimeF32() >= fps_log_freq)
 	{
@@ -411,6 +419,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// No teleport in progress
 			gViewerWindow->setShowProgress(FALSE);
 			gTeleportDisplay = FALSE;
+			gTeleportArrivalTimer.reset();
 			break;
 
 		default: 
@@ -452,6 +461,31 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			}
 			
 			gViewerWindow->setProgressPercent( percent_done );
+		}
+	}
+
+	// Progressively increase draw distance after TP when required.
+	if (gSavedDrawDistance > 0.0f && gAgent.getTeleportState() == LLAgent::TELEPORT_NONE)
+	{
+		if (gTeleportArrivalTimer.getElapsedTimeF32() >=
+			(F32)gSavedSettings.getU32("SpeedRezInterval"))
+		{
+			gTeleportArrivalTimer.reset();
+			F32 current = gSavedSettings.getF32("RenderFarClip");
+			if (gSavedDrawDistance > current)
+			{
+				current *= 2.0;
+				if (current > gSavedDrawDistance)
+				{
+					current = gSavedDrawDistance;
+				}
+				gSavedSettings.setF32("RenderFarClip", current);
+			}
+			if (current >= gSavedDrawDistance)
+			{
+				gSavedDrawDistance = 0.0f;
+				gSavedSettings.setF32("SavedRenderFarClip", 0.0f);
+			}
 		}
 	}
 

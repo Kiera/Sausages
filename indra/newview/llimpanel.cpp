@@ -1644,7 +1644,7 @@ BOOL LLFloaterIMPanel::handleKeyHere( KEY key, MASK mask )
 			gIMMgr->toggle(NULL);
 		}
 	}
-	else if ( KEY_ESCAPE == key )
+	else if (KEY_ESCAPE == key && mask == MASK_NONE)
 	{
 		handled = TRUE;
 		gFocusMgr.setKeyboardFocus(NULL);

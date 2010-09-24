@@ -284,7 +284,7 @@ BOOL LLPanel::handleKeyHere( KEY key, MASK mask )
 	LLUICtrl* cur_focus = dynamic_cast<LLUICtrl*>(gFocusMgr.getKeyboardFocus());
 
 	// handle user hitting ESC to defocus
-	if (key == KEY_ESCAPE)
+	if (key == KEY_ESCAPE && mask == MASK_NONE)
 	{
 		gFocusMgr.setKeyboardFocus(NULL);
 		return TRUE;

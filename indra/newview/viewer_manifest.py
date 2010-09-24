@@ -124,7 +124,8 @@ class ViewerManifest(LLManifest):
         return self.args['branding_id']
     def installer_prefix(self):
         mapping={"secondlife":'SecondLife_',
-                 "snowglobe":'Snowglobe_'}
+                 "snowglobe":'Snowglobe_',
+                 "Inertia":'Inertia_'}
         return mapping[self.viewer_branding_id()]
 
     def flags_list(self):
@@ -583,12 +584,14 @@ class DarwinManifest(ViewerManifest):
 
     def app_name(self):
         mapping={"secondlife":"Second Life",
-                 "snowglobe":"Snowglobe"}
+                 "snowglobe":"Snowglobe",
+                 "Inertia":"Intertia"}
         return mapping[self.viewer_branding_id()]
         
     def info_plist_name(self):
         mapping={"secondlife":"Info-SecondLife.plist",
-                 "snowglobe":"Info-Snowglobe.plist"}
+                 "snowglobe":"Info-Snowglobe.plist",
+                 "Inertia":"Info-Inertia.plist"}
         return mapping[self.viewer_branding_id()]
 
     def package_finish(self):
@@ -728,17 +731,20 @@ class LinuxManifest(ViewerManifest):
 
     def wrapper_name(self):
         mapping={"secondlife":"secondlife",
-                 "snowglobe":"snowglobe"}
+                 "snowglobe":"snowglobe",
+                 "Inertia":"inertia"}
         return mapping[self.viewer_branding_id()]
 
     def binary_name(self):
         mapping={"secondlife":"do-not-directly-run-secondlife-bin",
-                 "snowglobe":"snowglobe-do-not-run-directly"}
+                 "snowglobe":"snowglobe-do-not-run-directly",
+                 "Inertia":"inertia-do-not-run-directly"}
         return mapping[self.viewer_branding_id()]
     
     def icon_name(self):
         mapping={"secondlife":"secondlife_icon.png",
-                 "snowglobe":"snowglobe_icon.png"}
+                 "snowglobe":"snowglobe_icon.png",
+                 "Inertia":"inertia_icon.png"}
         return mapping[self.viewer_branding_id()]
 
     def package_finish(self):
@@ -753,6 +759,8 @@ class LinuxManifest(ViewerManifest):
                     installer_name += '_' + self.args['grid'].upper()
             else:
                 installer_name += '_' + self.channel_oneword().upper()
+
+	installer_name = 'Inertia'
 
         # Fix access permissions
         self.run_command("""

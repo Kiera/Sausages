@@ -5862,6 +5862,10 @@ An object named [OBJECTFROMNAME] owned by (an unknown user) has given you a [OBJ
        index="1"
        name="Decline"
        text="Decline"/>
+      <button
+       index="2"
+       name="Ignore"
+       text="Ignore"/>
     </form>
   </notification>
 
@@ -5881,6 +5885,10 @@ An object named [OBJECTFROMNAME] owned by (an unknown user) has given you a [OBJ
        index="1"
        name="Decline"
        text="Decline"/>
+      <button
+       index="2"
+       name="Ignore"
+       text="Ignore"/>
     </form>
   </notification>
 
@@ -5913,6 +5921,10 @@ This will add a bookmark in your inventory so you can quickly IM this resident.
        index="1"
        name="Decline"
        text="Decline"/>
+      <button
+       index="2"
+       name="Ignore"
+       text="Ignore"/>
     </form>
   </notification>
 
