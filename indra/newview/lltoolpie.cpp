@@ -724,13 +724,13 @@ BOOL LLToolPie::handleDoubleClick(S32 x, S32 y, MASK mask)
 		{
 			// Hit an object
 			// Do not go to attachments...
-			if (!mPick.getObject()->isHUDAttachment())
+			if (mPick.getObject() && !mPick.getObject()->isHUDAttachment())
 			{
-			// HACK: Call the last hit position the point we hit on the object
-			//gLastHitPosGlobal += gLastHitObjectOffset;
-			handle_go_to();
-			return TRUE;
-		}
+				// HACK: Call the last hit position the point we hit on the object
+				//gLastHitPosGlobal += gLastHitObjectOffset;
+				handle_go_to();
+				return TRUE;
+			}
 		}
 	} else
 	/* code added to support double click teleports */
