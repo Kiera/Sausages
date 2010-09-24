@@ -301,7 +301,7 @@ void LLFloaterTeleport::onClickTeleport(void* userdata)
 	LLHTTPClient::post(placeAvatarCap, args, new LLPlaceAvatarTeleportResponder());
 	gAgent.setTeleportMessage(
 				LLAgent::sTeleportProgressMessages["requesting"]);
-	gViewerWindow->setShowProgress(TRUE);
+	gViewerWindow->setShowProgress(FALSE);
 	gAgent.teleportCore(); 
 	gAgent.setTeleportState( LLAgent::TELEPORT_PLACE_AVATAR ); // teleportcore() sets tp state to legacy path, so reset. ick!
 	gTeleportDisplayTimer.reset();
