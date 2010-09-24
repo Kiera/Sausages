@@ -1,8 +1,12 @@
 /installed.xml
 /indra/bin
 /indra/bin-release
+/LICENSES
+/LICENSE-*
 /bin
 /bin-release
+/indra/newview/res-sdl/
+/indra/newview/fonts/
 /indra/viewer-*
 /indra/newview/vivox-runtime/
 /libraries/
