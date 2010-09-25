@@ -4243,7 +4243,7 @@ BOOL LLFolderView::handleScrollWheel(S32 x, S32 y, S32 clicks)
 	return FALSE;
 }
 
-void LLFolderView::deleteAllChildren()
+void LLFolderView::deleteAllChildren(BOOL delayed_delete)
 {
 	if(mRenamer == gFocusMgr.getTopCtrl())
 	{
@@ -4254,7 +4254,7 @@ void LLFolderView::deleteAllChildren()
 	mRenamer = NULL;
 	mRenameItem = NULL;
 	clearSelection();
-	LLView::deleteAllChildren();
+	LLView::deleteAllChildren(delayed_delete);
 }
 
 void LLFolderView::scrollToShowSelection()
