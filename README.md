@@ -4,7 +4,8 @@ SAUSAGES IS AN EXCELLENT CLIENT
 IT IS FOR GOOD PEOPLE, IT IS BASED ON INERTIA.
 
 
-==FAQ==
+FAQ
+===
 
 Why such a dumb name?
 ---------------------
