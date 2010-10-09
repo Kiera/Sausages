@@ -877,6 +877,11 @@ void LLTextEditor::setCursor(S32 row, S32 column)
 {
 	const llwchar* doc = mWText.c_str();
 	const char CR = 10;
+
+	//why are row and column S32s anyways?
+	if(row < 0) row = 0;
+	if(column < 0) column = 0;
+
 	while(row--)
 	{
 		while (CR != *doc++);
