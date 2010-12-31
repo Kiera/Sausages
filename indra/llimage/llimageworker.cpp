@@ -137,6 +137,10 @@ bool LLImageDecodeThread::ImageRequest::processRequest()
 											  mFormattedImage->getHeight(),
 											  mFormattedImage->getComponents());
 		}
+
+		if(mDecodedImageRaw->mBadBufferAllocation)
+			return true;
+
 		done = mFormattedImage->decode(mDecodedImageRaw, decode_time_slice); // 1ms
 		mDecodedRaw = done;
 	}

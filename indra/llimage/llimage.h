@@ -152,9 +152,8 @@ private:
 
 	S8 mComponents;
 
-	BOOL mBadBufferAllocation ;
-
 public:
+	BOOL mBadBufferAllocation ;
 	S16 mMemType; // debug
 	static BOOL sSizeOverride;
 };

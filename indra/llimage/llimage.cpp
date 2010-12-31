@@ -166,7 +166,7 @@ U8* LLImageBase::allocateData(S32 size)
 	{
 		deleteData(); // virtual
 		mBadBufferAllocation = FALSE ;
-		mData = new U8[size];
+		mData = new(std::nothrow) U8[size];
 		if (!mData)
 		{
 			llwarns << "allocate image data: " << size << llendl;
