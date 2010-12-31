@@ -142,9 +142,6 @@ protected:
 	// Given the id and the parent, build all of the folder views.
 	void rebuildViewsFor(const LLUUID& id, U32 mask);
 	void buildNewViews(const LLUUID& id);
-	// <edit>
-	void buildNewViews(const LLInventoryObject* objectp);
-	// </edit>
 
 public:
 	// TomY TODO: Move this elsewhere?
