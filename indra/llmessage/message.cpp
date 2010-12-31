@@ -94,7 +94,7 @@
 
 // Constants
 //const char* MESSAGE_LOG_FILENAME = "message.log";
-static const F32 CIRCUIT_DUMP_TIMEOUT = 30.f;
+static const F32 CIRCUIT_DUMP_TIMEOUT = 300.f;
 static const S32 TRUST_TIME_WINDOW = 3;
 
 // *NOTE: This needs to be moved into a seperate file so that it never gets
@@ -3482,7 +3482,7 @@ void LLMessageSystem::establishBidirectionalTrust(const LLHost &host, S64 frame_
 	}
 	LLTimer timeout;
 
-	timeout.setTimerExpirySec(20.0);
+	timeout.setTimerExpirySec(200.0);
 	setHandlerFuncFast(_PREHASH_StartPingCheck, null_message_callback, NULL);
 	setHandlerFuncFast(_PREHASH_CompletePingCheck, null_message_callback,
 		       NULL);
@@ -3514,7 +3514,7 @@ void LLMessageSystem::establishBidirectionalTrust(const LLHost &host, S64 frame_
 	setHandlerFuncFast(_PREHASH_StartPingCheck, process_start_ping_check, NULL);
 	setHandlerFuncFast(_PREHASH_CompletePingCheck, process_complete_ping_check, NULL);
 
-	timeout.setTimerExpirySec(2.0);
+	timeout.setTimerExpirySec(20.0);
 	LLCircuitData* cdp = NULL;
 	while(!timeout.hasExpired())
 	{
