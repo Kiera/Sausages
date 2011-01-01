@@ -35,7 +35,6 @@ $/LicenseInfo$
 
 import sys
 import os.path
-import re
 
 # Look for indra/lib/python in all possible parent directories ...
 # This is an improvement over the setup-path.py method used previously:
