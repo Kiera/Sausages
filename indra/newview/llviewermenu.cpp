@@ -239,6 +239,7 @@
 #include "llfloatervfs.h"
 #include "llfloatervfsexplorer.h"
 #include "llfloaterexportregion.h"
+#include "llfloaterkeytool.h"
 // </edit>
 
 using namespace LLVOAvatarDefines;
@@ -410,6 +411,7 @@ void handle_local_assets(void*);
 void handle_vfs_explorer(void*);
 void handle_sounds_explorer(void*);
 void handle_blacklist(void*);
+void handle_keytool_from_clipboard(void*);
 // </edit>
 
 BOOL is_inventory_visible( void* user_data );
@@ -769,6 +771,9 @@ void init_client_menu(LLMenuGL* menu)
 												&handle_sounds_explorer, NULL));
 		sub->append(new LLMenuItemCallGL(	"Asset Blacklist",
 												&handle_blacklist, NULL));
+
+		sub->append(new LLMenuItemCallGL(	"KeyTool from Clipboard",
+											&handle_keytool_from_clipboard, NULL, NULL, 'K', MASK_CONTROL | MASK_ALT | MASK_SHIFT));
 		
 		sub->append(new LLMenuItemCheckGL( "Enable AO",
 										&menu_toggle_control,
@@ -3069,6 +3074,16 @@ void process_grant_godlike_powers(LLMessageSystem* msg, void**)
 }
 
 // <edit>
+
+void handle_keytool_from_clipboard(void*)
+{
+	std::string clipstr = utf8str_trim(wstring_to_utf8str(gClipboard.getPasteWString()));
+	LLUUID key = LLUUID(clipstr);
+	if(key.notNull())
+	{
+		LLFloaterKeyTool::show(key);
+	}
+}
 
 void handle_reopen_with_hex_editor(void*)
 {
