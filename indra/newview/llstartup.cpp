@@ -1415,6 +1415,7 @@ bool idle_startup()
 		// <edit>
 		LLAO::refresh();
 		LLFloaterBlacklist::loadFromSave();
+		LLVOAvatar::loadClientTags();
 		// </edit>
 
 		if (show_connect_box)

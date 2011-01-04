@@ -84,6 +84,7 @@
 #include "llvoicevisualizer.h" // Ventrella
 
 // <edit>
+#include "llsdserialize.h" // client resolver
 #include "llfloaterexploreanimations.h"
 #include "llao.h"
 #include "llimagemetadatareader.h"
@@ -699,6 +700,7 @@ BOOL LLVOAvatar::sVisibleInFirstPerson = FALSE;
 F32 LLVOAvatar::sLODFactor = 1.f;
 BOOL LLVOAvatar::sUseImpostors = FALSE;
 BOOL LLVOAvatar::sJointDebug = FALSE;
+LLSD LLVOAvatar::sClientResolutionList;
 
 F32 LLVOAvatar::sUnbakedTime = 0.f;
 F32 LLVOAvatar::sUnbakedUpdateTime = 0.f;
@@ -3016,9 +3018,77 @@ void LLVOAvatar::idleUpdateWindEffect()
 		}
 	}
 }
+
+bool LLVOAvatar::loadClientTags(bool trigger_reload)
+{
+	std::string client_list_filename = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "client_list.xml");
+
+	if(!LLFile::isfile(client_list_filename))
+	{
+		client_list_filename = gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "client_list.xml");
+	}
+
+	if(LLFile::isfile(client_list_filename))
+	{
+		LLSD client_list;
+
+		llifstream importer(client_list_filename);
+		LLSDSerialize::fromXMLDocument(client_list, importer);
+		if(client_list.has("isComplete"))
+		{
+			sClientResolutionList = client_list;
+		}else
+		{
+			return false;
+		}
+	}else
+	{
+		return false;
+	}
+	if(trigger_reload)
+	{
+		for (std::vector<LLCharacter*>::iterator iter = LLCharacter::sInstances.begin();
+		iter != LLCharacter::sInstances.end(); ++iter)
+		{
+			LLVOAvatar* avatarp = (LLVOAvatar*) *iter;
+			if(avatarp)
+			{
+				LLVector3 root_pos_last = avatarp->mRoot.getWorldPosition();
+				avatarp->idleUpdateNameTag(root_pos_last);
+			}
+		}
+	}
+	return true;
+}
 void LLVOAvatar::getClientInfo(std::string& client, LLColor4& color, BOOL useComment)
 {
+	//new
+	const LLTextureEntry* tex = getTE(0);
+	if(tex && tex->getGlow() > 0.0f)
+	{
+		//tag
+		const LLUUID tag_uuid = tex->getID();
+		U32 tag_len = strnlen((const char*)&tag_uuid.mData[0], UUID_BYTES);
+		client = std::string((const char*)&tag_uuid.mData[0], tag_len);
+		LLStringFn::replace_ascii_controlchars(client, LL_UNKNOWN_CHAR);
+		//color
+		color = tex->getColor();
+
+		return;
+	}
+	//legacy
 	std::string uuid_str = getTE(TEX_HEAD_BODYPAINT)->getID().asString(); //UUID of the head texture
+	// legacy xml code
+	if(LLVOAvatar::sClientResolutionList.has("isComplete") && LLVOAvatar::sClientResolutionList.has(uuid_str) && mFullyLoaded)
+	{
+		LLSD cllsd = LLVOAvatar::sClientResolutionList[uuid_str];
+		client = cllsd["name"].asString();
+		LLColor4 sd_color;
+		sd_color.setValue(cllsd["color"]);
+		color = sd_color;
+		return;
+	}
+	// legacy
 	if(getTEImage(TEX_HEAD_BODYPAINT)->getID() == IMG_DEFAULT_AVATAR)
 	{
 		BOOL res = FALSE;
@@ -3050,19 +3120,7 @@ void LLVOAvatar::getClientInfo(std::string& client, LLColor4& color, BOOL useCom
 			if(res)
 				break;
 		}
-		if(res)
-		{ 
-			//I found that someone failed at clothing protection
-			if(getTEImage(TEX_EYES_IRIS)->getID().asString() == "4934f1bf-3b1f-cf4f-dbdf-a72550d05bc6"
-			&& getTEImage(TEX_UPPER_BODYPAINT)->getID().asString() == "4934f1bf-3b1f-cf4f-dbdf-a72550d05bc6"
-			&& getTEImage(TEX_LOWER_BODYPAINT)->getID().asString() == "4934f1bf-3b1f-cf4f-dbdf-a72550d05bc6")
-			{
-				color = LLColor4(1.f, 1.0f, 1.0f);
-				client = "Unknown viewer";
-			}
-			return;
-		}
-		else
+		if(!res)
 		{
 			color = LLColor4(0.5f, 0.5f, 0.5f);
 			client = "Viewer 2.0";
@@ -3200,6 +3258,27 @@ void LLVOAvatar::getClientInfo(std::string& client, LLColor4& color, BOOL useCom
 		color = LLColor4(0.25f,0.5f,0.75f);
 		client = "<-- Fag";
 		
+	}
+	else if (uuid_str == "ed63fbd0-589e-fe1d-a3d0-16905efaa96b"
+			|| uuid_str == "ae4e92fb-023d-23ba-d060-3403f953ab1a"
+			|| uuid_str == "5d9581af-d615-bc16-2667-2f04f8eeefe4"
+			|| uuid_str == "5f0e7c32-38c3-9214-01f0-fb16a5b40128"
+			|| uuid_str == "e35f7d40-6071-4b29-9727-5647bdafb5d5"
+			|| uuid_str == "e71b780e-1a57-400d-4649-959f69ec7d51"
+			|| uuid_str == "5bb6e4a6-8e24-7c92-be2e-91419bb0ebcb"
+			|| uuid_str == "8cf0577c-22d3-6a73-523c-15c0a90d6c27"
+			|| uuid_str == "ddf41cfa-f5c5-0dee-3ed9-f3fb0adb1ead"
+			|| uuid_str == "dd0ccfa2-8124-b165-176d-f3dc08f4189e"
+			|| uuid_str == "c1c189f5-6dab-fc03-ea5a-f9f68f90b018")
+	{
+		color = LLColor4(1.0f,0.0f,0.0f);
+		client = "Pheonix";
+	}
+	//I found that someone failed at clothing protection
+	else if(getTEImage(TEX_EYES_IRIS)->getID() == getTEImage(TEX_UPPER_BODYPAINT)->getID())
+	{
+		color = LLColor4(1.f, 1.0f, 1.0f);
+		client = "Unknown viewer";
 	}
 	else
 	{

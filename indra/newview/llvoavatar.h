@@ -89,6 +89,7 @@ public:
 	static void updateImpostors();
 
 	// <edit>
+	static bool loadClientTags(bool trigger_reload = false);
 	void getClientInfo(std::string& clientTag, LLColor4& tagColor, BOOL useComment=FALSE);
 	std::string extraMetadata;
 	// </edit>
@@ -604,6 +605,8 @@ private:
 	// Animation timer
 	LLTimer		mAnimTimer;
 	F32			mTimeLast;	
+	
+	static LLSD sClientResolutionList;
 
 	LLPointer<LLHUDEffectSpiral> mBeam;
 	LLFrameTimer mBeamTimer;
