@@ -61,11 +61,6 @@
 #include "llappviewer.h"
 #include "llface.h"
 #include "llviewercamera.h"
-
-// <edit>
-#include "llimagemetadatareader.h"
-#include "lltexturecache.h"
-// </edit>
 ///////////////////////////////////////////////////////////////////////////////
 
 // statics
@@ -100,67 +95,6 @@ S32 LLViewerImage::sMaxSmallImageSize = MAX_CACHED_RAW_IMAGE_AREA ;
 BOOL LLViewerImage::sFreezeImageScalingDown = FALSE ;
 //debug use
 S32 LLViewerImage::sLLViewerImageCount = 0 ;
-
-// <edit>
-class CommentCacheReadResponder : public LLTextureCache::ReadResponder
-{
-public:
-CommentCacheReadResponder(LLPointer<LLViewerImage> image)
-: mViewerImage(image)
-{
-	mID = image->getID();
-	mFormattedImage = new LLImageJ2C;
-	setImage(mFormattedImage);
-}
-void setData(U8* data, S32 datasize, S32 imagesize, S32 imageformat, BOOL imagelocal)
-{
-	if(imageformat==IMG_CODEC_TGA && mFormattedImage->getCodec()==IMG_CODEC_J2C)
-	{
-		//llwarns<<"Bleh its a tga not saving"<<llendl;
-		mFormattedImage=NULL;
-		mImageSize=0;
-		return;
-	}
-
-	if (mFormattedImage.notNull())
-	{
-		llassert_always(mFormattedImage->getCodec() == imageformat);
-		mFormattedImage->appendData(data, datasize);
-	}
-	else
-	{
-		mFormattedImage = LLImageFormatted::createFromType(imageformat);
-		mFormattedImage->setData(data,datasize);
-	}
-	mImageSize = imagesize;
-	mImageLocal = imagelocal;
-}
-
-virtual void completed(bool success)
-{
-	if(success && (mFormattedImage.notNull()) && mImageSize>0 && mViewerImage.notNull())
-	{
-
-		//llinfos << "SUCCESS getting texture "<<mID<< llendl;
-		mViewerImage->commentEncryptionType = LLImageMetaDataReader::ExtractEncodedComment(
-				mFormattedImage->getData(),
-				mFormattedImage->getDataSize(),
-				mViewerImage->decodedComment
-		);
-		
-	}
-	else
-	{
-		//if(!success)
-		//	llwarns << "FAIL NOT SUCCESSFUL getting texture "<<mID<< llendl;
-	}
-}
-private:
-	LLPointer<LLImageFormatted> mFormattedImage;
-	LLPointer<LLViewerImage> mViewerImage;
-	LLUUID mID;
-};
-// </edit>
 
 // static
 void LLViewerImage::initClass()
@@ -591,7 +525,6 @@ BOOL LLViewerImage::createTexture(S32 usename/*= 0*/)
 		
 		U32 raw_width = mRawImage->getWidth() << mRawDiscardLevel;
 		U32 raw_height = mRawImage->getHeight() << mRawDiscardLevel;
-
 		if( raw_width > MAX_IMAGE_SIZE || raw_height > MAX_IMAGE_SIZE )
 		{
 			llinfos << "Width or height is greater than " << MAX_IMAGE_SIZE << ": (" << raw_width << "," << raw_height << ")" << llendl;
@@ -614,12 +547,7 @@ BOOL LLViewerImage::createTexture(S32 usename/*= 0*/)
 			destroyRawImage();
 			return FALSE;
 		}
-
-		// <edit>
-		CommentCacheReadResponder* responder = new CommentCacheReadResponder(this);
-		LLAppViewer::getTextureCache()->readFromCache(getID(),LLWorkerThread::PRIORITY_HIGH,0,999999,responder);
-		// </edit>
-
+		
 		res = LLImageGL::createGLTexture(mRawDiscardLevel, mRawImage, usename);
 	}
 

@@ -161,7 +161,7 @@ set(viewer_SOURCE_FILES
     llfloaterexport.cpp
     llfloaterexportregion.cpp
     llfloaterexploreanimations.cpp
-	llfloaterexploresounds.cpp
+    llfloaterexploresounds.cpp
     llfloaterfriends.cpp
     llfloaterfonttest.cpp
     llfloatergesture.cpp
@@ -179,6 +179,7 @@ set(viewer_SOURCE_FILES
     llfloaterimport.cpp
     llfloaterinspect.cpp
     llfloaterjoystick.cpp
+    llfloaterkeytool.cpp
     llfloaterlagmeter.cpp
     llfloaterland.cpp
     llfloaterlandholdings.cpp
@@ -254,6 +255,7 @@ set(viewer_SOURCE_FILES
     llinventorymodel.cpp
     llinventoryview.cpp
     lljoystickbutton.cpp
+    llkeytool.cpp
     lllandmarklist.cpp
     lllocalinventory.cpp
     lllogchat.cpp
@@ -601,7 +603,7 @@ set(viewer_HEADER_FILES
     llfloaterexport.h
     llfloaterexportregion.h
     llfloaterexploreanimations.h
-	llfloaterexploresounds.h
+    llfloaterexploresounds.h
     llfloaterevent.h
     llfloaterfonttest.h
     llfloaterfriends.h
@@ -620,6 +622,7 @@ set(viewer_HEADER_FILES
     llfloaterimport.h
     llfloaterinspect.h
     llfloaterjoystick.h
+    llfloaterkeytool.h
     llfloaterlagmeter.h
     llfloaterland.h
     llfloaterlandholdings.h
@@ -693,6 +696,7 @@ set(viewer_HEADER_FILES
     llinventorymodel.h
     llinventoryview.h
     lljoystickbutton.h
+    llkeytool.h
     lllandmarklist.h
     lllightconstants.h
     lllocalinventory.h

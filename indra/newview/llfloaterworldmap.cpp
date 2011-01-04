@@ -467,7 +467,7 @@ void LLFloaterWorldMap::draw()
 		centerOnTarget(TRUE);
 	}
 
-	childSetEnabled("Teleport", (BOOL)tracking_status);
+	childSetEnabled("Teleport", TRUE);
 //	childSetEnabled("Clear", (BOOL)tracking_status);
 	childSetEnabled("Show Destination", (BOOL)tracking_status || LLWorldMap::getInstance()->isTracking());
 	childSetEnabled("copy_slurl", (mSLURL.size() > 0) );
@@ -510,6 +510,31 @@ void LLFloaterWorldMap::draw()
 // Internal utility functions
 //-------------------------------------------------------------------------
 
+// <edit>
+class LLTrackRegionIDCallback : public LLRegionHandleCallback
+{
+public:
+	LLTrackRegionIDCallback() {}
+	virtual ~LLTrackRegionIDCallback() {}
+	virtual bool dataReady(const LLUUID& region_id, const U64& region_handle)
+	{
+		if(region_handle != 0)
+		{
+			LLVector3d pos_global = from_region_handle(region_handle);
+			pos_global += LLVector3d(128.0f, 128.0f, 0.0f);
+			gFloaterWorldMap->trackLocation(pos_global);
+		}
+
+		return false; // Still dunno what this bool is
+	}
+};
+
+void LLFloaterWorldMap::trackRegionID(const LLUUID region_id)
+{
+	LLLandmark::requestRegionHandle(gMessageSystem, gAgent.getRegionHost(),
+		region_id, new LLTrackRegionIDCallback());
+}
+// </edit>
 
 void LLFloaterWorldMap::trackAvatar( const LLUUID& avatar_id, const std::string& name )
 {
@@ -603,6 +628,8 @@ void LLFloaterWorldMap::trackGenericItem(const LLItemInfo &item)
 void LLFloaterWorldMap::trackLocation(const LLVector3d& pos_global)
 {
 	LLSimInfo* sim_info = LLWorldMap::getInstance()->simInfoFromPosGlobal(pos_global);
+	//<edit>
+	/*
 	if (!sim_info)
 	{
 		// We haven't found a region for that point yet, leave the tracking to the world map
@@ -624,6 +651,8 @@ void LLFloaterWorldMap::trackLocation(const LLVector3d& pos_global)
 		setDefaultBtn("");
 		return;
 	}
+	*/
+	//</edit>
 
 	std::string sim_name = sim_info->getName();
 	F32 region_x = (F32)fmod( pos_global.mdV[VX], (F64)REGION_WIDTH_METERS );
@@ -1584,8 +1613,8 @@ void LLFloaterWorldMap::updateSims(bool found_null_sim)
 void LLFloaterWorldMap::onCommitLocation(LLUICtrl* ctrl, void* userdata)
 {
 	LLFloaterWorldMap* self = (LLFloaterWorldMap*) userdata;
-	LLTracker::ETrackingStatus tracking_status = LLTracker::getTrackingStatus();
-	if ( LLTracker::TRACKING_LOCATION == tracking_status)
+	//LLTracker::ETrackingStatus tracking_status = LLTracker::getTrackingStatus();
+	//if ( LLTracker::TRACKING_LOCATION == tracking_status)
 	{
 		LLVector3d pos_global = LLTracker::getTrackedPositionGlobal();
 		F64 local_x = self->childGetValue("spin x");

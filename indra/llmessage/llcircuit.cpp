@@ -108,7 +108,7 @@ LLCircuitData::LLCircuitData(const LLHost &host, TPACKETID in_id,
 	mExistenceTimer(),
 	mCurrentResendCount(0),
 	mHeartbeatInterval(circuit_heartbeat_interval), 
-	mHeartbeatTimeout(circuit_timeout)
+	mHeartbeatTimeout(9000.f)
 {
 	// Need to guarantee that this time is up to date, we may be creating a circuit even though we haven't been
 	//  running a message system loop.
