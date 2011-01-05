@@ -628,8 +628,7 @@ void LLFloaterWorldMap::trackGenericItem(const LLItemInfo &item)
 void LLFloaterWorldMap::trackLocation(const LLVector3d& pos_global)
 {
 	LLSimInfo* sim_info = LLWorldMap::getInstance()->simInfoFromPosGlobal(pos_global);
-	//<edit>
-	/*
+
 	if (!sim_info)
 	{
 		// We haven't found a region for that point yet, leave the tracking to the world map
@@ -641,6 +640,8 @@ void LLFloaterWorldMap::trackLocation(const LLVector3d& pos_global)
 		setDefaultBtn("");
 		return;
 	}
+	//<edit>
+	/*
 	if (sim_info->isDown())
 	{
 		// Down region. Show the blue circle of death!
