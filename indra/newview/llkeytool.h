@@ -2,6 +2,10 @@
 #ifndef LL_LLKEYTOOL_H
 #define LL_LLKEYTOOL_H
 
+#include "llcommon.h"
+#include "lluuid.h"
+#include "message.h"
+
 class LLKeyTool
 {
 public:
