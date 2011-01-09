@@ -256,6 +256,10 @@ LLViewerImage::LLViewerImage(const LLUUID& id, const LLHost& host, BOOL usemipma
 {
 	init(true);
 	sImageCount++;
+	if (host != LLHost::invalid)
+	{
+		mCanUseHTTP = false;	// We must request the image from the provided host sim.
+	}
 }
 
 LLViewerImage::LLViewerImage(const std::string& url, const LLUUID& id, BOOL usemipmaps)
@@ -1016,8 +1020,7 @@ bool LLViewerImage::updateFetch()
 	S32 current_discard = getDiscardLevel();
 	S32 desired_discard = getDesiredDiscardLevel();
 	F32 decode_priority = getDecodePriority();
-	decode_priority = llmax(decode_priority, 0.0f);
-	decode_priority = llmin(decode_priority, maxDecodePriority());
+	decode_priority = llclamp(decode_priority, 0.0f, maxDecodePriority());
 	
 	if (mIsFetching)
 	{
@@ -1043,7 +1046,7 @@ bool LLViewerImage::updateFetch()
 		else
 		{
 			mFetchState = LLAppViewer::getTextureFetch()->getFetchState(mID, mDownloadProgress, mRequestedDownloadPriority,
-																		mFetchPriority, mFetchDeltaTime, mRequestDeltaTime);
+																		mFetchPriority, mFetchDeltaTime, mRequestDeltaTime, mCanUseHTTP);
 		}
 		
 		// We may have data ready regardless of whether or not we are finished (e.g. waiting on write)
@@ -1190,7 +1193,7 @@ bool LLViewerImage::updateFetch()
 			mRequestedDiscardLevel = desired_discard;
 
 			mFetchState = LLAppViewer::getTextureFetch()->getFetchState(mID, mDownloadProgress, mRequestedDownloadPriority,
-																		mFetchPriority, mFetchDeltaTime, mRequestDeltaTime);
+																		mFetchPriority, mFetchDeltaTime, mRequestDeltaTime, mCanUseHTTP);
 		}	
 
 		// if createRequest() failed, we're finishing up a request for this UUID,
@@ -1272,7 +1275,7 @@ BOOL LLViewerImage::forceFetch()
 		mRequestedDiscardLevel = desired_discard ;
 
 		mFetchState = LLAppViewer::getTextureFetch()->getFetchState(mID, mDownloadProgress, mRequestedDownloadPriority,
-																	mFetchPriority, mFetchDeltaTime, mRequestDeltaTime);
+																	mFetchPriority, mFetchDeltaTime, mRequestDeltaTime, mCanUseHTTP);
 	}	
 
 	return mIsFetching ? true : false;

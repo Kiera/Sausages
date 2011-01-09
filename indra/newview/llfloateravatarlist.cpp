@@ -494,6 +494,25 @@ void LLFloaterAvatarList::updateAvatarList()
 					//name = gCacheName->getDefaultName();
 					continue; //prevent (Loading...)
 				}
+
+#ifdef LL_DISPLAY_NAMES
+				std::string display_name = name;
+				if (LLAvatarNameCache::useDisplayNames())
+				{
+					LLAvatarName avatar_name;
+					if (LLAvatarNameCache::get(avid, &avatar_name))
+					{
+						if (LLAvatarNameCache::useDisplayNames() == 2)
+						{
+							display_name = avatar_name.mDisplayName;
+						}
+						else
+						{
+							display_name = avatar_name.getNames();
+						}
+					}
+				}
+#endif
 #ifdef LL_RRINTERFACE_H //MK
 				if (gRRenabled && gAgent.mRRInterface.mContainsShownames)
 				{

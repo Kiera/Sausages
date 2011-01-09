@@ -1429,12 +1429,6 @@ void LLAssetStorage::reportMetric( const LLUUID& asset_id, const LLAssetType::ET
 								   const LLUUID& agent_id, S32 asset_size, EMetricResult result,
 								   const char *file, const S32 line, const std::string& in_message )
 {
-	if( !metric_recipient )
-	{
-		llinfos << "Couldn't store LLAssetStoreage::reportMetric - no metrics_recipient" << llendl;
-		return;
-	}
-
 	std::string filename(in_filename);
 	if (filename.empty())
 		filename = ll_safe_string(file);
@@ -1442,6 +1436,12 @@ void LLAssetStorage::reportMetric( const LLUUID& asset_id, const LLAssetType::ET
 	// Create revised message - new_message = "in_message :: file:line"
 	std::stringstream new_message;
 	new_message << in_message << " :: " << filename << ":" << line;
+
+	if (!metric_recipient)
+	{
+		llinfos << "Couldn't reportMetric - no metrics_recipient, the message was: " << new_message.str() << llendl;
+		return;
+	}
 
 	// Change always_report to true if debugging... do not check it in this way
 	static bool always_report = false;

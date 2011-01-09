@@ -32,6 +32,7 @@
 
 #ifndef LL_LLCACHENAME_H
 #define LL_LLCACHENAME_H
+#include "llavatarnamecache.h"	// for convenience
 
 class LLMessageSystem;
 class LLHost;

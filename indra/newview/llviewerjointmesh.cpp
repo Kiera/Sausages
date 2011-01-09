@@ -565,7 +565,12 @@ U32 LLViewerJointMesh::drawShape( F32 pixelArea, BOOL first_pass, BOOL is_dummy)
 			// Ignore the warning if that's the case.
 			if (!gSavedSettings.getBOOL("RenderUnloadedAvatar"))
 			{
-				llwarns << "Layerset without composite" << llendl;
+				static std::set<S32> mesh_ids;
+				if (mesh_ids.count(mMeshID) == 0)
+				{
+					mesh_ids.insert(mMeshID);
+					llwarns << "Layerset without composite for MeshID = " << mMeshID << llendl;
+				}
 			}
 			gGL.getTexUnit(0)->bind(gImageList.getImage(IMG_DEFAULT));
 		}

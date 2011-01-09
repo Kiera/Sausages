@@ -114,6 +114,10 @@ public:
 	void idleUpdateLoadingEffect();
 	void idleUpdateWindEffect();
 	void idleUpdateNameTag(const LLVector3& root_pos_last);
+	void clearNameTag();
+	static void invalidateNameTag(const LLUUID& agent_id);
+	// force all name tags to rebuild, useful when display names turned on/off
+	static void invalidateNameTags();
 	void idleUpdateRenderCost();
 	void idleUpdateTractorBeam();
 	void idleUpdateBelowWater();
@@ -150,6 +154,8 @@ public:
 	void updateAttachmentVisibility(U32 camera_mode);
 	void clampAttachmentPositions();
 	S32 getAttachmentCount(); // Warning: order(N) not order(1)
+	BOOL canAttachMoreObjects() const;
+	bool allowMultipleAttachments() const;
 
 	// HUD functions
 	BOOL hasHUDAttachment() const;
@@ -277,7 +283,7 @@ public:
 	void dirtyMesh(); // Dirty the avatar mesh
 	void hideSkirt();
 
-	virtual void setParent(LLViewerObject* parent);
+	virtual BOOL setParent(LLViewerObject* parent);
 	virtual void addChild(LLViewerObject *childp);
 	virtual void removeChild(LLViewerObject *childp);
 
@@ -285,6 +291,7 @@ public:
 	BOOL attachObject(LLViewerObject *viewer_object);
 	BOOL detachObject(LLViewerObject *viewer_object);
 	void lazyAttach();
+	void checkAttachments();
 
 	void sitOnObject(LLViewerObject *sit_object);
 	void getOffObject();
@@ -514,7 +521,8 @@ public:
 	// <edit>
 	std::map<S32, LLUUID> mUnsupportedAttachmentPoints;
 	// </edit>
-
+protected:
+	U32					getNumAttachments() const; // O(N), not O(1)
 	//--------------------------------------------------------------------
 	// static preferences that are controlled by user settings/menus
 	//--------------------------------------------------------------------
@@ -615,6 +623,7 @@ private:
 
 	LLWString mNameString;
 	std::string  mTitle;
+	std::string  mCompleteName;
 	BOOL	  mNameAway;
 	BOOL	  mNameBusy;
 	BOOL	  mNameMute;
