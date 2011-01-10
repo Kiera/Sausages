@@ -29,7 +29,20 @@
 
 std::vector<LLFloaterAttachments*> LLFloaterAttachments::instances;
 U32 LLFloaterAttachments::sCurrentRequestID = 1;
+std::map<U32,LLFloaterAttachments*> LLFloaterAttachments::mRequests;
+std::map<U32,LLHost> LLFloaterAttachments::mRequestHosts;
+LLFloaterAttachmentsTimer* LLFloaterAttachments::mTimer = NULL;
 
+LLFloaterAttachmentsTimer::LLFloaterAttachmentsTimer(U32 localid)
+: LLEventTimer(0.35f)
+{
+	mLocalID = localid;
+}
+BOOL LLFloaterAttachmentsTimer::tick()
+{
+	LLFloaterAttachments::nextRequest(mLocalID);
+	return TRUE; //done
+}
 LLFloaterAttachments::LLFloaterAttachments()
 :	LLFloater()
 {
@@ -41,7 +54,6 @@ LLFloaterAttachments::LLFloaterAttachments()
 
 	LLFloaterAttachments::instances.push_back(this);
 }
-
 
 LLFloaterAttachments::~LLFloaterAttachments()
 {
@@ -156,72 +168,72 @@ BOOL LLFloaterAttachments::postBuild(void)
 			this->setTitle(av_name + " attachments...");
 		}
 	}
-
+	bool activate_timer = mRequests.empty() && (mTimer == NULL);
 	//try and find the prims for the HUD attachments
 	std::map<LLViewerObject*, bool>::iterator avatar_iter = avatars.begin();
 	std::map<LLViewerObject*, bool>::iterator avatars_end = avatars.end();
 	for( ; avatar_iter != avatars_end; avatar_iter++)
 	{
 		LLViewerObject* avatar = (*avatar_iter).first;
+		LLHost host = avatar->getRegion()->getHost();
 		addAvatarStuff((LLVOAvatar*)avatar);
 
 		mAvatarIDs.insert(avatar->getID());
 
 		U32 avatarid = avatar->getLocalID();
 
-		gMessageSystem->newMessageFast(_PREHASH_ObjectSelect);
-		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-		gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-		gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
-		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-		gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, avatarid+1);
-		int block_counter = 0;
-
-		for (int i=2; i<500; ++i)
+		for (int i=1; i<500; ++i)
 		{
-			block_counter++;
-			if(block_counter >= 254)
+			U32 req = i+avatarid;
+			LLUUID id = LLUUID::null;
+			gObjectList.getUUIDFromLocal(id,req,host.getAddress(),host.getPort());
+			if(id == LLUUID::null)
 			{
-				// start a new message
-				gMessageSystem->sendReliable(avatar->getRegion()->getHost());
-				gMessageSystem->newMessageFast(_PREHASH_ObjectSelect);
-				gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-				gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-				gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
+				mRequestHosts[req] = host;
+				mRequests[req] = this;
 			}
-			gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-			gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, i+avatarid);
 		}
-		gMessageSystem->sendReliable(avatar->getRegion()->getHost());
-
-		gMessageSystem->newMessageFast(_PREHASH_ObjectDeselect);
-		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-		gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-		gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
-		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-		gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, avatarid+1);
-		block_counter = 0;
-		for (int i=2; i<500; ++i)
-		{
-			block_counter++;
-			if(block_counter >= 254)
-			{
-				// start a new message
-				gMessageSystem->sendReliable(avatar->getRegion()->getHost());
-				gMessageSystem->newMessageFast(_PREHASH_ObjectDeselect);
-				gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-				gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-				gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
-			}
-			gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-			gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, avatarid+i);
-		}
-		gMessageSystem->sendReliable(avatar->getRegion()->getHost());
 	}
-
+	if(activate_timer && !mRequests.empty())
+		nextRequest(0,true);
 	return TRUE;
 }
 
+void LLFloaterAttachments::nextRequest(U32 id,bool first)
+{
+	if(mRequests.empty()) return;
+	U32 localid = mRequests.begin()->first;
+
+	if(!first){
+		if(id != localid) return;
+		mRequestHosts.erase(mRequestHosts.begin());
+		mRequests.erase(mRequests.begin());
+		localid = mRequests.begin()->first;
+		if(mRequests.empty())
+		{
+			mTimer = NULL;
+			return;
+		}
+	}
+
+	gMessageSystem->newMessageFast(_PREHASH_ObjectSelect);
+	gMessageSystem->nextBlockFast(_PREHASH_AgentData);
+	gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+	gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
+	gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
+	gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, localid);
+	gMessageSystem->sendReliable(mRequestHosts[localid]);
+
+	gMessageSystem->newMessageFast(_PREHASH_ObjectDeselect);
+	gMessageSystem->nextBlockFast(_PREHASH_AgentData);
+	gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+	gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
+	gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
+	gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, localid);
+	gMessageSystem->sendReliable(mRequestHosts[localid]);
+
+	mTimer = new LLFloaterAttachmentsTimer(localid);
+}
 void LLFloaterAttachments::addAvatarStuff(LLVOAvatar* avatarp)
 {
 	// Add attachments
