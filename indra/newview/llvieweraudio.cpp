@@ -33,6 +33,8 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "llaudioengine.h"
+#include "llassettype.h"
+#include "lldir.h"
 #include "llagent.h"
 #include "llappviewer.h"
 #include "llvieweraudio.h"
@@ -61,55 +63,75 @@ void init_audio()
 						  LLViewerCamera::getInstance()->getUpAxis(),
 						  LLViewerCamera::getInstance()->getAtAxis());
 
-// load up our initial set of sounds we'll want so they're in memory and ready to be played
-
-	BOOL mute_audio = gSavedSettings.getBOOL("MuteAudio");
-
-	if (!mute_audio && FALSE == gSavedSettings.getBOOL("NoPreload"))
+	// load up and decode our initial set of sounds so they are ready to be played
+	if (gSavedSettings.getBOOL("NoPreload") == FALSE)
 	{
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndAlert")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndBadKeystroke")));
-		//gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndChatFromObject")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndClick")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndClickRelease")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndHealthReductionF")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndHealthReductionM")));
-		//gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndIncomingChat")));
-		//gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndIncomingIM")));
-		//gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndInvApplyToObject")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndInvalidOp")));
-		//gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndInventoryCopyToInv")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndMoneyChangeDown")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndMoneyChangeUp")));
-		//gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndObjectCopyToInv")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndObjectCreate")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndObjectDelete")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndObjectRezIn")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndObjectRezOut")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuAppear")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuHide")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuSliceHighlight0")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuSliceHighlight1")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuSliceHighlight2")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuSliceHighlight3")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuSliceHighlight4")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuSliceHighlight5")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuSliceHighlight6")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuSliceHighlight7")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndSnapshot")));
-		//gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndStartAutopilot")));
-		//gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndStartFollowpilot")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndStartIM")));
-		//gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndStopAutopilot")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndTeleportOut")));
-		//gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndTextureApplyToObject")));
-		//gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndTextureCopyToInv")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndTyping")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndWindowClose")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndWindowOpen")));
+		audio_decode_ui_sounds();
+	}
+	audio_update_volume(true);
+}
+
+void audio_decode_ui_sounds()
+{
+	if (!gAudiop) 
+	{
+		llwarns << "Audio Engine not initialized. Could not preload the UI sounds." << llendl;
+		return;
 	}
 
-	audio_update_volume(true);
+	std::stack<std::string> ui_sounds;
+	ui_sounds.push("UISndTeleportOut");
+	ui_sounds.push("UISndStartIM");
+	ui_sounds.push("UISndHealthReductionF");
+	ui_sounds.push("UISndHealthReductionM");
+	ui_sounds.push("UISndMoneyChangeDown");
+	ui_sounds.push("UISndMoneyChangeUp");
+	ui_sounds.push("UISndSnapshot");
+	ui_sounds.push("UISndTyping");
+	ui_sounds.push("UISndObjectCreate");
+	ui_sounds.push("UISndObjectDelete");
+	ui_sounds.push("UISndObjectRezIn");
+	ui_sounds.push("UISndObjectRezOut");
+	ui_sounds.push("UISndAlert");
+	ui_sounds.push("UISndBadKeystroke");
+	ui_sounds.push("UISndClick");
+	ui_sounds.push("UISndClickRelease");
+	ui_sounds.push("UISndInvalidOp");
+	ui_sounds.push("UISndPieMenuAppear");
+	ui_sounds.push("UISndPieMenuHide");
+	ui_sounds.push("UISndPieMenuSliceHighlight0");
+	ui_sounds.push("UISndPieMenuSliceHighlight1");
+	ui_sounds.push("UISndPieMenuSliceHighlight2");
+	ui_sounds.push("UISndPieMenuSliceHighlight3");
+	ui_sounds.push("UISndPieMenuSliceHighlight4");
+	ui_sounds.push("UISndPieMenuSliceHighlight5");
+	ui_sounds.push("UISndPieMenuSliceHighlight6");
+	ui_sounds.push("UISndPieMenuSliceHighlight7");
+	ui_sounds.push("UISndWindowClose");
+	ui_sounds.push("UISndWindowOpen");
+
+ 	BOOL mute_audio = gSavedSettings.getBOOL("MuteAudio");
+	BOOL mute_ui = gSavedSettings.getBOOL("MuteUI");
+	gSavedSettings.setBOOL("MuteAudio", FALSE);
+	gSavedSettings.setBOOL("MuteUI", FALSE);
+
+	LLUUID uuid;
+	std::string uuid_str;
+	std::string wav_path;
+	while (!ui_sounds.empty())
+ 	{
+		uuid = LLUUID(gSavedSettings.getString(ui_sounds.top()));
+		uuid.toString(uuid_str);
+		wav_path = gDirUtilp->getExpandedFilename(LL_PATH_SKINS, "default", "sounds", uuid_str) + ".dsf";
+		if (!gDirUtilp->fileExists(wav_path))	// This sound is not part of the skin and must be fetched
+		{
+			gAudiop->triggerSound(uuid, gAgent.getID(), 0.01f, LLAudioEngine::AUDIO_TYPE_UI);
+		}
+		ui_sounds.pop();
+	}
+
+	gSavedSettings.setBOOL("MuteAudio", mute_audio);
+	gSavedSettings.setBOOL("MuteUI", mute_ui);
 }
 
 void audio_update_volume(bool force_update)

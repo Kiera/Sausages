@@ -236,7 +236,7 @@ public:
 	BOOL isProbablyModifiable() const;
 	*/
 
-	virtual void setParent(LLViewerObject* parent);
+	virtual BOOL setParent(LLViewerObject* parent);
 	virtual void addChild(LLViewerObject *childp);
 	virtual void removeChild(LLViewerObject *childp);
 	const_child_list_t& getChildren() const { 	return mChildList; }
@@ -667,6 +667,11 @@ public:
 	S32 getAttachmentPoint();
 	std::string getAttachmentPointName();
 // </edit>
+	const LLUUID &getAttachmentItemID() const { return mAttachmentItemID; }
+	void setAttachmentItemID(const LLUUID &id) { mAttachmentItemID = id; }
+	const LLUUID &extractAttachmentItemID(); // find&set the inventory item ID of the attached object
+private:
+	LLUUID mAttachmentItemID; // ItemID when item is in user inventory.
 };
 
 ///////////////////

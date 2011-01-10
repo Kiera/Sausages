@@ -232,6 +232,10 @@ BOOL	LLPipeline::sRenderParticleBeacons = FALSE;
 BOOL	LLPipeline::sRenderSoundBeacons = FALSE;
 BOOL	LLPipeline::sRenderBeacons = FALSE;
 BOOL	LLPipeline::sRenderHighlight = TRUE;
+BOOL	LLPipeline::sRenderInvisibleSoundBeacons = FALSE;
+BOOL	LLPipeline::sRenderAttachments = FALSE;
+U32		LLPipeline::sRenderByOwner = 0;
+BOOL	LLPipeline::sRenderBeaconsFloaterOpen = FALSE;
 BOOL	LLPipeline::sForceOldBakedUpload = FALSE;
 S32		LLPipeline::sUseOcclusion = 0;
 BOOL	LLPipeline::sDelayVBUpdate = TRUE;
@@ -2056,16 +2060,36 @@ void LLPipeline::forAllVisibleDrawables(void (*func)(LLDrawable*))
 	forAllDrawables(sCull->beginVisibleGroups(), sCull->endVisibleGroups(), func);
 }
 
+// Returns 0 when the object is not to be highlighted, 1 when it is highlightable
+// and must also get marked with a beacon, and 2 when it is only to be highlighted.
+U32 highlightable(LLViewerObject* vobj)
+{
+	if (!vobj) return 0;
+	if (vobj->isAvatar()) return 0;
+	if (gPipeline.sRenderByOwner == 1 && !vobj->permYouOwner()) return 0;
+	if (gPipeline.sRenderByOwner == 2 && vobj->permYouOwner()) return 0;
+	if (vobj->getParent())
+	{
+		if (!gPipeline.sRenderAttachments) return 0;
+		// Attachments can be highlighted but are not marked with beacons since
+		// it would mark the avatar itself... But, we highlight all the primitives
+		// of the attachments instead of just the root primitive (which could be
+		// buried into the avatar or be too small to be visible).
+		if (((LLViewerObject*)vobj->getParent())->isAvatar()) return 2;
+		if (vobj->getRoot() && ((LLViewerObject*)vobj->getRoot())->isAvatar()) return 2;
+		return 0;
+	}
+	return 1;
+}
+
 //function for creating scripted beacons
 void renderScriptedBeacons(LLDrawable* drawablep)
 {
 	LLViewerObject *vobj = drawablep->getVObj();
-	if (vobj 
-		&& !vobj->isAvatar() 
-		&& !vobj->getParent()
-		&& vobj->flagScripted())
+	U32 type = highlightable(vobj);
+	if (type != 0 && vobj->flagScripted())
 	{
-		if (gPipeline.sRenderBeacons)
+		if (gPipeline.sRenderBeacons && type != 2)
 		{
 			gObjectList.addDebugBeacon(vobj->getPositionAgent(), "", LLColor4(1.f, 0.f, 0.f, 0.5f), LLColor4(1.f, 1.f, 1.f, 0.5f), gSavedSettings.getS32("DebugBeaconLineWidth"));
 		}
@@ -2085,13 +2109,10 @@ void renderScriptedBeacons(LLDrawable* drawablep)
 void renderScriptedTouchBeacons(LLDrawable* drawablep)
 {
 	LLViewerObject *vobj = drawablep->getVObj();
-	if (vobj 
-		&& !vobj->isAvatar() 
-		&& !vobj->getParent()
-		&& vobj->flagScripted()
-		&& vobj->flagHandleTouch())
+	U32 type = highlightable(vobj);
+	if (type != 0 && vobj->flagScripted() && vobj->flagHandleTouch())
 	{
-		if (gPipeline.sRenderBeacons)
+		if (gPipeline.sRenderBeacons && type != 2)
 		{
 			gObjectList.addDebugBeacon(vobj->getPositionAgent(), "", LLColor4(1.f, 0.f, 0.f, 0.5f), LLColor4(1.f, 1.f, 1.f, 0.5f), gSavedSettings.getS32("DebugBeaconLineWidth"));
 		}
@@ -2111,12 +2132,10 @@ void renderScriptedTouchBeacons(LLDrawable* drawablep)
 void renderPhysicalBeacons(LLDrawable* drawablep)
 {
 	LLViewerObject *vobj = drawablep->getVObj();
-	if (vobj 
-		&& !vobj->isAvatar() 
-		//&& !vobj->getParent()
-		&& vobj->usePhysics())
+	U32 type = highlightable(vobj);
+	if (type != 0 && vobj->usePhysics())
 	{
-		if (gPipeline.sRenderBeacons)
+		if (gPipeline.sRenderBeacons && type != 2)
 		{
 			gObjectList.addDebugBeacon(vobj->getPositionAgent(), "", LLColor4(0.f, 1.f, 0.f, 0.5f), LLColor4(1.f, 1.f, 1.f, 0.5f), gSavedSettings.getS32("DebugBeaconLineWidth"));
 		}
@@ -2137,10 +2156,10 @@ void renderParticleBeacons(LLDrawable* drawablep)
 {
 	// Look for attachments, objects, etc.
 	LLViewerObject *vobj = drawablep->getVObj();
-	if (vobj 
-		&& vobj->isParticleSource())
+	U32 type = highlightable(vobj);
+	if (type != 0 && vobj->isParticleSource())
 	{
-		if (gPipeline.sRenderBeacons)
+		if (gPipeline.sRenderBeacons && type != 2)
 		{
 			LLColor4 light_blue(0.5f, 0.5f, 1.f, 0.5f);
 			gObjectList.addDebugBeacon(vobj->getPositionAgent(), "", light_blue, LLColor4(1.f, 1.f, 1.f, 0.5f), gSavedSettings.getS32("DebugBeaconLineWidth"));
@@ -2158,12 +2177,18 @@ void renderParticleBeacons(LLDrawable* drawablep)
 	}
 }
 
-void renderSoundHighlights(LLDrawable* drawablep)
+void renderSoundBeacons(LLDrawable* drawablep)
 {
 	// Look for attachments, objects, etc.
 	LLViewerObject *vobj = drawablep->getVObj();
-	if (vobj && vobj->isAudioSource())
+	U32 type = highlightable(vobj);
+	if (type != 0 && vobj->isAudioSource())
 	{
+		if ((gPipeline.sRenderBeacons || !gPipeline.sRenderInvisibleSoundBeacons)  && type != 2)
+		{
+			gObjectList.addDebugBeacon(vobj->getPositionAgent(), "", LLColor4(1.f, 1.f, 0.f, 0.5f), LLColor4(1.f, 1.f, 1.f, 0.5f), gSavedSettings.getS32("DebugBeaconLineWidth"));
+		}
+
 		if (gPipeline.sRenderHighlight)
 		{
 			S32 face_id;
@@ -2291,7 +2316,7 @@ void LLPipeline::postSort(LLCamera& camera)
 	}
 	
 	// only render if the flag is set. The flag is only set if we are in edit mode or the toggle is set in the menus
-	if (gSavedSettings.getBOOL("BeaconAlwaysOn") && !sShadowRender)
+	if ((sRenderBeaconsFloaterOpen || gSavedSettings.getBOOL("BeaconAlwaysOn")) && !sShadowRender)
 	{
 		if (sRenderScriptedTouchBeacons)
 		{
@@ -2319,22 +2344,25 @@ void LLPipeline::postSort(LLCamera& camera)
 		// If god mode, also show audio cues
 		if (sRenderSoundBeacons && gAudiop)
 		{
-			// Walk all sound sources and render out beacons for them. Note, this isn't done in the ForAllVisibleDrawables function, because some are not visible.
-			LLAudioEngine::source_map::iterator iter;
-			for (iter = gAudiop->mAllSources.begin(); iter != gAudiop->mAllSources.end(); ++iter)
+			if (sRenderInvisibleSoundBeacons)
 			{
-				LLAudioSource *sourcep = iter->second;
-
-				LLVector3d pos_global = sourcep->getPositionGlobal();
-				LLVector3 pos = gAgent.getPosAgentFromGlobal(pos_global);
-				if (gPipeline.sRenderBeacons)
+				// Walk all sound sources and render out beacons for them. Note, this isn't done in the ForAllVisibleDrawables function, because some are not visible.
+				LLAudioEngine::source_map::iterator iter;
+				for (iter = gAudiop->mAllSources.begin(); iter != gAudiop->mAllSources.end(); ++iter)
 				{
-					//pos += LLVector3(0.f, 0.f, 0.2f);
-					gObjectList.addDebugBeacon(pos, "", LLColor4(1.f, 1.f, 0.f, 0.5f), LLColor4(1.f, 1.f, 1.f, 0.5f), gSavedSettings.getS32("DebugBeaconLineWidth"));
+					LLAudioSource *sourcep = iter->second;
+
+					LLVector3d pos_global = sourcep->getPositionGlobal();
+					LLVector3 pos = gAgent.getPosAgentFromGlobal(pos_global);
+					if (gPipeline.sRenderBeacons)
+					{
+						//pos += LLVector3(0.f, 0.f, 0.2f);
+						gObjectList.addDebugBeacon(pos, "", LLColor4(1.f, 1.f, 0.f, 0.5f), LLColor4(1.f, 1.f, 1.f, 0.5f), gSavedSettings.getS32("DebugBeaconLineWidth"));
+					}
 				}
 			}
 			// now deal with highlights for all those seeable sound sources
-			forAllVisibleDrawables(renderSoundHighlights);
+			forAllVisibleDrawables(renderSoundBeacons);
 		}
 	}
 
@@ -3339,41 +3367,45 @@ void LLPipeline::renderForSelect(std::set<LLViewerObject*>& objects, BOOL render
 			LLViewerJointAttachment* attachmentp = curiter->second;
 			if (attachmentp->getIsHUDAttachment())
 			{
-				LLViewerObject* objectp = attachmentp->getObject();
-				if (objectp)
+				for (LLViewerJointAttachment::attachedobjs_vec_t::iterator attachment_iter = attachmentp->mAttachedObjects.begin();
+					 attachment_iter != attachmentp->mAttachedObjects.end();
+					 ++attachment_iter)
 				{
-					LLDrawable* drawable = objectp->mDrawable;
-					if (drawable->isDead())
+					if (LLViewerObject* objectp = (*attachment_iter))
 					{
-						continue;
-					}
-
-					for (S32 j = 0; j < drawable->getNumFaces(); ++j)
-					{
-						LLFace* facep = drawable->getFace(j);
-						if (!facep->getPool())
+						LLDrawable* drawable = objectp->mDrawable;
+						if (drawable->isDead())
 						{
-							facep->renderForSelect(prim_mask);
+							continue;
 						}
-					}
 
-					//render child faces
-					LLViewerObject::const_child_list_t& child_list = objectp->getChildren();
-					for (LLViewerObject::child_list_t::const_iterator iter = child_list.begin();
-						 iter != child_list.end(); iter++)
-					{
-						LLViewerObject* child = *iter;
-						LLDrawable* child_drawable = child->mDrawable;
-						for (S32 l = 0; l < child_drawable->getNumFaces(); ++l)
+						for (S32 j = 0; j < drawable->getNumFaces(); ++j)
 						{
-							LLFace* facep = child_drawable->getFace(l);
+							LLFace* facep = drawable->getFace(j);
 							if (!facep->getPool())
 							{
 								facep->renderForSelect(prim_mask);
 							}
 						}
+
+						//render child faces
+						LLViewerObject::const_child_list_t& child_list = objectp->getChildren();
+						for (LLViewerObject::child_list_t::const_iterator iter = child_list.begin();
+							 iter != child_list.end(); iter++)
+						{
+							LLViewerObject* child = *iter;
+							LLDrawable* child_drawable = child->mDrawable;
+							for (S32 l = 0; l < child_drawable->getNumFaces(); ++l)
+							{
+								LLFace* facep = child_drawable->getFace(l);
+								if (!facep->getPool())
+								{
+									facep->renderForSelect(prim_mask);
+								}
+							}
+						}
 					}
-				}	
+				}
 			}
 		}
 
@@ -4626,6 +4658,54 @@ void LLPipeline::toggleRenderHighlights(void*)
 BOOL LLPipeline::getRenderHighlights(void*)
 {
 	return sRenderHighlight;
+}
+
+// static
+void LLPipeline::setRenderInvisibleSoundBeacons(BOOL val)
+{
+	sRenderInvisibleSoundBeacons = val;
+}
+
+// static
+void LLPipeline::toggleRenderInvisibleSoundBeacons(void*)
+{
+	sRenderInvisibleSoundBeacons = !sRenderInvisibleSoundBeacons;
+}
+
+// static
+BOOL LLPipeline::getRenderInvisibleSoundBeacons(void*)
+{
+	return sRenderInvisibleSoundBeacons;
+}
+
+// static
+void LLPipeline::setRenderByOwner(U32 val)
+{
+	sRenderByOwner = val;
+}
+
+// static
+U32 LLPipeline::getRenderByOwner(void*)
+{
+	return sRenderByOwner;
+}
+
+// static
+void LLPipeline::setRenderAttachments(BOOL val)
+{
+	sRenderAttachments = val;
+}
+
+// static
+void LLPipeline::toggleRenderAttachments(void*)
+{
+	sRenderAttachments = !sRenderAttachments;
+}
+
+// static
+BOOL LLPipeline::getRenderAttachments(void*)
+{
+	return sRenderAttachments;
 }
 
 LLViewerObject* LLPipeline::lineSegmentIntersectInWorld(const LLVector3& start, const LLVector3& end,
@@ -6499,10 +6579,15 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 		iter != avatar->mAttachmentPoints.end();
 		++iter)
 	{
-		LLViewerObject* object = iter->second->getObject();
-		if (object)
+		LLViewerJointAttachment *attachment = iter->second;
+		for (LLViewerJointAttachment::attachedobjs_vec_t::iterator attachment_iter = attachment->mAttachedObjects.begin();
+			 attachment_iter != attachment->mAttachedObjects.end();
+			 ++attachment_iter)
 		{
-			markVisible(object->mDrawable->getSpatialBridge(), *LLViewerCamera::getInstance());
+			if (LLViewerObject* attached_object = (*attachment_iter))
+			{
+				markVisible(attached_object->mDrawable->getSpatialBridge(), *LLViewerCamera::getInstance());
+			}
 		}
 	}
 

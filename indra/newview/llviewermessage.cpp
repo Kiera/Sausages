@@ -650,7 +650,7 @@ bool join_group_response(const LLSD& notification, const LLSD& response)
 	if(option == 0 && !group_id.isNull())
 	{
 		// check for promotion or demotion.
-		S32 max_groups = MAX_AGENT_GROUPS;
+		S32 max_groups = gMaxAgentGroups;
 		if(gAgent.isInGroup(group_id)) ++max_groups;
 
 		if(gAgent.mGroups.count() < max_groups)
@@ -2518,6 +2518,25 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 
 	if (is_audible)
 	{
+		if (chatter && chatter->isAvatar())
+		{
+			if (LLAvatarNameCache::useDisplayNames())
+			{
+				LLAvatarName avatar_name;
+				if (LLAvatarNameCache::get(from_id, &avatar_name))
+				{
+					if (LLAvatarNameCache::useDisplayNames() == 2)
+					{
+						from_name = avatar_name.mDisplayName;
+					}
+					else
+					{
+						from_name = avatar_name.getNames();
+					}
+				}
+				chat.mFromName = from_name;
+			}
+		}
 		BOOL visible_in_chat_bubble = FALSE;
 		std::string verb;
 
@@ -3283,6 +3302,10 @@ void send_agent_update(BOOL force_send, BOOL send_reliable)
 	if (gAgent.isGroupTitleHidden())
 	{
 		flags |= AU_FLAGS_HIDETITLE;
+	}
+	if (gAgent.getAutoPilot())
+	{
+		flags |= AU_FLAGS_CLIENT_AUTOPILOT;
 	}
 
 	flag_change = last_flags ^ flags;

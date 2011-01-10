@@ -36,6 +36,7 @@
 
 #include <list>
 #include <map>
+#include <set>
 
 #include "v3math.h"
 #include "v3dmath.h"
@@ -54,7 +55,8 @@ const F32 ATTACHED_OBJECT_TIMEOUT = 5.0f;
 const F32 DEFAULT_MIN_DISTANCE = 2.0f;
 
 #define MAX_CHANNELS 30
-#define MAX_BUFFERS 40	// Some extra for preloading, maybe?
+// Number of maximum rezzed objects with sounds + sounds without an object + UI sounds.
+#define MAX_BUFFERS 100
 
 // This define is intended to allow us to switch from os based wav
 // file loading to vfs based wav file loading. The problem is that I
@@ -172,6 +174,8 @@ public:
 	LLAudioChannel *getFreeChannel(const F32 priority); // Get a free channel or flush an existing one if your priority is higher
 	void cleanupBuffer(LLAudioBuffer *bufferp);
 
+	bool isUISound(const LLUUID &uuid) { return (mUISounds.find(uuid) != mUISounds.end()); }
+
 	bool hasDecodedFile(const LLUUID &uuid);
 	bool hasLocalFile(const LLUUID &uuid);
 
@@ -232,6 +236,8 @@ protected:
 
 	source_map mAllSources;
 	data_map mAllData;
+
+	std::set<LLUUID> mUISounds;
 
 	LLAudioChannel *mChannels[MAX_CHANNELS];
 

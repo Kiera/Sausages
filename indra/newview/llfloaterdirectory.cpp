@@ -268,7 +268,7 @@ void* LLFloaterDirectory::createGroupDetailHolder(void* userdata)
 void* LLFloaterDirectory::createPlaceDetail(void* userdata)
 {
 	LLFloaterDirectory *self = (LLFloaterDirectory*)userdata;
-	self->mPanelPlacep = new LLPanelPlace();
+	self->mPanelPlacep = new LLPanelPlace(false);
 	LLUICtrlFactory::getInstance()->buildPanel(self->mPanelPlacep, "panel_place.xml");
 	self->mPanelPlacep->setVisible(FALSE);
 	return self->mPanelPlacep;
@@ -278,7 +278,7 @@ void* LLFloaterDirectory::createPlaceDetail(void* userdata)
 void* LLFloaterDirectory::createPlaceDetailSmall(void* userdata)
 {
 	LLFloaterDirectory *self = (LLFloaterDirectory*)userdata;
-	self->mPanelPlaceSmallp = new LLPanelPlace();
+	self->mPanelPlaceSmallp = new LLPanelPlace(false);
 	LLUICtrlFactory::getInstance()->buildPanel(self->mPanelPlaceSmallp, "panel_place_small.xml");
 	self->mPanelPlaceSmallp->setVisible(FALSE);
 	return self->mPanelPlaceSmallp;
@@ -410,7 +410,7 @@ void LLFloaterDirectory::toggleFind(void*)
 	}
 	else
 	{
-		sInstance->close();
+		sInstance->setVisible(FALSE);
 	}
 }
 
@@ -434,7 +434,7 @@ void LLFloaterDirectory::toggleEvents(void*)
 		LLPanel *current_panel = sInstance->childGetVisibleTab("Directory Tabs");
 		if (current_panel == sInstance->mEventsPanel)
 		{
-			sInstance->close();
+			sInstance->setVisible(FALSE);
 		}
 		else
 		{
@@ -448,7 +448,7 @@ void LLFloaterDirectory::hide(void*)
 {
 	if (sInstance)
 	{
-		sInstance->close();
+		sInstance->setVisible(FALSE);
 	}
 }
 
@@ -461,7 +461,8 @@ void LLFloaterDirectory::setVisible(BOOL visible)
 
 void LLFloaterDirectory::onClose(bool app_quitting)
 {
-	setVisible(FALSE);
+//	setVisible(FALSE);
+	LLFloater::onClose(app_quitting);	// so that the web browsers are destroyed and stop eating up 100% of the CPU...
 }
 
 // static

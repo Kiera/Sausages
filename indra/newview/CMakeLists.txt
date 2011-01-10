@@ -156,6 +156,7 @@ set(viewer_SOURCE_FILES
     llfloaterdaycycle.cpp
     llfloaterdickdongs.cpp
     llfloaterdirectory.cpp
+    llfloaterdisplayname.cpp
     llfloatereditui.cpp
     llfloaterenvsettings.cpp
     llfloaterevent.cpp
@@ -204,6 +205,7 @@ set(viewer_SOURCE_FILES
     llfloaterproperties.cpp
     llfloaterregioninfo.cpp
     llfloaterreporter.cpp
+	llfloatersearchreplace.cpp
     llfloaterscriptdebug.cpp
     llfloatersellland.cpp
     llfloatersettingsdebug.cpp
@@ -405,6 +407,7 @@ set(viewer_SOURCE_FILES
     llviewercamera.cpp
     llviewercontrol.cpp
     llviewerdisplay.cpp
+    llviewerdisplayname.cpp
     llviewergenericmessage.cpp
     llviewergesture.cpp
     llviewerimage.cpp
@@ -583,7 +586,7 @@ set(viewer_HEADER_FILES
     llfloateravatarpicker.h
     llfloateravatartextures.h
     llfloaterbeacons.h
-	llfloaterblacklist.h
+    llfloaterblacklist.h
     llfloaterbuildoptions.h
     llfloaterbulkpermission.h
     llfloaterbump.h
@@ -600,6 +603,7 @@ set(viewer_HEADER_FILES
     llfloaterdaycycle.h
     llfloaterdickdongs.h
     llfloaterdirectory.h
+    llfloaterdisplayname.h
     llfloatereditui.h
     llfloaterenvsettings.h
     llfloaterexport.h
@@ -648,6 +652,7 @@ set(viewer_HEADER_FILES
     llfloaterproperties.h
     llfloaterregioninfo.h
     llfloaterreporter.h
+	llfloatersearchreplace.h
     llfloaterscriptdebug.h
     llfloatersellland.h
     llfloatersettingsdebug.h
@@ -853,6 +858,7 @@ set(viewer_HEADER_FILES
     llviewercamera.h
     llviewercontrol.h
     llviewerdisplay.h
+    llviewerdisplayname.h
     llviewergenericmessage.h
     llviewergesture.h
     llviewerimage.h

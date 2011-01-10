@@ -62,6 +62,7 @@
 #include "imageids.h"
 #include "llmodaldialog.h"
 #include "llassetstorage.h"
+#include "llstartup.h"	// for gIsInSecondLife
 #include "lltexturectrl.h"
 #include "lltextureentry.h"
 #include "llwearablelist.h"
@@ -215,7 +216,14 @@ public:
 				std::string name = std::string("checkbox_") + attachment->getName();
 				mCheckBoxList.push_back(std::make_pair(name,attachment_pt));
 				childSetEnabled(name, object_attached);
+				childSetValue(name, object_attached);
 			}
+		}
+
+		if (!gIsInSecondLife && (gSavedSettings.getBOOL("OSAllowInventoryLinks") == FALSE))
+		{
+			childSetEnabled("checkbox_use_links", FALSE);
+			childSetValue("checkbox_use_links", FALSE);
 		}
 
 		childSetAction("Save", onSave, this ); 
@@ -427,9 +435,7 @@ LLPanelEditWearable::LLPanelEditWearable( EWearableType type )
 BOOL LLPanelEditWearable::postBuild()
 {
 	LLAssetType::EType asset_type = LLWearable::typeToAssetType( mType );
-	std::string icon_name = (asset_type == LLAssetType::AT_CLOTHING ?
-										 "inv_item_clothing.tga" :
-										 "inv_item_skin.tga" );
+	std::string icon_name = get_item_icon_name(asset_type, LLInventoryType::IT_WEARABLE, mType, FALSE);
 	childSetValue("icon", icon_name);
 
 	childSetAction("Create New", LLPanelEditWearable::onBtnCreateNew, this );
@@ -522,7 +528,7 @@ void LLPanelEditWearable::setSubpart( ESubpart subpart )
 			param = (LLViewerVisualParam *)avatar->getNextVisualParam())
 		{
 			if (param->getID() == -1
-				|| param->getGroup() != VISUAL_PARAM_GROUP_TWEAKABLE 
+				|| !param->isTweakable()
 				|| param->getEditGroup() != part->mEditGroup 
 				|| !(param->getSex() & avatar_sex))
 			{

@@ -30,6 +30,7 @@
  * COMPLETENESS OR PERFORMANCE.
  * $/LicenseInfo$
  */
+#include <time.h>
 
 #include "linden_common.h"
 
@@ -323,7 +324,10 @@ void LLAudioEngine::idle(F32 max_decode_time)
 			else
 			{
 				channelp->setWaiting(false);
-				channelp->play();
+				if (channelp->mCurrentBufferp)
+				{
+					channelp->play();
+				}
 			}
 		}
 	}
@@ -529,7 +533,7 @@ bool LLAudioEngine::updateBufferForData(LLAudioData *adp, const LLUUID &audio_uu
 	{
 		if (adp->hasDecodedData())
 		{
-			adp->load();
+			return adp->load();
 		}
 		else if (adp->hasLocalData())
 		{
@@ -563,6 +567,9 @@ void LLAudioEngine::enableWind(bool enable)
 
 LLAudioBuffer * LLAudioEngine::getFreeBuffer()
 {
+	static clock_t last_info = 0;
+	static bool spamming = FALSE;
+
 	S32 i;
 	for (i = 0; i < MAX_BUFFERS; i++)
 	{
@@ -594,8 +601,18 @@ LLAudioBuffer * LLAudioEngine::getFreeBuffer()
 
 	if (buffer_id >= 0)
 	{
-		llinfos << "Taking over unused buffer " << buffer_id << llendl;
-		//llinfos << "Flushing unused buffer!" << llendl;
+		if (clock() - last_info > CLOCKS_PER_SEC)
+		{
+			// Do not spam us with such messages...
+			llinfos << "Taking over unused buffer " << buffer_id << llendl;
+			last_info = clock();
+		}
+		else if (!spamming)
+		{
+			// ... but warn us *once* when the buffer freeing frequency is abnormal.
+			llwarns << "Excessive buffer freeing frequency, info messages throttled." << llendl;
+			spamming = true;
+		}
 		mBuffers[buffer_id]->mAudioDatap->mBufferp = NULL;
 		delete mBuffers[buffer_id];
 		mBuffers[buffer_id] = createBuffer();
@@ -640,7 +657,7 @@ LLAudioChannel * LLAudioEngine::getFreeChannel(const F32 priority)
 	{
 		LLAudioChannel *channelp = mChannels[i];
 		LLAudioSource *sourcep = channelp->getSource();
-		if (sourcep->getPriority() < min_priority)
+		if (sourcep && sourcep->getPriority() < min_priority)
 		{
 			min_channelp = channelp;
 			min_priority = sourcep->getPriority();
@@ -823,6 +840,11 @@ void LLAudioEngine::triggerSound(const LLUUID &audio_uuid, const LLUUID& owner_i
 	// Create a new source (since this can't be associated with an existing source.
 	//llinfos << "Localized: " << audio_uuid << llendl;
 
+	if (type == AUDIO_TYPE_UI)
+	{
+		mUISounds.insert(audio_uuid);
+	}
+
 	if (mMuted)
 	{
 		return;
@@ -1001,8 +1023,15 @@ bool LLAudioEngine::hasDecodedFile(const LLUUID &uuid)
 	uuid.toString(uuid_str);
 
 	std::string wav_path;
-	wav_path = gDirUtilp->getExpandedFilename(LL_PATH_CACHE,uuid_str);
-	wav_path += ".dsf";
+	bool ui_sound = isUISound(uuid);
+	if (ui_sound)
+	{
+		wav_path = gDirUtilp->getExpandedFilename(LL_PATH_SKINS, "default", "sounds", uuid_str) + ".dsf";
+	}
+	if (!ui_sound || !gDirUtilp->fileExists(wav_path))
+	{
+		wav_path = gDirUtilp->getExpandedFilename(LL_PATH_CACHE, uuid_str) + ".dsf";
+	}
 
 	if (gDirUtilp->fileExists(wav_path))
 	{
@@ -1762,6 +1791,8 @@ LLAudioData::LLAudioData(const LLUUID &uuid) :
 
 bool LLAudioData::load()
 {
+	static clock_t last_info = 0;
+
 	// For now, just assume we're going to use one buffer per audiodata.
 	if (mBufferp)
 	{
@@ -1773,15 +1804,26 @@ bool LLAudioData::load()
 	mBufferp = gAudiop->getFreeBuffer();
 	if (!mBufferp)
 	{
-		// No free buffers, abort.
-		llinfos << "Not able to allocate a new audio buffer, aborting." << llendl;
+		if (clock() - last_info > CLOCKS_PER_SEC)	// Do not spam us with such messages
+		{
+			llinfos << "Not able to allocate a new audio buffer, aborting." << llendl;
+			last_info = clock();
+		}
 		return false;
 	}
 
 	std::string uuid_str;
 	std::string wav_path;
 	mID.toString(uuid_str);
-	wav_path= gDirUtilp->getExpandedFilename(LL_PATH_CACHE,uuid_str) + ".dsf";
+	bool ui_sound = gAudiop->isUISound(mID);
+	if (ui_sound)
+	{
+		wav_path = gDirUtilp->getExpandedFilename(LL_PATH_SKINS, "default", "sounds", uuid_str) + ".dsf";
+	}
+	if (!ui_sound || !gDirUtilp->fileExists(wav_path))
+	{
+		wav_path = gDirUtilp->getExpandedFilename(LL_PATH_CACHE, uuid_str) + ".dsf";
+	}
 
 	if (!mBufferp->loadWAV(wav_path))
 	{
@@ -1789,6 +1831,8 @@ bool LLAudioData::load()
 		gAudiop->cleanupBuffer(mBufferp);
 		mBufferp = NULL;
 
+		// And preload it again.
+		gAudiop->preloadSound(mID);
 		return false;
 	}
 	mBufferp->mAudioDatap = this;

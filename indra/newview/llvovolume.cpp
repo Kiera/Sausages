@@ -462,6 +462,27 @@ void LLVOVolume::updateTextureVirtualSize()
 		else
 		{
 			vsize = face->getTextureVirtualSize();
+			if (isAttachment())
+			{
+				// Rez attachments faster and at full details !
+				if (permYouOwner())
+				{
+					// Our attachments must really rez fast and fully:
+					// we shouldn't have to zoom on them to get the textures
+					// fully loaded !
+					imagep->setBoostLevel(LLViewerImageBoostLevel::BOOST_HUD);
+					imagep->dontDiscard();
+				}
+				else
+				{
+					// Others' can get their texture discarded to avoid
+					// filling up the video buffers in crowded areas...
+					imagep->setBoostLevel(LLViewerImageBoostLevel::BOOST_SELECTED);
+					imagep->setAdditionalDecodePriority(1.5f);
+					vsize = (F32) LLViewerCamera::getInstance()->getScreenPixelArea();
+ 					face->setPixelArea(vsize); // treat as full screen
+				}
+			}
 		}
 
 		mPixelArea = llmax(mPixelArea, face->getPixelArea());		
@@ -881,17 +902,20 @@ void LLVOVolume::updateFaceFlags()
 	}
 }
 
-void LLVOVolume::setParent(LLViewerObject* parent)
+BOOL LLVOVolume::setParent(LLViewerObject* parent)
 {
+	BOOL ret = FALSE ;
 	if (parent != getParent())
 	{
-		LLViewerObject::setParent(parent);
+		ret = LLViewerObject::setParent(parent);
 		if (mDrawable)
 		{
 			gPipeline.markMoved(mDrawable);
 			gPipeline.markRebuild(mDrawable, LLDrawable::REBUILD_VOLUME, TRUE);
 		}
 	}
+
+	return ret ;
 }
 
 // NOTE: regenFaces() MUST be followed by genTriangles()!
@@ -2408,8 +2432,6 @@ void LLVolumeGeometryManager::rebuildGeom(LLSpatialGroup* group)
 
 void LLVolumeGeometryManager::rebuildMesh(LLSpatialGroup* group)
 {
-	static int warningsCount = 20;
-
 	if (group->isState(LLSpatialGroup::MESH_DIRTY))
 	{
 		S32 num_mapped_veretx_buffer = LLVertexBuffer::sMappedCount ;
@@ -2473,11 +2495,8 @@ void LLVolumeGeometryManager::rebuildMesh(LLSpatialGroup* group)
 		//if not all buffers are unmapped
 		if(num_mapped_veretx_buffer != LLVertexBuffer::sMappedCount) 
 		{
-			if (++warningsCount > 20)	// Do not spam the log file uselessly...
-			{
-			llwarns << "Not all mapped vertex buffers are unmapped!" << llendl ; 
-				warningsCount = 1;
-			}
+
+			LL_WARNS_ONCE("rebuildMesh") << "Not all mapped vertex buffers are unmapped!" << LL_ENDL;
 			for (LLSpatialGroup::element_iter drawable_iter = group->getData().begin(); drawable_iter != group->getData().end(); ++drawable_iter)
 			{
 				LLDrawable* drawablep = *drawable_iter;

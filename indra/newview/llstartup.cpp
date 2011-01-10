@@ -211,11 +211,13 @@
 // exported globals
 //
 bool gAgentMovementCompleted = false;
+bool gIsInSecondLife = false;
 std::string gInitialOutfit;
 std::string gInitialOutfitGender;
 
 std::string SCREEN_HOME_FILENAME = "screen_home.bmp";
 std::string SCREEN_LAST_FILENAME = "screen_last.bmp";
+S32  gMaxAgentGroups = DEFAULT_MAX_AGENT_GROUPS;
 
 //
 // Imported globals
@@ -1537,6 +1539,7 @@ bool idle_startup()
 		requested_options.push_back("buddy-list");
 		requested_options.push_back("ui-config");
 #endif
+		requested_options.push_back("max-agent-groups");
 		requested_options.push_back("map-server-url");
 		requested_options.push_back("tutorial_setting");
 		requested_options.push_back("login-flags");
@@ -1626,7 +1629,11 @@ bool idle_startup()
 
 		gAcceptTOS = FALSE;
 		gAcceptCriticalMessage = FALSE;
-
+		std::string temp_uri = LLViewerLogin::getInstance()->getCurrentGridURI();
+		LLStringUtil::toLower(temp_uri);
+		gIsInSecondLife = (temp_uri.find("aditi") != std::string::npos ||
+						   temp_uri.find("agni") != std::string::npos ||
+						   temp_uri.find("://216.82.") != std::string::npos);
 		LLStartUp::setStartupState(STATE_WAIT_LEGACY_LOGIN);
 		return FALSE;
 	}
@@ -1746,6 +1753,11 @@ bool idle_startup()
 		// reset globals
 		gAcceptTOS = FALSE;
 		gAcceptCriticalMessage = FALSE;
+		std::string temp_uri = LLViewerLogin::getInstance()->getCurrentGridURI();
+		LLStringUtil::toLower(temp_uri);
+		gIsInSecondLife = (temp_uri.find("aditi") != std::string::npos ||
+						   temp_uri.find("agni") != std::string::npos ||
+						   temp_uri.find("://216.82.") != std::string::npos);
 		LLStartUp::setStartupState( STATE_LOGIN_NO_DATA_YET );
 		return FALSE;
 	}
@@ -2439,6 +2451,17 @@ bool idle_startup()
 				}
 			}
 
+			std::string max_agent_groups = LLUserAuth::getInstance()->getResponse("max-agent-groups");
+			if (!max_agent_groups.empty())
+			{
+				gMaxAgentGroups = atoi(max_agent_groups.c_str());
+				LL_INFOS("LLStartup") << "gMaxAgentGroups read from login.cgi: " << gMaxAgentGroups << LL_ENDL;
+			}
+			else
+			{
+				gMaxAgentGroups = DEFAULT_MAX_AGENT_GROUPS;
+			}
+
 			std::string map_server_url = LLUserAuth::getInstance()->getResponse("map-server-url");
 			if(!map_server_url.empty())
 			{
@@ -2449,6 +2472,12 @@ bool idle_startup()
 		// OGPX : successful login path common to OGP and XML-RPC
 		if (successful_login)
 		{
+			if (!gIsInSecondLife && gMaxAgentGroups == DEFAULT_MAX_AGENT_GROUPS)
+			{
+				gMaxAgentGroups = OPENSIM_DEFAULT_MAX_AGENT_GROUPS;
+				LL_INFOS("LLStartup") << "gMaxAgentGroups set to OpenSim default: " << gMaxAgentGroups << LL_ENDL;
+			}
+
 			// JC: gesture loading done below, when we have an asset system
 			// in place.  Don't delete/clear user_credentials until then.
 
@@ -2690,6 +2719,12 @@ bool idle_startup()
 	
 			// Load stored cache if possible
             LLAppViewer::instance()->loadNameCache();
+
+			// Start cache in not-running state until we figure out if we have
+			// capabilities for display name lookup
+			LLAvatarNameCache::initClass(false);
+			LLAvatarNameCache::setUseDisplayNames(gSavedSettings.getU32("DisplayNamesUsage"));
+			LLAvatarName::sOmitResidentAsLastName = (bool)gSavedSettings.getBOOL("OmitResidentAsLastName");
 		}
 
 		// *Note: this is where gWorldMap used to be initialized.
