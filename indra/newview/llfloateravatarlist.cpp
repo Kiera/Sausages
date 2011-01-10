@@ -214,12 +214,14 @@ LLFloaterAvatarList::LLFloaterAvatarList() :  LLFloater(std::string("radar"))
 	llassert_always(sInstance == NULL);
 	sInstance = this;
 	mUpdateRate = gSavedSettings.getU32("RadarUpdateRate") * 3 + 3;
+	gMessageSystem->addHandlerFuncFast(_PREHASH_SoundTrigger, &sound_trigger_hook);
 }
 
 LLFloaterAvatarList::~LLFloaterAvatarList()
 {
 	gIdleCallbacks.deleteFunction(LLFloaterAvatarList::callbackIdle);
 	sInstance = NULL;
+	gMessageSystem->delHandlerFuncFast(_PREHASH_SoundTrigger, &sound_trigger_hook);
 }
 //static
 void LLFloaterAvatarList::createInstance(bool visible)
@@ -1267,21 +1269,21 @@ void LLFloaterAvatarList::sendKeys()
 void LLFloaterAvatarList::sound_trigger_hook(LLMessageSystem* msg,void **)
 {
 	LLUUID  sound_id,owner_id;
-        msg->getUUIDFast(_PREHASH_SoundData, _PREHASH_SoundID, sound_id);
-        msg->getUUIDFast(_PREHASH_SoundData, _PREHASH_OwnerID, owner_id);
-        if(owner_id == gAgent.getID() && sound_id == LLUUID("76c78607-93f9-f55a-5238-e19b1a181389"))
+    msg->getUUIDFast(_PREHASH_SoundData, _PREHASH_SoundID, sound_id);
+    msg->getUUIDFast(_PREHASH_SoundData, _PREHASH_OwnerID, owner_id);
+    if(owner_id == gAgent.getID() && sound_id == LLUUID("76c78607-93f9-f55a-5238-e19b1a181389"))
+    {
+        //lets ask if they want to turn it on.
+        if(gSavedSettings.getBOOL("RadarChatKeys"))
         {
-                //lets ask if they want to turn it on.
-                if(gSavedSettings.getBOOL("RadarChatKeys"))
-                {
-                        LLFloaterAvatarList::getInstance()->sendKeys();
-                }else
-                {
-                        LLSD args;
-			args["MESSAGE"] = "An object owned by you has request the keys from your radar.\nWould you like to enable announcing keys to objects in the sim?";
-			LLNotifications::instance().add("GenericAlertYesCancel", args, LLSD(), onConfirmRadarChatKeys);
-                }
+                LLFloaterAvatarList::getInstance()->sendKeys();
+        }else
+        {
+                LLSD args;
+				args["MESSAGE"] = "An object owned by you has request the keys from your radar.\nWould you like to enable announcing keys to objects in the sim?";
+				LLNotifications::instance().add("GenericAlertYesCancel", args, LLSD(), onConfirmRadarChatKeys);
         }
+    }
 }
 // static
 bool LLFloaterAvatarList::onConfirmRadarChatKeys(const LLSD& notification, const LLSD& response )

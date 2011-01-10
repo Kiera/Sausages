@@ -152,7 +152,7 @@ BOOL LLFloaterAttachments::postBuild(void)
 
 		if(!av_name.empty())
 		{
-			gObjectList.getUUIDFromLocal();
+			//gObjectList.getUUIDFromLocal();
 			this->setTitle(av_name + " attachments...");
 		}
 	}
