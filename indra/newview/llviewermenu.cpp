@@ -240,6 +240,7 @@
 #include "llfloatervfsexplorer.h"
 #include "llfloaterexportregion.h"
 #include "llfloaterkeytool.h"
+#include "llfloaterattachments.h"
 // </edit>
 
 using namespace LLVOAvatarDefines;
@@ -873,10 +874,10 @@ void init_client_menu(LLMenuGL* menu)
 	}
 	
 	// neither of these works particularly well at the moment
-	/*menu->append(new LLMenuItemCallGL(  "Reload UI XML",	&reload_ui,	
-	  				NULL, NULL) );*/
-	/*menu->append(new LLMenuItemCallGL("Reload settings/colors", 
-					&handle_reload_settings, NULL, NULL));*/
+	menu->append(new LLMenuItemCallGL(  "Reload UI XML",	&reload_ui,
+	  				NULL, NULL) );
+	menu->append(new LLMenuItemCallGL("Reload settings/colors",
+					&handle_reload_settings, NULL, NULL));
 	menu->append(new LLMenuItemCallGL("Reload personal setting overrides", 
 		&reload_personal_settings_overrides, NULL, NULL, KEY_F2, MASK_CONTROL|MASK_SHIFT));
 
@@ -2524,6 +2525,29 @@ class LLAvatarDebug : public view_listener_t
 		return true;
 	}
 };
+
+//<edit>
+class LLAvatarEnableAttachmentList : public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		LLViewerObject* object = LLSelectMgr::getInstance()->getSelection()->getPrimaryObject();
+		bool new_value = (object != NULL);
+		gMenuHolder->findControl(userdata["control"].asString())->setValue(new_value);
+		return true;
+	}
+};
+
+class LLAvatarAttachmentList : public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		LLFloaterAttachments* floater = new LLFloaterAttachments();
+		floater->center();
+		return true;
+	}
+};
+//</edit>
 
 bool callback_eject(const LLSD& notification, const LLSD& response)
 {
@@ -8269,7 +8293,10 @@ void initialize_menus()
 	addMenu(new LLAvatarVisibleDebug(), "Avatar.VisibleDebug");
 	addMenu(new LLAvatarEnableDebug(), "Avatar.EnableDebug");
 	addMenu(new LLAvatarInviteToGroup(), "Avatar.InviteToGroup");
-	addMenu(new LLAvatarGiveCard(), "Avatar.GiveCard");
+	//<edit>
+	//addMenu(new LLAvatarGiveCard(), "Avatar.GiveCard");
+	addMenu(new LLAvatarAttachmentList(), "Avatar.AttachmentList");
+	//</edit>
 	addMenu(new LLAvatarEject(), "Avatar.Eject");
 	addMenu(new LLAvatarSendIM(), "Avatar.SendIM");
 	addMenu(new LLAvatarReportAbuse(), "Avatar.ReportAbuse");
@@ -8307,6 +8334,7 @@ void initialize_menus()
 	// <edit>
 	addMenu(new LLObjectEnableSaveAs(), "Object.EnableSaveAs");
 	addMenu(new LLObjectEnableImport(), "Object.EnableImport");
+	addMenu(new LLObjectEnableSaveAs(), "Avatar.EnableAttachmentList");
 	// </edit>
 	addMenu(new LLObjectEnableMute(), "Object.EnableMute");
 	addMenu(new LLObjectEnableBuy(), "Object.EnableBuy");

@@ -720,6 +720,7 @@ private:
 
 	LLAnimPauseRequest		mPauseRequest;
 
+public:
 	static std::set<LLUUID> sObjectPropertiesFamilyRequests;
 };
 

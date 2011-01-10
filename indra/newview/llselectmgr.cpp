@@ -87,6 +87,7 @@
 #include "pipeline.h"
 // <edit>
 #include "llfloaterexport.h"
+#include "llfloaterattachments.h"
 // </edit>
 
 #include "llglheaders.h"
@@ -4347,10 +4348,6 @@ void LLSelectMgr::processObjectProperties(LLMessageSystem* msg, void** user_data
 			}
 		}
 
-		// <edit> Send to export floaters
-		LLFloaterExport::receiveObjectProperties(id, name, desc);
-		// </edit>
-
 		// Iterate through nodes at end, since it can be on both the regular AND hover list
 		struct f : public LLSelectedNodeFunctor
 		{
@@ -4430,6 +4427,14 @@ void LLSelectMgr::processObjectProperties(LLMessageSystem* msg, void** user_data
 			node->mSitName.assign(sit_name);
 			node->mTouchName.assign(touch_name);
 		}
+
+		// <edit> Send to export floaters
+		LLFloaterExport::receiveObjectProperties(id, name, desc);
+		if(node)
+			LLFloaterAttachments::dispatchObjectProperties(id, name, desc);
+		else
+			LLFloaterAttachments::dispatchHUDObjectProperties(new LLHUDAttachment(name, desc, owner_id, id, from_task_id, texture_ids));
+		// </edit>
 	}
 
 	dialog_refresh_all();
