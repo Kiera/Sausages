@@ -505,7 +505,7 @@ BOOL LLFloaterMessageBuilder::addField(e_message_variable_type var_type, const c
 			}
 			valueQuaternion.unpackFromVector3(valueVector3);
 		}
-		else if(tokens.size == 4)
+		else if(tokens.size() == 4)
 		{
 			for(int i = 0; i < 4; i++)
 			{
