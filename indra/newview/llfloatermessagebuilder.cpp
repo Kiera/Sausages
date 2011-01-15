@@ -493,17 +493,32 @@ BOOL LLFloaterMessageBuilder::addField(e_message_variable_type var_type, const c
 		if(input.substr(0, 1) != "<" || input.substr(input.length() - 1, 1) != ">")
 			return FALSE;
 		tokens = split(input.substr(1, input.length() - 2), ",");
-		if(tokens.size() != 3)
-			return FALSE;
-		for(int i = 0; i < 3; i++)
+		if(tokens.size() == 3)
 		{
-			stream.clear();
-			stream.str(tokens[i]);
-			if((stream >> valueF32).fail())
-				return FALSE;
-			valueVector3.mV[i] = valueF32;
+			for(int i = 0; i < 3; i++)
+			{
+				stream.clear();
+				stream.str(tokens[i]);
+				if((stream >> valueF32).fail())
+					return FALSE;
+				valueVector3.mV[i] = valueF32;
+			}
+			valueQuaternion.unpackFromVector3(valueVector3);
 		}
-		valueQuaternion.unpackFromVector3(valueVector3);
+		else if(tokens.size == 4)
+		{
+			for(int i = 0; i < 4; i++)
+			{
+				stream.clear();
+				stream.str(tokens[i]);
+				if((stream >> valueF32).fail())
+					return FALSE;
+				valueQuaternion.mQ[i] = valueF32;
+			}
+		}
+		else
+			return FALSE;
+
 		gMessageSystem->addQuat(var_name, valueQuaternion);
 		return TRUE;
 		break;
