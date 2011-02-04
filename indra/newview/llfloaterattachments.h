@@ -7,16 +7,6 @@
 #include "llvoavatar.h"
 #include "llvoavatardefines.h"
 #include "llfloaterexport.h"
-#include "lltimer.h"
-
-class LLFloaterAttachmentsTimer: public LLEventTimer //this period will change
-{
-public:
-	LLFloaterAttachmentsTimer(U32 localid);
-	BOOL tick();
-private:
-	U32 mLocalID;
-};
 
 class LLHUDAttachment
 {
@@ -62,15 +52,9 @@ public:
 
 	static void processObjectPropertiesFamily(LLMessageSystem* msg, void** user_data);
 	
-	friend class LLFloaterAttachmentsTimer;
 private:
 	virtual ~LLFloaterAttachments();
 	void addToPrimList(LLViewerObject* object);
-
-	static std::map<U32,LLFloaterAttachments*> mRequests;
-	static std::map<U32,LLHost> mRequestHosts;
-	static LLFloaterAttachmentsTimer* mTimer;
-	static void nextRequest(U32 id,bool first = false); //this is for the timer
 
 	enum LIST_COLUMN_ORDER
 	{
@@ -81,7 +65,6 @@ private:
 	};
 	
 	LLObjectSelectionHandle mSelection;
-
 };
 
 #endif
