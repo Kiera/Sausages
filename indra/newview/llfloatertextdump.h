@@ -1,10 +1,7 @@
 /**
- * @file LLFloaterTextDump.h
- * @brief Asset Text Editor floater made by Hazim Gazov (based on hex editor floater by Day Oh)
+ * @file llfloatertextdump.h
+ * @brief Simple Floater with a textbox for dumping text somewhere other than the chat window
  * @author Hazim Gazov
- * 
- * $LicenseInfo:firstyear=2010&license=WTFPLV2$
- *  
  */
 
 
