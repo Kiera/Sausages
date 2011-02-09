@@ -535,8 +535,8 @@ BOOL LLFloaterMessageBuilder::addField(e_message_variable_type var_type, const c
 			valueBOOL = FALSE;
 		else if((stream >> valueBOOL).fail())
 			return FALSE;
-		//gMessageSystem->addBOOL(var_name, valueBOOL);
-		gMessageSystem->addU8(var_name, (U8)valueBOOL);
+		gMessageSystem->addBOOL(var_name, valueBOOL);
+		//gMessageSystem->addU8(var_name, (U8)valueBOOL);
 		return TRUE;
 		break;
 	case MVT_IP_ADDR:
