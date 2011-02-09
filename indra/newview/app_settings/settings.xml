@@ -13418,7 +13418,23 @@
         <array>
             <integer>343</integer>
             <integer>687</integer>
-            <integer>901</integer>
+            <integer>951</integer>
+            <integer>473</integer>
+        </array>
+    </map>
+    <key>FloaterTextDumpRect</key>
+    <map>
+        <key>Comment</key>
+        <string>Rectangle for text dump floater.</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Rect</string>
+        <key>Value</key>
+        <array>
+            <integer>343</integer>
+            <integer>687</integer>
+            <integer>951</integer>
             <integer>473</integer>
         </array>
     </map>
