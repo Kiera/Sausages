@@ -3945,7 +3945,19 @@ void LLVOAvatar::idleUpdateTractorBeam()
 		}
 		if (mBeamTimer.getElapsedTimeF32() > 0.25f)
 		{
-			mBeam->setColor(LLColor4U(gAgent.getEffectColor()));
+			//edit
+			static LLFrameTimer rainbowTimer;
+			if(gSavedSettings.getBOOL("RainbowBeams"))
+			{
+				F32 cee = rainbowTimer.getElapsedTimeF32() * 80.0f;
+				F32 dee = 2.094395f;
+				LLColor4 rainbow((0.5 + sin(cee * DEG_TO_RAD)),
+					(0.5 + sin(cee * DEG_TO_RAD + dee)),
+					(0.5 + sin(cee * DEG_TO_RAD + dee + dee)));
+				mBeam->setColor(rainbow);
+			}
+			else
+				mBeam->setColor(LLColor4U(gAgent.getEffectColor()));
 			mBeam->setNeedsSendToSim(TRUE);
 			mBeamTimer.reset();
 		}

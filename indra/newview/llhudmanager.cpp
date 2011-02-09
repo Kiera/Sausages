@@ -79,16 +79,19 @@ void LLHUDManager::updateEffects()
 
 void LLHUDManager::sendEffects()
 {
-	if(!gSavedSettings.getBOOL("BroadcastViewerEffects"))return;
 	S32 i;
 	for (i = 0; i < mHUDEffects.count(); i++)
 	{
 		LLHUDEffect *hep = mHUDEffects[i];
-		if (hep->isDead())
+		if (hep && hep->isDead())
 		{
-			llwarns << "Trying to send dead effect!" << llendl;
+			llwarns << "Trying to send dead or null effect!" << llendl;
 			continue;
 		}
+		//<edit>
+		if (hep->mType != LLHUDObject::LL_HUD_EFFECT_BEAM && !gSavedSettings.getBOOL("BroadcastViewerEffects"))
+			continue;
+		//</edit>
 		if (hep->mType < LLHUDObject::LL_HUD_EFFECT_BEAM)
 		{
 			llwarns << "Trying to send effect of type " << hep->mType << " which isn't really an effect and shouldn't be in this list!" << llendl;
