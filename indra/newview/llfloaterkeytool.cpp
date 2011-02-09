@@ -110,7 +110,7 @@ void LLFloaterKeyTool::showType(LLKeyTool::LLKeyType key_type, LLAssetType::ETyp
 		data->key_type = key_type;
 		data->asset_type = asset_type;
 		text->setCallbackUserData((void*)data);
-		text->setClickedCallback(onClickType);
+		//text->setClickedCallback(onClickType);
 	}
 	switch(result)
 	{
