@@ -24,20 +24,35 @@
 #include "llfloaterattachments.h"
 #include "llworld.h"
 #include "llviewerregion.h"
+#include "llfile.h"
 
-//half of this file is copy/pasted from llfloaterexport and I'm not unshitting it.
+#include "llmath.h"
+#include "llv4math.h"
+
+#include "llfloatertextdump.h"
+
+//Half of this file is copy/pasted from llfloaterexport and the stuff I tacked on sucks. I'm not unshitting it. You've been warned.
+//but, it'll be patched soon, so who cares.
+
+//the fullid -> localid mappings are probably wrong or will be missing altogether. oh well.
 
 std::vector<LLFloaterAttachments*> LLFloaterAttachments::instances;
 U32 LLFloaterAttachments::sCurrentRequestID = 1;
+std::map<LLUUID, S16> LLFloaterAttachments::sInventoryRequests;
 
 LLFloaterAttachments::LLFloaterAttachments()
-:	LLFloater()
+:	LLFloater(),
+	mReceivedProps(0),
+	mViewingChildren(false)
 {
 	mSelection = LLSelectMgr::getInstance()->getSelection();
 	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_attachments.xml");
 
 	if(LLFloaterAttachments::instances.empty())
+	{
 		gMessageSystem->addHandlerFuncFast(_PREHASH_ObjectPropertiesFamily, &processObjectPropertiesFamily);
+		gMessageSystem->addHandlerFuncFast(_PREHASH_KillObject, &dispatchKillObject);
+	}
 
 	LLFloaterAttachments::instances.push_back(this);
 }
@@ -52,7 +67,10 @@ LLFloaterAttachments::~LLFloaterAttachments()
 	}
 
 	if(LLFloaterAttachments::instances.empty())
+	{
 		gMessageSystem->delHandlerFuncFast(_PREHASH_ObjectPropertiesFamily, &processObjectPropertiesFamily);
+		gMessageSystem->delHandlerFuncFast(_PREHASH_KillObject, &dispatchKillObject);
+	}
 }
 
 BOOL LLFloaterAttachments::postBuild(void)
@@ -60,316 +78,298 @@ BOOL LLFloaterAttachments::postBuild(void)
 	if(!mSelection) return TRUE;
 	if(mSelection->getRootObjectCount() < 1) return TRUE;
 
-	// Older stuff
+	childSetCommitCallback("attachment_list", onCommitAttachmentList, this);
 
-	LLScrollListCtrl* list = getChild<LLScrollListCtrl>("attachment_list");
+	childSetAction("inventory_btn", onClickInventory, this);
+	childSetAction("textures_btn", onClickTextures, this);
+	childSetAction("view_children_btn", onClickViewChildren, this);
 
-	std::map<LLViewerObject*, bool> avatars;
+	LLViewerObject* avatar = NULL;
 
 	for (LLObjectSelection::valid_root_iterator iter = mSelection->valid_root_begin();
 		 iter != mSelection->valid_root_end(); iter++)
 	{
 		LLSelectNode* nodep = *iter;
 		LLViewerObject* objectp = nodep->getObject();
-		std::string objectp_id = llformat("%d", objectp->getLocalID());
 
-		if(list->getItemIndex(objectp->getID()) == -1)
+		LLViewerObject* parentp = objectp->getSubParent();
+		if(parentp)
 		{
-			bool is_attachment = false;
-			bool is_root = true;
-			LLViewerObject* parentp = objectp->getSubParent();
-			if(parentp)
+			if(parentp->isAvatar())
 			{
-				if(!parentp->isAvatar())
-				{
-					// parent is a prim I guess
-					is_root = false;
-				}
-				else
-				{
-					// parent is an avatar
-					is_attachment = true;
-					if(!avatars[parentp]) avatars[parentp] = true;
-				}
-			}
-
-			bool is_prim = true;
-			if(objectp->getPCode() >= LL_PCODE_APP)
-			{
-				is_prim = false;
-			}
-
-			bool is_avatar = objectp->isAvatar();
-
-			
-			if(is_root && is_prim && is_attachment)
-			{
-				LLSD element;
-				element["id"] = objectp->getID();
-
-				LLSD& check_column = element["columns"][LIST_CHECKED];
-				check_column["column"] = "checked";
-				check_column["type"] = "checkbox";
-				check_column["value"] = true;
-
-				LLSD& type_column = element["columns"][LIST_TYPE];
-				type_column["column"] = "type";
-				type_column["type"] = "icon";
-				type_column["value"] = "inv_item_object.tga";
-
-				LLSD& name_column = element["columns"][LIST_NAME];
-				name_column["column"] = "name";
-				if(is_attachment)
-					name_column["value"] = nodep->mName + " (worn on " + utf8str_tolower(objectp->getAttachmentPointName()) + ")";
-				else
-					name_column["value"] = nodep->mName;
-
-				LLSD& avatarid_column = element["columns"][LIST_AVATARID];
-				avatarid_column["column"] = "avatarid";
-				if(is_attachment)
-					avatarid_column["value"] = parentp->getID();
-				else
-					avatarid_column["value"] = LLUUID::null;
-
-				list->addElement(element, ADD_BOTTOM);
-
-				addToPrimList(objectp);
-			}
-			else if(is_avatar)
-			{
-				if(!avatars[objectp])
-				{
-					avatars[objectp] = true;
-				}
+				// parent is an avatar
+				avatar = parentp;
+				break;
 			}
 		}
+
+		if(objectp->isAvatar())
+		{
+			avatar = objectp;
+			break;
+		}
+
 	}
 
-	if(!avatars.empty())
+	if(avatar)
 	{
 		std::string av_name;
-		gCacheName->getFullName((*avatars.begin()).first->getID(), av_name);
+		gCacheName->getFullName(avatar->getID(), av_name);
 
 		if(!av_name.empty())
-		{
-			//gObjectList.getUUIDFromLocal();
-			this->setTitle(av_name + " attachments...");
-		}
-	}
+			setTitle(av_name + " HUDs");
 
-	//try and find the prims for the HUD attachments
-	std::map<LLViewerObject*, bool>::iterator avatar_iter = avatars.begin();
-	std::map<LLViewerObject*, bool>::iterator avatars_end = avatars.end();
-	for( ; avatar_iter != avatars_end; avatar_iter++)
-	{
-		LLViewerObject* avatar = (*avatar_iter).first;
-		addAvatarStuff((LLVOAvatar*)avatar);
-
-		mAvatarIDs.insert(avatar->getID());
-
-		U32 avatarid = avatar->getLocalID();
-
-		gMessageSystem->newMessageFast(_PREHASH_ObjectSelect);
-		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-		gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-		gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
-		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-		gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, avatarid+1);
-		int block_counter = 0;
-
-		for (int i=2; i<500; ++i)
-		{
-			block_counter++;
-			if(block_counter >= 254)
-			{
-				// start a new message
-				gMessageSystem->sendReliable(avatar->getRegion()->getHost());
-				gMessageSystem->newMessageFast(_PREHASH_ObjectSelect);
-				gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-				gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-				gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
-			}
-			gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-			gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, i+avatarid);
-		}
-		gMessageSystem->sendReliable(avatar->getRegion()->getHost());
-
-		gMessageSystem->newMessageFast(_PREHASH_ObjectDeselect);
-		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-		gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-		gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
-		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-		gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, avatarid+1);
-		block_counter = 0;
-		for (int i=2; i<500; ++i)
-		{
-			block_counter++;
-			if(block_counter >= 254)
-			{
-				// start a new message
-				gMessageSystem->sendReliable(avatar->getRegion()->getHost());
-				gMessageSystem->newMessageFast(_PREHASH_ObjectDeselect);
-				gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-				gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-				gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
-			}
-			gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-			gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, avatarid+i);
-		}
-		gMessageSystem->sendReliable(avatar->getRegion()->getHost());
+		selectAgentHudPrims(avatar);
 	}
 
 	return TRUE;
 }
 
-void LLFloaterAttachments::addAvatarStuff(LLVOAvatar* avatarp)
+void LLFloaterAttachments::onCommitAttachmentList(LLUICtrl* ctrl, void* user_data)
 {
-	// Add attachments
-	LLViewerObject::child_list_t child_list = avatarp->getChildren();
-	for (LLViewerObject::child_list_t::iterator i = child_list.begin(); i != child_list.end(); ++i)
+	LLFloaterAttachments* floaterp = (LLFloaterAttachments*)user_data;
+	floaterp->refreshButtons();
+}
+
+void LLFloaterAttachments::refreshButtons()
+{
+	LLScrollListCtrl* scrollp = getChild<LLScrollListCtrl>("attachment_list");
+	LLScrollListItem* scroll_itemp = scrollp->getFirstSelected();
+	if(scroll_itemp)
 	{
-		requestAttachmentProps(*i, avatarp);
+		LLUUID primid = scroll_itemp->getUUID();
+		BOOL have_localid = mReceivedProps >= mPendingRequests.size() && mFull2LocalID.count(primid) > 0;
+
+		getChild<LLButton>("inventory_btn")->setEnabled(have_localid);
+		getChild<LLButton>("textures_btn")->setEnabled(have_localid);
+		if(mViewingChildren)
+			getChild<LLButton>("view_children_btn")->setEnabled(TRUE);
+		else
+			getChild<LLButton>("view_children_btn")->setEnabled(mHUDAttachmentHierarchy.count(primid) > 0);
+	}
+	else
+	{
+		getChild<LLButton>("inventory_btn")->setEnabled(FALSE);
+		getChild<LLButton>("textures_btn")->setEnabled(FALSE);
+		getChild<LLButton>("view_children_btn")->setEnabled(FALSE);
+	}
+
+	if(mViewingChildren) getChild<LLButton>("view_children_btn")->setEnabled(TRUE);
+}
+
+void LLFloaterAttachments::onClickInventory(void* user_data)
+{
+	LLFloaterAttachments* floaterp = (LLFloaterAttachments*)user_data;
+
+	LLScrollListCtrl* scrollp = floaterp->getChild<LLScrollListCtrl>("attachment_list");
+	LLScrollListItem* scroll_itemp = scrollp->getFirstSelected();
+	if(scroll_itemp)
+	{
+		if(floaterp->mFull2LocalID.count(scroll_itemp->getUUID()) > 0)
+		{
+			sInventoryRequests[scroll_itemp->getUUID()] = floaterp->mHUDAttachmentPrims[scroll_itemp->getUUID()]->mInvSerial;
+
+			gMessageSystem->newMessageFast(_PREHASH_RequestTaskInventory);
+			gMessageSystem->nextBlockFast(_PREHASH_AgentData);
+			gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+			gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+			gMessageSystem->nextBlockFast(_PREHASH_InventoryData);
+			gMessageSystem->addU32Fast(_PREHASH_LocalID, floaterp->mFull2LocalID[scroll_itemp->getUUID()]);
+			gMessageSystem->sendReliable(gAgent.getRegionHost());
+		}
+		else
+		{
+			llinfos << "Couldn't find localid for " << scroll_itemp->getUUID().asString() << llendl;
+		}
 	}
 }
 
-void LLFloaterAttachments::requestAttachmentProps(LLViewerObject* childp, LLVOAvatar* avatarp)
+void LLFloaterAttachments::onClickTextures(void* user_data)
 {
-	LLScrollListCtrl* list = getChild<LLScrollListCtrl>("attachment_list");
+	LLFloaterAttachments* floaterp = (LLFloaterAttachments*)user_data;
 
-	if(list->getItemIndex(childp->getID()) == -1)
+	LLScrollListCtrl* scrollp = floaterp->getChild<LLScrollListCtrl>("attachment_list");
+	LLScrollListItem* scroll_itemp = scrollp->getFirstSelected();
+	if(scroll_itemp)
 	{
-		LLSD element;
-		element["id"] = childp->getID();
+		std::vector<LLUUID> textures = floaterp->mHUDAttachmentPrims[scroll_itemp->getUUID()]->mTextures;
 
-		LLSD& check_column = element["columns"][LIST_CHECKED];
-		check_column["column"] = "checked";
-		check_column["type"] = "checkbox";
-		check_column["value"] = false;
+		std::set<LLUUID> seen_textures;
 
-		LLSD& type_column = element["columns"][LIST_TYPE];
-		type_column["column"] = "type";
-		type_column["type"] = "icon";
-		type_column["value"] = "inv_item_object.tga";
+		std::vector<LLUUID>::iterator it_textures = textures.begin();
+		std::vector<LLUUID>::iterator it_textures_end = textures.end();
 
-		LLSD& name_column = element["columns"][LIST_NAME];
-		name_column["column"] = "name";
-		name_column["value"] = "Object (worn on " + utf8str_tolower(childp->getAttachmentPointName()) + ")";
-
-		LLSD& avatarid_column = element["columns"][LIST_AVATARID];
-		avatarid_column["column"] = "avatarid";
-		avatarid_column["value"] = avatarp->getID();
-
-		list->addElement(element, ADD_BOTTOM);
-
-		addToPrimList(childp);
-		//LLSelectMgr::getInstance()->selectObjectAndFamily(childp, false);
-		//LLSelectMgr::getInstance()->deselectObjectAndFamily(childp, true, true);
-
-		LLViewerObject::child_list_t select_list = childp->getChildren();
-		LLViewerObject::child_list_t::iterator select_iter;
-		int block_counter;
-
-		gMessageSystem->newMessageFast(_PREHASH_ObjectSelect);
-		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-		gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-		gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
-		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-		gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, childp->getLocalID());
-		block_counter = 0;
-		for (select_iter = select_list.begin(); select_iter != select_list.end(); ++select_iter)
+		while(it_textures != it_textures_end)
 		{
+			if(seen_textures.count((*it_textures)) == 0)
+			{
+				seen_textures.insert((*it_textures));
+				LLFloaterChat::addChat(LLChat((*it_textures).asString()));
+			}
+			it_textures++;
+		}
+	}
+}
+
+void LLFloaterAttachments::onClickViewChildren(void* user_data)
+{
+	LLFloaterAttachments* floaterp = (LLFloaterAttachments*)user_data;
+
+	LLScrollListCtrl* scrollp = floaterp->getChild<LLScrollListCtrl>("attachment_list");
+	LLScrollListItem* scroll_itemp = scrollp->getFirstSelected();
+	if(scroll_itemp && !floaterp->mViewingChildren)
+	{
+		LLUUID primid = scroll_itemp->getUUID();
+		if(floaterp->mHUDAttachmentHierarchy.count(primid) > 0)
+		{
+			scrollp->clearRows();
+
+			std::multimap<LLUUID, LLUUID>::iterator child_begin = floaterp->mHUDAttachmentHierarchy.lower_bound(primid);
+			std::multimap<LLUUID, LLUUID>::iterator child_end = floaterp->mHUDAttachmentHierarchy.upper_bound(primid);
+
+			while(child_begin != child_end)
+			{
+				LLHUDAttachment* hud_prim = floaterp->mHUDAttachmentPrims[child_begin->second];
+				floaterp->addAttachmentToList(hud_prim->mObjectID, hud_prim->mName);
+				child_begin++;
+			}
+			floaterp->getChild<LLButton>("view_children_btn")->setLabel(std::string("Parent..."));
+			floaterp->mViewingChildren = true;
+		}
+	}
+	else if(floaterp->mViewingChildren)
+	{
+		if(floaterp->mHUDAttachmentHierarchy.count(floaterp->mAvatarID) > 0)
+		{
+			scrollp->clearRows();
+
+			std::multimap<LLUUID, LLUUID>::iterator parent_begin = floaterp->mHUDAttachmentHierarchy.lower_bound(floaterp->mAvatarID);
+			std::multimap<LLUUID, LLUUID>::iterator parent_end = floaterp->mHUDAttachmentHierarchy.upper_bound(floaterp->mAvatarID);
+
+			while(parent_begin != parent_end)
+			{
+				LLHUDAttachment* hud_prim = floaterp->mHUDAttachmentPrims[parent_begin->second];
+				floaterp->addAttachmentToList(hud_prim->mObjectID, hud_prim->mName);
+				parent_begin++;
+			}
+			floaterp->getChild<LLButton>("view_children_btn")->setLabel(std::string("Children..."));
+			floaterp->mViewingChildren = false;
+		}
+	}
+
+	floaterp->refreshButtons();
+}
+
+void LLFloaterAttachments::selectAgentHudPrims(LLViewerObject* avatar)
+{
+	//try and find the prims for the HUD attachments
+
+	mAvatarID = avatar->getID();
+
+	U32 local_id = avatar->getLocalID() + 1;
+
+	mHandleKillObject = true;
+
+
+	gMessageSystem->newMessageFast(_PREHASH_ObjectSelect);
+	gMessageSystem->nextBlockFast(_PREHASH_AgentData);
+	gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+	gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
+	gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
+	gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, local_id);
+	int block_counter = 0;
+	int i = 0;
+
+	U32 ip = avatar->getRegion()->getHost().getAddress();
+	U32 port = avatar->getRegion()->getHost().getPort();
+
+	//try to select all of the possible hud prim localids
+	while(i<MAX_HUD_PRIM_NUM)
+	{
+		++local_id;
+
+		LLUUID fullid;
+		gObjectList.getUUIDFromLocal(fullid, local_id, ip, port);
+		if(fullid == LLUUID::null)
+		{
+			mPendingRequests.push_back(local_id);
+			i++;
+
 			block_counter++;
 			if(block_counter >= 254)
 			{
 				// start a new message
-				gMessageSystem->sendReliable(childp->getRegion()->getHost());
+				gMessageSystem->sendReliable(avatar->getRegion()->getHost());
 				gMessageSystem->newMessageFast(_PREHASH_ObjectSelect);
 				gMessageSystem->nextBlockFast(_PREHASH_AgentData);
 				gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
 				gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
 			}
 			gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-			gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, (*select_iter)->getLocalID());
+			gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, local_id);
 		}
-		gMessageSystem->sendReliable(childp->getRegion()->getHost());
+	}
+	gMessageSystem->sendReliable(avatar->getRegion()->getHost());
 
-		gMessageSystem->newMessageFast(_PREHASH_ObjectDeselect);
-		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-		gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-		gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
-		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-		gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, childp->getLocalID());
-		block_counter = 0;
-		for (select_iter = select_list.begin(); select_iter != select_list.end(); ++select_iter)
+	//deselect all of the hud prim localids
+	local_id = avatar->getLocalID() + 1;
+	i = 0;
+
+	gMessageSystem->newMessageFast(_PREHASH_ObjectDeselect);
+	gMessageSystem->nextBlockFast(_PREHASH_AgentData);
+	gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+	gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
+	gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
+	gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, local_id);
+	block_counter = 0;
+	while(i<MAX_HUD_PRIM_NUM)
+	{
+		local_id++;
+
+		LLUUID fullid;
+		gObjectList.getUUIDFromLocal(fullid, local_id, ip, port);
+		if(fullid == LLUUID::null)
 		{
+			i++;
+
 			block_counter++;
 			if(block_counter >= 254)
 			{
 				// start a new message
-				gMessageSystem->sendReliable(childp->getRegion()->getHost());
+				gMessageSystem->sendReliable(avatar->getRegion()->getHost());
 				gMessageSystem->newMessageFast(_PREHASH_ObjectDeselect);
 				gMessageSystem->nextBlockFast(_PREHASH_AgentData);
 				gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
 				gMessageSystem->addUUID(_PREHASH_SessionID, gAgent.getSessionID());
 			}
 			gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-			gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, (*select_iter)->getLocalID());
-		}
-		gMessageSystem->sendReliable(childp->getRegion()->getHost());
-	}
-}
-
-void LLFloaterAttachments::addToPrimList(LLViewerObject* object)
-{
-	mPrimList.push_back(object->getLocalID());
-	LLViewerObject::child_list_t child_list = object->getChildren();
-	for (LLViewerObject::child_list_t::iterator i = child_list.begin(); i != child_list.end(); ++i)
-	{
-		LLViewerObject* child = *i;
-		if(child->getPCode() < LL_PCODE_APP)
-		{
-			mPrimList.push_back(child->getLocalID());
+			gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, local_id);
 		}
 	}
+	gMessageSystem->sendReliable(avatar->getRegion()->getHost());
 }
 
-void LLFloaterAttachments::receivePrimName(LLViewerObject* object, std::string name)
+void LLFloaterAttachments::dispatchHUDObjectProperties(LLHUDAttachment* hud_attachment)
 {
-	LLUUID fullid = object->getID();
-	U32 localid = object->getLocalID();
-
-	if(std::find(mPrimList.begin(), mPrimList.end(), localid) != mPrimList.end())
+	std::vector<LLFloaterAttachments*>::iterator iter = LLFloaterAttachments::instances.begin();
+	std::vector<LLFloaterAttachments*>::iterator end = LLFloaterAttachments::instances.end();
+	for( ; iter != end; ++iter)
 	{
-		LLScrollListCtrl* list = getChild<LLScrollListCtrl>("attachment_list");
-		S32 item_index = list->getItemIndex(fullid);
-		if(item_index != -1)
-		{
-			std::vector<LLScrollListItem*> items = list->getAllData();
-			std::vector<LLScrollListItem*>::iterator iter = items.begin();
-			std::vector<LLScrollListItem*>::iterator end = items.end();
-			for( ; iter != end; ++iter)
-			{
-				if((*iter)->getUUID() == fullid)
-				{
-					(*iter)->getColumn(LIST_NAME)->setValue(name + " (worn on " + utf8str_tolower(object->getAttachmentPointName()) + ")");
-					break;
-				}
-			}
-		}
+		(*iter)->receiveHUDPrimInfo(hud_attachment);
 	}
 }
 
 void LLFloaterAttachments::receiveHUDPrimInfo(LLHUDAttachment* hud_attachment)
 {
 	//check that this is for an avatar we're monitoring
-	if(std::find(mAvatarIDs.begin(), mAvatarIDs.end(), hud_attachment->mOwnerID) != mAvatarIDs.end())
+	if( hud_attachment->mOwnerID == mAvatarID)
 	{
 		//check that we don't have this already and that it really is a hud object
 		if(mHUDAttachmentPrims.count(hud_attachment->mObjectID) == 0 && !gObjectList.findObject(hud_attachment->mObjectID))
 		{
-			mHUDAttachmentPrims[hud_attachment->mObjectID] = hud_attachment;
 
-			LLSelectMgr::sObjectPropertiesFamilyRequests.insert(hud_attachment->mObjectID);
+			mHUDAttachmentPrims[hud_attachment->mObjectID] = hud_attachment;
+			mHUDPrims.push_back(hud_attachment->mObjectID);
 
 			mRootRequests[sCurrentRequestID] = hud_attachment->mObjectID;
 
@@ -386,6 +386,66 @@ void LLFloaterAttachments::receiveHUDPrimInfo(LLHUDAttachment* hud_attachment)
 			gMessageSystem->sendReliable(gAgent.getRegionHost());
 		}
 	}
+	if(++mReceivedProps >= mPendingRequests.size())
+	{
+		connectFullAndLocalIDs();
+	}
+	llinfos << "Prim: " << mReceivedProps << ":" << mPendingRequests.size() << llendl;
+}
+
+void LLFloaterAttachments::dispatchKillObject(LLMessageSystem* msg, void** user_data)
+{
+	std::vector<LLFloaterAttachments*>::iterator iter = LLFloaterAttachments::instances.begin();
+	std::vector<LLFloaterAttachments*>::iterator end = LLFloaterAttachments::instances.end();
+	for( ; iter != end; ++iter)
+	{
+		if((*iter)->mHandleKillObject)
+		{
+			S32	i;
+
+			S32	num_objects = msg->getNumberOfBlocksFast(_PREHASH_ObjectData);
+
+			for (i = 0; i < num_objects; i++)
+			{
+				U32	local_id;
+				msg->getU32Fast(_PREHASH_ObjectData, _PREHASH_ID, local_id, i);
+				(*iter)->receiveKillObject(local_id);
+			}
+		}
+	}
+}
+
+void LLFloaterAttachments::receiveKillObject(U32 local_id)
+{
+	std::list<U32>::iterator localid_iter = std::find(mPendingRequests.begin(), mPendingRequests.end(), local_id);
+	if(localid_iter != mPendingRequests.end())
+	{
+		mPendingRequests.erase(localid_iter);
+
+		llinfos << "Prim: " << mReceivedProps << ":" << mPendingRequests.size() << llendl;
+
+		if(mReceivedProps >= mPendingRequests.size())
+		{
+			connectFullAndLocalIDs();
+		}
+	}
+}
+
+void LLFloaterAttachments::connectFullAndLocalIDs()
+{
+	mHandleKillObject = false;
+
+	std::list<U32>::iterator request_iter = mPendingRequests.begin();
+	std::list<LLUUID>::iterator hudprim_iter = mHUDPrims.begin();
+	while(request_iter != mPendingRequests.end())
+	{
+		mFull2LocalID[(*hudprim_iter)] = (*request_iter);
+
+		//llinfos << (*hudprim_iter).asString() << " : " << (*request_iter) << llendl;
+
+		request_iter++;
+		hudprim_iter++;
+	}
 }
 
 void LLFloaterAttachments::receiveHUDPrimRoot(LLHUDAttachment* hud_attachment)
@@ -394,10 +454,9 @@ void LLFloaterAttachments::receiveHUDPrimRoot(LLHUDAttachment* hud_attachment)
 
 	LLHUDAttachment* child = mHUDAttachmentPrims[mRootRequests[hud_attachment->mRequestID]];
 	//the object requested was a root prim
-	llinfos << "things" << llendl;
-	if(std::find(mAvatarIDs.begin(), mAvatarIDs.end(), hud_attachment->mObjectID) != mAvatarIDs.end())
+	if(hud_attachment->mObjectID == mAvatarID)
 	{
-		llinfos << hud_attachment->mName << " : " << child->mName << llendl;
+		//llinfos << hud_attachment->mName << " : " << child->mName << llendl;
 
 		mHUDAttachmentHierarchy.insert(std::pair<LLUUID,LLUUID>(hud_attachment->mObjectID, mRootRequests[hud_attachment->mRequestID]));
 
@@ -405,58 +464,16 @@ void LLFloaterAttachments::receiveHUDPrimRoot(LLHUDAttachment* hud_attachment)
 
 		if(list->getItemIndex(child->mObjectID) == -1)
 		{
-			LLSD element;
-			element["id"] = child->mObjectID;
-
-			LLSD& check_column = element["columns"][LIST_CHECKED];
-			check_column["column"] = "checked";
-			check_column["type"] = "checkbox";
-			check_column["value"] = false;
-
-			LLSD& type_column = element["columns"][LIST_TYPE];
-			type_column["column"] = "type";
-			type_column["type"] = "icon";
-			type_column["value"] = "inv_item_object.tga";
-
-			LLSD& name_column = element["columns"][LIST_NAME];
-			name_column["column"] = "name";
-			name_column["value"] = child->mName + " (worn on HUD??)";
-
-			LLSD& avatarid_column = element["columns"][LIST_AVATARID];
-			avatarid_column["column"] = "avatarid";
-			avatarid_column["value"] = child->mOwnerID;
-
-			list->addElement(element, ADD_BOTTOM);
+			if(!mViewingChildren)
+				addAttachmentToList(child->mObjectID, child->mName);
 		}
 	}
 	//the object requested was a child prim
 	else if(mHUDAttachmentPrims.count(hud_attachment->mObjectID))
 	{
-		llinfos << hud_attachment->mName << " : " << child->mName << llendl;
+		//llinfos << hud_attachment->mName << " : " << child->mName << llendl;
 
 		mHUDAttachmentHierarchy.insert(std::pair<LLUUID,LLUUID>(hud_attachment->mObjectID, mRootRequests[hud_attachment->mRequestID]));
-	}
-}
-
-// static
-void LLFloaterAttachments::dispatchObjectProperties(LLUUID fullid, std::string name, std::string desc)
-{
-	LLViewerObject* object = gObjectList.findObject(fullid);
-	std::vector<LLFloaterAttachments*>::iterator iter = LLFloaterAttachments::instances.begin();
-	std::vector<LLFloaterAttachments*>::iterator end = LLFloaterAttachments::instances.end();
-	for( ; iter != end; ++iter)
-	{
-		(*iter)->receivePrimName(object, name);
-	}
-}
-
-void LLFloaterAttachments::dispatchHUDObjectProperties(LLHUDAttachment* hud_attachment)
-{
-	std::vector<LLFloaterAttachments*>::iterator iter = LLFloaterAttachments::instances.begin();
-	std::vector<LLFloaterAttachments*>::iterator end = LLFloaterAttachments::instances.end();
-	for( ; iter != end; ++iter)
-	{
-		(*iter)->receiveHUDPrimInfo(hud_attachment);
 	}
 }
 
@@ -466,13 +483,8 @@ void LLFloaterAttachments::processObjectPropertiesFamily(LLMessageSystem* msg, v
 	LLUUID id;
 	msg->getUUIDFast(_PREHASH_ObjectData, _PREHASH_ObjectID, id);
 
-	LLUUID creator_id;
 	LLUUID owner_id;
 	LLUUID group_id;
-	LLUUID extra_id;
-	U32 base_mask, owner_mask, group_mask, everyone_mask, next_owner_mask;
-	LLSaleInfo sale_info;
-	LLCategory category;
 
 	msg->getU32Fast(_PREHASH_ObjectData, _PREHASH_RequestFlags,	request_flags );
 
@@ -483,16 +495,6 @@ void LLFloaterAttachments::processObjectPropertiesFamily(LLMessageSystem* msg, v
 
 	msg->getUUIDFast(_PREHASH_ObjectData, _PREHASH_OwnerID,		owner_id );
 	msg->getUUIDFast(_PREHASH_ObjectData, _PREHASH_GroupID,		group_id );
-	msg->getU32Fast(_PREHASH_ObjectData, _PREHASH_BaseMask,		base_mask );
-	msg->getU32Fast(_PREHASH_ObjectData, _PREHASH_OwnerMask,		owner_mask );
-	msg->getU32Fast(_PREHASH_ObjectData,_PREHASH_GroupMask,		group_mask );
-	msg->getU32Fast(_PREHASH_ObjectData, _PREHASH_EveryoneMask,	everyone_mask );
-	msg->getU32Fast(_PREHASH_ObjectData, _PREHASH_NextOwnerMask, next_owner_mask);
-	sale_info.unpackMessage(msg, _PREHASH_ObjectData);
-	category.unpackMessage(msg, _PREHASH_ObjectData);
-
-	LLUUID last_owner_id;
-	msg->getUUIDFast(_PREHASH_ObjectData, _PREHASH_LastOwnerID, last_owner_id );
 
 	// unpack name & desc
 	std::string name;
@@ -524,9 +526,50 @@ void LLFloaterAttachments::processObjectPropertiesFamily(LLMessageSystem* msg, v
 	}
 }
 
+void LLFloaterAttachments::addAttachmentToList(LLUUID objectid, std::string name)
+{
+	LLScrollListCtrl* list = getChild<LLScrollListCtrl>("attachment_list");
+	LLSD element;
+	element["id"] = objectid;
+
+	LLSD& type_column = element["columns"][LIST_TYPE];
+	type_column["column"] = "type";
+	type_column["type"] = "icon";
+	type_column["value"] = "inv_item_object.tga";
+
+	LLSD& name_column = element["columns"][LIST_NAME];
+	name_column["column"] = "name";
+	name_column["value"] = name;
+	list->addElement(element, ADD_BOTTOM);
+
+	refreshButtons();
+}
+
+void LLFloaterAttachments::dumpTaskInvFile(const std::string& title, const std::string &filename)
+{
+	std::string filename_and_local_path = gDirUtilp->getExpandedFilename(LL_PATH_CACHE, filename);
+	llifstream ifs(filename_and_local_path);
+	if(ifs.good())
+	{
+		std::stringstream sstr;
+
+		sstr << ifs.rdbuf();
+
+		LLFloaterTextDump::show(title, sstr.str());
+
+		ifs.close();
+		LLFile::remove(filename_and_local_path);
+	}
+	else
+	{
+		llwarns << "unable to load task inventory: " << filename_and_local_path
+				<< llendl;
+	}
+}
+
 //this is dumb.
-LLHUDAttachment::LLHUDAttachment(std::string name, std::string description, LLUUID owner_id, LLUUID object_id, LLUUID from_task_id, std::vector<LLUUID> textures, U32 request_id)
-	: mName(name), mDescription(description), mOwnerID(owner_id), mObjectID(object_id), mFromTaskID(from_task_id), mTextures(textures), mRequestID(request_id)
+LLHUDAttachment::LLHUDAttachment(std::string name, std::string description, LLUUID owner_id, LLUUID object_id, LLUUID from_task_id, std::vector<LLUUID> textures, U32 request_id, S32 inv_serial)
+	: mName(name), mDescription(description), mOwnerID(owner_id), mObjectID(object_id), mFromTaskID(from_task_id), mTextures(textures), mRequestID(request_id), mInvSerial(inv_serial)
 {
 }
 

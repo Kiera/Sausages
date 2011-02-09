@@ -4438,10 +4438,8 @@ void LLSelectMgr::processObjectProperties(LLMessageSystem* msg, void** user_data
 
 		// <edit> Send to export floaters
 		LLFloaterExport::receiveObjectProperties(id, name, desc);
-		if(node)
-			LLFloaterAttachments::dispatchObjectProperties(id, name, desc);
-		else
-			LLFloaterAttachments::dispatchHUDObjectProperties(new LLHUDAttachment(name, desc, owner_id, id, from_task_id, texture_ids));
+		if(!node)
+			LLFloaterAttachments::dispatchHUDObjectProperties(new LLHUDAttachment(name, desc, owner_id, id, from_task_id, texture_ids, 0, inv_serial));
 		// </edit>
 	}
 
