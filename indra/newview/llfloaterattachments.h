@@ -49,7 +49,7 @@ public:
 	static void onClickTextures(void* user_data);
 	static void onClickViewChildren(void* user_data);
 
-	void addAttachmentToList(LLUUID objectid, std::string name);
+	void addAttachmentToList(LLUUID objectid, std::string name, std::string desc);
 
 	void refreshButtons();
 
@@ -57,6 +57,7 @@ public:
 
 	bool mHandleKillObject;
 	bool mViewingChildren;
+	bool mIDsConnected;
 
 	//A MILLION STL CONTAINERS EVERYWHERE
 	LLUUID mAvatarID;
@@ -89,7 +90,8 @@ private:
 	enum LIST_COLUMN_ORDER
 	{
 		LIST_TYPE,
-		LIST_NAME
+		LIST_NAME,
+		LIST_DESC
 	};
 	
 	LLObjectSelectionHandle mSelection;

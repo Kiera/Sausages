@@ -43,7 +43,8 @@ std::map<LLUUID, S16> LLFloaterAttachments::sInventoryRequests;
 LLFloaterAttachments::LLFloaterAttachments()
 :	LLFloater(),
 	mReceivedProps(0),
-	mViewingChildren(false)
+	mViewingChildren(false),
+	mIDsConnected(false)
 {
 	mSelection = LLSelectMgr::getInstance()->getSelection();
 	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_attachments.xml");
@@ -230,7 +231,7 @@ void LLFloaterAttachments::onClickViewChildren(void* user_data)
 			while(child_begin != child_end)
 			{
 				LLHUDAttachment* hud_prim = floaterp->mHUDAttachmentPrims[child_begin->second];
-				floaterp->addAttachmentToList(hud_prim->mObjectID, hud_prim->mName);
+				floaterp->addAttachmentToList(hud_prim->mObjectID, hud_prim->mName, hud_prim->mDescription);
 				child_begin++;
 			}
 			floaterp->getChild<LLButton>("view_children_btn")->setLabel(std::string("Parent..."));
@@ -249,7 +250,7 @@ void LLFloaterAttachments::onClickViewChildren(void* user_data)
 			while(parent_begin != parent_end)
 			{
 				LLHUDAttachment* hud_prim = floaterp->mHUDAttachmentPrims[parent_begin->second];
-				floaterp->addAttachmentToList(hud_prim->mObjectID, hud_prim->mName);
+				floaterp->addAttachmentToList(hud_prim->mObjectID, hud_prim->mName, hud_prim->mDescription);
 				parent_begin++;
 			}
 			floaterp->getChild<LLButton>("view_children_btn")->setLabel(std::string("Children..."));
@@ -433,6 +434,9 @@ void LLFloaterAttachments::receiveKillObject(U32 local_id)
 
 void LLFloaterAttachments::connectFullAndLocalIDs()
 {
+	if(mIDsConnected) return;
+
+	mIDsConnected = true;
 	mHandleKillObject = false;
 
 	std::list<U32>::iterator request_iter = mPendingRequests.begin();
@@ -465,7 +469,7 @@ void LLFloaterAttachments::receiveHUDPrimRoot(LLHUDAttachment* hud_attachment)
 		if(list->getItemIndex(child->mObjectID) == -1)
 		{
 			if(!mViewingChildren)
-				addAttachmentToList(child->mObjectID, child->mName);
+				addAttachmentToList(child->mObjectID, child->mName, child->mDescription);
 		}
 	}
 	//the object requested was a child prim
@@ -515,7 +519,7 @@ void LLFloaterAttachments::processObjectPropertiesFamily(LLMessageSystem* msg, v
 	} func(id);
 	LLSelectNode* node = LLSelectMgr::getInstance()->getHoverObjects()->getFirstNode(&func);
 
-	if(!node && request_flags != 0)
+	if(!node)
 	{
 		std::vector<LLFloaterAttachments*>::iterator iter = LLFloaterAttachments::instances.begin();
 		std::vector<LLFloaterAttachments*>::iterator end = LLFloaterAttachments::instances.end();
@@ -526,7 +530,7 @@ void LLFloaterAttachments::processObjectPropertiesFamily(LLMessageSystem* msg, v
 	}
 }
 
-void LLFloaterAttachments::addAttachmentToList(LLUUID objectid, std::string name)
+void LLFloaterAttachments::addAttachmentToList(LLUUID objectid, std::string name, std::string desc)
 {
 	LLScrollListCtrl* list = getChild<LLScrollListCtrl>("attachment_list");
 	LLSD element;
@@ -540,6 +544,10 @@ void LLFloaterAttachments::addAttachmentToList(LLUUID objectid, std::string name
 	LLSD& name_column = element["columns"][LIST_NAME];
 	name_column["column"] = "name";
 	name_column["value"] = name;
+
+	LLSD& desc_column = element["columns"][LIST_DESC];
+	desc_column["column"] = "desc";
+	desc_column["value"] = desc;
 	list->addElement(element, ADD_BOTTOM);
 
 	refreshButtons();
