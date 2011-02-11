@@ -68,7 +68,7 @@ public:
 	std::map<LLUUID, LLHUDAttachment*> mHUDAttachmentPrims;
 	std::multimap<LLUUID, LLUUID> mHUDAttachmentHierarchy;
 
-	int mReceivedProps;
+	U32 mReceivedProps;
 
 	std::list<U32> mPendingRequests;
 	std::list<LLUUID> mHUDPrims;
