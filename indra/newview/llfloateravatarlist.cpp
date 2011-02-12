@@ -139,7 +139,7 @@ void LLAvatarListEntry::setPosition(LLVector3d position, bool this_sim, bool dra
 	{
 		if (mInSimFrame == U32_MAX)
 		{
-			chat_avatar_status(mName, mID, ALERT_TYPE_SIM, true);
+			chat_avatar_status(mDisplayName, mID, ALERT_TYPE_SIM, true);
 		}
 		mInSimFrame = mFrame;
 	}
@@ -147,7 +147,7 @@ void LLAvatarListEntry::setPosition(LLVector3d position, bool this_sim, bool dra
 	{
 		if (mInDrawFrame == U32_MAX)
 		{
-			chat_avatar_status(mName, mID, ALERT_TYPE_DRAW, true);
+			chat_avatar_status(mDisplayName, mID, ALERT_TYPE_DRAW, true);
 		}
 		mInDrawFrame = mFrame;
 	}
@@ -155,7 +155,7 @@ void LLAvatarListEntry::setPosition(LLVector3d position, bool this_sim, bool dra
 	{
 		if (mInShoutFrame == U32_MAX)
 		{
-			chat_avatar_status(mName, mID, ALERT_TYPE_SHOUTRANGE, true);
+			chat_avatar_status(mDisplayName, mID, ALERT_TYPE_SHOUTRANGE, true);
 		}
 		mInShoutFrame = mFrame;
 	}
@@ -163,7 +163,7 @@ void LLAvatarListEntry::setPosition(LLVector3d position, bool this_sim, bool dra
 	{
 		if (mInChatFrame == U32_MAX)
 		{
-			chat_avatar_status(mName, mID, ALERT_TYPE_CHATRANGE, true);
+			chat_avatar_status(mDisplayName, mID, ALERT_TYPE_CHATRANGE, true);
 		}
 		mInChatFrame = mFrame;
 	}
@@ -177,22 +177,22 @@ bool LLAvatarListEntry::getAlive()
 	if (mInSimFrame != U32_MAX && (current - mInSimFrame) >= 2)
 	{
 		mInSimFrame = U32_MAX;
-		chat_avatar_status(mName, mID, ALERT_TYPE_SIM, false);
+		chat_avatar_status(mDisplayName, mID, ALERT_TYPE_SIM, false);
 	}
 	if (mInDrawFrame != U32_MAX && (current - mInDrawFrame) >= 2)
 	{
 		mInDrawFrame = U32_MAX;
-		chat_avatar_status(mName, mID, ALERT_TYPE_DRAW, false);
+		chat_avatar_status(mDisplayName, mID, ALERT_TYPE_DRAW, false);
 	}
 	if (mInShoutFrame != U32_MAX && (current - mInShoutFrame) >= 2)
 	{
 		mInShoutFrame = U32_MAX;
-		chat_avatar_status(mName, mID, ALERT_TYPE_SHOUTRANGE, false);
+		chat_avatar_status(mDisplayName, mID, ALERT_TYPE_SHOUTRANGE, false);
 	}
 	if (mInChatFrame != U32_MAX && (current - mInChatFrame) >= 2)
 	{
 		mInChatFrame = U32_MAX;
-		chat_avatar_status(mName, mID, ALERT_TYPE_CHATRANGE, false);
+		chat_avatar_status(mDisplayName, mID, ALERT_TYPE_CHATRANGE, false);
 	}
 	return ((current - mFrame) <= 2);
 }
