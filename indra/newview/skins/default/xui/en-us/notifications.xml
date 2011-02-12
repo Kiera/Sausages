@@ -5279,6 +5279,14 @@ The complete contents you are offering are not yet locally available. Please try
 
   <notification
    icon="notifytip.tga"
+   name="IncompleteInventoryItem"
+   type="notifytip">
+The item you are accessing is not yet locally available. Please try again in a minute.
+
+ </notification>
+
+ <notification
+   icon="notifytip.tga"
    name="CannotModifyProtectedCategories"
    type="notifytip">
 You cannot modify protected categories.
@@ -6560,7 +6568,13 @@ An error has occurred while trying to connect to voice chat for [VOICE_CHANNEL_N
    name="ServerVersionChanged"
    priority="high"
    type="notifytip">
-The region you have entered is running a different simulator version. Click this message for details.
+The region you have entered is running a different simulator version.
+Current simulator : [NEWVERSION]
+Previous simulator: [OLDVERSION]
+    <unique>
+      <context key="OLDVERSION"/>
+      <context key="NEWVERSION"/>
+    </unique>
   </notification>
 
   <notification

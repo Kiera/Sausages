@@ -4329,9 +4329,12 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 	if (high_res)
 	{
 		send_agent_pause();
-		//rescale fonts
-		initFonts(scale_factor);
-		LLHUDText::reshape();
+		if (show_ui || !hide_hud)
+		{
+			//rescale fonts
+			initFonts(scale_factor);
+			LLHUDText::reshape();
+		}
 	}
 
 	S32 output_buffer_offset_y = 0;
@@ -4450,7 +4453,7 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 		LLPipeline::sShowHUDAttachments = TRUE;
 	}
 
-	if (high_res)
+	if (high_res && (show_ui || !hide_hud))
 	{
 		initFonts(1.f);
 		LLHUDText::reshape();

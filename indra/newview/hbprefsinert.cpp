@@ -70,9 +70,20 @@ private:
 	BOOL mEnableLLWind;
 	BOOL mEnableClouds;
 	BOOL mInitialEnableClouds;
+	BOOL mRezWithLandGroup;
 	BOOL mBroadcastViewerEffects;
+	BOOL mHighlightOwnNameInChat;
+	BOOL mHighlightOwnNameInIM;
+	BOOL mHighlightDisplayName;
+	BOOL mLegacyNamesForFriends;
+	BOOL mOmitResidentAsLastName;
+	BOOL mNotifyServerVersion;
+	LLColor4 mOwnNameChatColor;
+	std::string mHighlightNicknames;
 	U32 mSpeedRezInterval;
+	U32 mDecimalsForTools;
 	U32 mLinksForChattingObjects;
+	U32 mDisplayNamesUsage;
 	U32 mTimeFormat;
 	U32 mDateFormat;
 	U32 mSpoofProtectionAtOpen;
@@ -121,16 +132,40 @@ void LLPrefsInertImpl::refreshValues()
 	mPreviewAnimInWorld			= gSavedSettings.getBOOL("PreviewAnimInWorld");
 	mSpeedRez					= gSavedSettings.getBOOL("SpeedRez");
 	mSpeedRezInterval			= gSavedSettings.getU32("SpeedRezInterval");
+	mDecimalsForTools			= gSavedSettings.getU32("DecimalsForTools");
 	mLinksForChattingObjects	= gSavedSettings.getU32("LinksForChattingObjects");
 	mRevokePermsOnStandUp		= gSavedSettings.getBOOL("RevokePermsOnStandUp");
+	mRezWithLandGroup			= gSavedSettings.getBOOL("RezWithLandGroup");
 	mEnableLLWind				= gSavedSettings.getBOOL("WindEnabled");
 	mEnableClouds				= gSavedSettings.getBOOL("CloudsEnabled");
 	mBroadcastViewerEffects		= gSavedSettings.getBOOL("BroadcastViewerEffects");
+	mHighlightOwnNameInChat		= gSavedSettings.getBOOL("HighlightOwnNameInChat");
+	mHighlightOwnNameInIM		= gSavedSettings.getBOOL("HighlightOwnNameInIM");
+	mOwnNameChatColor			= gSavedSettings.getColor4("OwnNameChatColor");
+	if (LLStartUp::getStartupState() == STATE_STARTED)
+	{
+		mHighlightNicknames		= gSavedPerAccountSettings.getString("HighlightNicknames");
+		mHighlightDisplayName	= gSavedPerAccountSettings.getBOOL("HighlightDisplayName");
+	}
+	mDisplayNamesUsage			= gSavedSettings.getU32("DisplayNamesUsage");
+	mLegacyNamesForFriends		= gSavedSettings.getBOOL("LegacyNamesForFriends");
+	mOmitResidentAsLastName		= gSavedSettings.getBOOL("OmitResidentAsLastName");
+	mNotifyServerVersion		= gSavedSettings.getBOOL("NotifyServerVersion");
 }
 
 void LLPrefsInertImpl::refresh()
 {
 	refreshValues();
+	if (LLStartUp::getStartupState() != STATE_STARTED)
+	{
+		childDisable("highlight_nicknames_text");
+		childDisable("highlight_display_name_check");
+	}
+	else
+	{
+		childSetValue("highlight_nicknames_text", mHighlightNicknames);
+		childSetValue("highlight_display_name_check", mHighlightDisplayName);
+	}
 
 	childEnable("fetch_inventory_on_login_check");
 
@@ -191,15 +226,17 @@ void LLPrefsInertImpl::cancel()
 	gSavedSettings.setBOOL("DoubleClickTeleport",		mDoubleClickTeleport);
 	gSavedSettings.setBOOL("HideNotificationsInChat",	mHideNotificationsInChat);
 	gSavedSettings.setBOOL("PlayTypingSound",			mPlayTypingSound);
-	gSavedSettings.setBOOL("DisablePointAtAndBeam",			mDisablePointAtAndBeam);
+	gSavedSettings.setBOOL("DisablePointAtAndBeam",		mDisablePointAtAndBeam);
 	gSavedSettings.setBOOL("PrivateLookAt",				mPrivateLookAt);
 	gSavedSettings.setBOOL("FetchInventoryOnLogin",		mFetchInventoryOnLogin);
 	gSavedSettings.setBOOL("SecondsInChatAndIMs",		mSecondsInChatAndIMs);
 	gSavedSettings.setBOOL("PreviewAnimInWorld",		mPreviewAnimInWorld);
 	gSavedSettings.setBOOL("SpeedRez",					mSpeedRez);
 	gSavedSettings.setU32("SpeedRezInterval",			mSpeedRezInterval);
+	gSavedSettings.setU32("DecimalsForTools",			mDecimalsForTools);
 	gSavedSettings.setU32("LinksForChattingObjects",	mLinksForChattingObjects);
 	gSavedSettings.setBOOL("RevokePermsOnStandUp",		mRevokePermsOnStandUp);
+	gSavedSettings.setBOOL("RezWithLandGroup",			mRezWithLandGroup);
 	gSavedSettings.setBOOL("WindEnabled",				mEnableLLWind);
 	gSavedSettings.setBOOL("BroadcastViewerEffects",	mBroadcastViewerEffects);
 	gSavedSettings.setU32("SpoofProtectionLevel",		mSpoofProtectionAtOpen);
@@ -211,6 +248,18 @@ void LLPrefsInertImpl::cancel()
 		gSavedSettings.setBOOL("CloudsEnabled", mEnableClouds);
 		LLPipeline::toggleRenderTypeControl((void*)LLPipeline::RENDER_TYPE_CLOUDS);
 	}
+	gSavedSettings.setBOOL("HighlightOwnNameInChat",	mHighlightOwnNameInChat);
+	gSavedSettings.setBOOL("HighlightOwnNameInIM",		mHighlightOwnNameInIM);
+	gSavedSettings.setColor4("OwnNameChatColor",		mOwnNameChatColor);
+	if (LLStartUp::getStartupState() == STATE_STARTED)
+	{
+		gSavedPerAccountSettings.setString("HighlightNicknames", mHighlightNicknames);
+		gSavedPerAccountSettings.setBOOL("HighlightDisplayName", mHighlightDisplayName);
+	}
+	gSavedSettings.setU32("DisplayNamesUsage",			mDisplayNamesUsage);
+	gSavedSettings.setBOOL("LegacyNamesForFriends",		mLegacyNamesForFriends);
+	gSavedSettings.setBOOL("OmitResidentAsLastName",	mOmitResidentAsLastName);
+	gSavedSettings.setBOOL("NotifyServerVersion",		mNotifyServerVersion);
 }
 
 void LLPrefsInertImpl::apply()
@@ -279,6 +328,12 @@ void LLPrefsInertImpl::apply()
 			else
 				gMessageSystem->startSpoofProtection(0);
 		}
+	}
+
+	if (LLStartUp::getStartupState() == STATE_STARTED)
+	{
+		gSavedPerAccountSettings.setString("HighlightNicknames", childGetValue("highlight_nicknames_text"));
+		gSavedPerAccountSettings.setBOOL("HighlightDisplayName", childGetValue("highlight_display_name_check"));
 	}
 	refreshValues();
 }

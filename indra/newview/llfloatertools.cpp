@@ -60,6 +60,7 @@
 #include "llstatusbar.h"
 #include "lltabcontainer.h"
 #include "lltextbox.h"
+#include "qltoolalign.h"
 #include "lltoolbrush.h"
 #include "lltoolcomp.h"
 #include "lltooldraganddrop.h"
@@ -215,6 +216,8 @@ BOOL	LLFloaterTools::postBuild()
 	childSetCommitCallback("radio spin",click_popup_grab_spin,NULL);
 	mRadioPosition = getChild<LLCheckBoxCtrl>("radio position");
 	childSetCommitCallback("radio position",commit_select_tool,LLToolCompTranslate::getInstance());
+	mRadioAlign = getChild<LLCheckBoxCtrl>("radio align");
+	childSetCommitCallback("radio align", commit_select_tool, QLToolAlign::getInstance());
 	mRadioRotate = getChild<LLCheckBoxCtrl>("radio rotate");
 	childSetCommitCallback("radio rotate",commit_select_tool,LLToolCompRotate::getInstance());
 	mRadioStretch = getChild<LLCheckBoxCtrl>("radio stretch");
@@ -358,6 +361,7 @@ LLFloaterTools::LLFloaterTools()
 	mRadioSpin(NULL),
 
 	mRadioPosition(NULL),
+	mRadioAlign(NULL),
 	mRadioRotate(NULL),
 	mRadioStretch(NULL),
 	mRadioSelectFace(NULL),
@@ -583,6 +587,7 @@ void LLFloaterTools::updatePopup(LLCoordGL center, MASK mask)
 
 	// Edit buttons
 	BOOL edit_visible = tool == LLToolCompTranslate::getInstance() ||
+						tool == QLToolAlign::getInstance() ||
 						tool == LLToolCompRotate::getInstance() ||
 						tool == LLToolCompScale::getInstance() ||
 						tool == LLToolFace::getInstance() ||
@@ -592,6 +597,7 @@ void LLFloaterTools::updatePopup(LLCoordGL center, MASK mask)
 	mBtnEdit	->setToggleState( edit_visible );
 
 	mRadioPosition	->setVisible( edit_visible );
+	mRadioAlign		->setVisible( edit_visible );
 	mRadioRotate	->setVisible( edit_visible );
 	mRadioStretch	->setVisible( edit_visible );
 	if (mRadioSelectFace)
@@ -607,6 +613,7 @@ void LLFloaterTools::updatePopup(LLCoordGL center, MASK mask)
 	}
 
 	mRadioPosition	->set( tool == LLToolCompTranslate::getInstance() );
+	mRadioAlign 	->set( tool == QLToolAlign::getInstance() );
 	mRadioRotate	->set( tool == LLToolCompRotate::getInstance() );
 	mRadioStretch	->set( tool == LLToolCompScale::getInstance() );
 

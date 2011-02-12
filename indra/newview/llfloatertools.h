@@ -131,6 +131,7 @@ public:
 
 	// Edit buttons
 	LLCheckBoxCtrl	*mRadioPosition;
+	LLCheckBoxCtrl	*mRadioAlign;
 	LLCheckBoxCtrl	*mRadioRotate;
 	LLCheckBoxCtrl	*mRadioStretch;
 	LLCheckBoxCtrl	*mRadioSelectFace;

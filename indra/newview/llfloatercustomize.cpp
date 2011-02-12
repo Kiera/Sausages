@@ -1369,16 +1369,21 @@ void LLScrollingPanelParam::draw()
 
 void updateAvatarHeightDisplay()
 {
-       if (gFloaterCustomize)
-        {
-               LLVOAvatar* avatar = gAgent.getAvatarObject();
-               F32 avatar_size = (avatar->mBodySize.mV[VZ]) + (F32)0.17; //mBodySize is actually quite a bit off.
-               gFloaterCustomize->getChild<LLTextBox>("HeightTextM")->setValue(llformat("%.2f", avatar_size) + "m");
-               F32 feet = avatar_size / 0.3048;
-               F32 inches = (feet - (F32)((U32)feet)) * 12.0;
-               gFloaterCustomize->getChild<LLTextBox>("HeightTextI")->setValue(llformat("%d'%d\"", (U32)feet, (U32)inches));
-        }
- }
+	if (gFloaterCustomize)
+	{
+		LLVOAvatar* avatar = gAgent.getAvatarObject();
+		if (!avatar) return;	// Paranoia
+		F32 shoes = avatar->getVisualParamWeight("Shoe_Heels") * 0.08f;
+		shoes += avatar->getVisualParamWeight("Shoe_Platform") * 0.07f;
+		gFloaterCustomize->getChild<LLTextBox>("ShoesText")->setValue(llformat("%.2f", shoes) + "m");
+		F32 avatar_size = (avatar->mBodySize.mV[VZ]) - shoes + (F32)0.17; //mBodySize is actually quite a bit off.
+		gFloaterCustomize->getChild<LLTextBox>("HeightTextM")->setValue(llformat("%.2f", avatar_size) + "m");
+		F32 feet = avatar_size / 0.3048;
+		F32 inches = (feet - (F32)((U32)feet)) * 12.0;
+		gFloaterCustomize->getChild<LLTextBox>("HeightTextI")->setValue(llformat("%d'%d\"", (U32)feet, (U32)inches));
+		gFloaterCustomize->getChild<LLTextBox>("PelvisToFootText")->setValue(llformat("%.2f", avatar->getPelvisToFoot()) + "m");
+	}
+}
 
 // static
 void LLScrollingPanelParam::onSliderMoved(LLUICtrl* ctrl, void* userdata)

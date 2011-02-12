@@ -3154,20 +3154,16 @@ void process_agent_movement_complete(LLMessageSystem* msg, void**)
 	// send walk-vs-run status
 	gAgent.sendWalkRun(gAgent.getRunning() || gAgent.getAlwaysRun());
 
-	// If the server version has changed, display an info box and offer
-	// to display the release notes, unless this is the initial log in.
-	if (gLastVersionChannel == version_channel)
+	// If the server version has changed, display an info box, unless we don't
+	// want such notifications.
+	if (gLastVersionChannel != version_channel && !gLastVersionChannel.empty() &&
+		 gSavedSettings.getBOOL("NotifyServerVersion"))
 	{
-		return;
+		LLSD args;
+		args["OLDVERSION"] = gLastVersionChannel;
+		args["NEWVERSION"] = version_channel;
+		LLNotifications::instance().add("ServerVersionChanged", args);
 	}
-
-	if (!gLastVersionChannel.empty())
-	{
-		LLSD payload;
-		payload["message"] = version_channel;
-		LLNotifications::instance().add("ServerVersionChanged", LLSD(), payload);
-	}
-
 	gLastVersionChannel = version_channel;
 }
 

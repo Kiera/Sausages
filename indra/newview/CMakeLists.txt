@@ -203,6 +203,7 @@ set(viewer_SOURCE_FILES
     llfloaterpostprocess.cpp
     llfloaterpreference.cpp
     llfloaterproperties.cpp
+    llfloaterregiondebugconsole.cpp
     llfloaterregioninfo.cpp
     llfloaterreporter.cpp
 	llfloatersearchreplace.cpp
@@ -370,6 +371,7 @@ set(viewer_SOURCE_FILES
     lltexturestats.cpp
     lltexturestatsuploader.cpp
     lltextureview.cpp
+    qltoolalign.cpp
     lltoolbar.cpp
     lltoolbrush.cpp
     lltoolcomp.cpp
@@ -651,6 +653,7 @@ set(viewer_HEADER_FILES
     llfloaterpreference.h
     llfloaterperms.h
     llfloaterproperties.h
+    llfloaterregiondebugconsole.h
     llfloaterregioninfo.h
     llfloaterreporter.h
 	llfloatersearchreplace.h
@@ -821,6 +824,7 @@ set(viewer_HEADER_FILES
     lltexturestatsuploader.h
     lltextureview.h
     lltool.h
+    qltoolalign.h
     lltoolbar.h
     lltoolbrush.h
     lltoolcomp.h

@@ -71,6 +71,7 @@
 #include "llurlhistory.h"
 #include "llfirstuse.h"
 #include "llrender.h"
+#include "llfont.h"
 
 #include "llweb.h"
 #include "llsecondlifeurls.h"
@@ -692,6 +693,8 @@ bool LLAppViewer::init()
 	// </edit>
 	// Modify settings based on system configuration and compile options
 	settings_modify();
+	// Work around for a crash bug when changing OpenGL settings
+	LLFont::sOpenGLcrashOnRestart = (getenv("LL_OPENGL_RESTART_CRASH_BUG") != NULL);
 
 	// Find partition serial number (Windows) or hardware serial (Mac)
 	mSerialNumber = generateSerialNumber();

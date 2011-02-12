@@ -42,7 +42,11 @@
 
 	<check_box bottom="-70" follows="left|top" font="SansSerifSmall" height="16"
 	     initial_value="false" label="Zoom" left="4" mouse_opaque="true"
-	     name="radio zoom" radio_style="true" width="114" />
+	     name="radio zoom" radio_style="true" width="70" />
+	<check_box bottom="-70" follows="left|top" font="SansSerifSmall" height="16"
+	     initial_value="false" label="Align" left="75" mouse_opaque="true"
+	     name="radio align" radio_style="true" width="50"
+	     tool_tip="Aligns the edges of the selected prims along an axis, Keep SHIFT pressed to pack the prims till they are touching." />
 	<volume_slider bottom="-69" follows="left|top" height="14" increment="0.01"
 	     initial_val="0.125" left="114" max_val="0.5" min_val="0"
 	     mouse_opaque="true" name="slider zoom" width="134" />
