@@ -6156,8 +6156,8 @@ Grant this request?
    icon="notify.tga"
    name="ScriptDialog"
    type="notify">
-[FIRST] [LAST]&apos;s &apos;[TITLE]&apos; (ch[CHANNEL])
-[MESSAGE]
+[FIRST] [LAST]&apos;s &apos;[TITLE]&apos; (ch:[CHANNEL])
+    [MESSAGE]
     <form name="form">
       <button
        index="-1"
@@ -6170,7 +6170,7 @@ Grant this request?
    icon="notify.tga"
    name="ScriptTextBoxDialog"
    type="notify">
-    [FIRST] [LAST]&apos;s &apos;[TITLE]&apos;
+    [FIRST] [LAST]&apos;s &apos;[TITLE]&apos; (ch:[CHANNEL])
     [MESSAGE]
     <form name="form">
       <input name="message" />
