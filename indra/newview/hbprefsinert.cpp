@@ -125,7 +125,7 @@ void LLPrefsInertImpl::refreshValues()
 	mDoubleClickTeleport		= gSavedSettings.getBOOL("DoubleClickTeleport");
 	mHideNotificationsInChat	= gSavedSettings.getBOOL("HideNotificationsInChat");
 	mPlayTypingSound			= gSavedSettings.getBOOL("PlayTypingSound");
-	mDisablePointAtAndBeam			= gSavedSettings.getBOOL("DisablePointAtAndBeam");
+	mDisablePointAtAndBeam		= gSavedSettings.getBOOL("DisablePointAtAndBeam");
 	mPrivateLookAt				= gSavedSettings.getBOOL("PrivateLookAt");
 	mSecondsInChatAndIMs		= gSavedSettings.getBOOL("SecondsInChatAndIMs");
 	mFetchInventoryOnLogin		= gSavedSettings.getBOOL("FetchInventoryOnLogin");

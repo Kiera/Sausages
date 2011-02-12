@@ -57,6 +57,7 @@
 #include "llresmgr.h"
 #include "llselectmgr.h"
 #include "llslider.h"
+#include "llspinctrl.h"
 #include "llstatusbar.h"
 #include "lltabcontainer.h"
 #include "lltextbox.h"
@@ -174,6 +175,28 @@ void*	LLFloaterTools::createPanelLandInfo(void* data)
 	return floater->mPanelLandInfo;
 }
 
+void LLFloaterTools::toolsPrecision()
+{
+	U32 decimals = gSavedSettings.getU32("DecimalsForTools");
+	if (decimals != mPrecision)
+	{
+		if (decimals > 5)
+		{
+			decimals = 5;
+		}
+		getChild<LLSpinCtrl>("Pos X")->setPrecision(decimals);
+		getChild<LLSpinCtrl>("Pos Y")->setPrecision(decimals);
+		getChild<LLSpinCtrl>("Pos Z")->setPrecision(decimals);
+		getChild<LLSpinCtrl>("Scale X")->setPrecision(decimals);
+		getChild<LLSpinCtrl>("Scale Y")->setPrecision(decimals);
+		getChild<LLSpinCtrl>("Scale Z")->setPrecision(decimals);
+		getChild<LLSpinCtrl>("Rot X")->setPrecision(decimals);
+		getChild<LLSpinCtrl>("Rot Y")->setPrecision(decimals);
+		getChild<LLSpinCtrl>("Rot Z")->setPrecision(decimals);
+		mPrecision = decimals;
+	}
+}
+
 BOOL	LLFloaterTools::postBuild()
 {
 	
@@ -240,6 +263,9 @@ BOOL	LLFloaterTools::postBuild()
 	mTextGridMode = getChild<LLTextBox>("text ruler mode");
 	mComboGridMode = getChild<LLComboBox>("combobox grid mode");
 	childSetCommitCallback("combobox grid mode",commit_grid_mode, this);
+
+	toolsPrecision();
+
 	//
 	// Create Buttons
 	//
@@ -407,7 +433,8 @@ LLFloaterTools::LLFloaterTools()
 	mPanelLandInfo(NULL),
 
 	mTabLand(NULL),
-	mDirty(TRUE)
+	mDirty(TRUE),
+	mPrecision(3)
 {
 	setAutoFocus(FALSE);
 	LLCallbackMap::map_t factory_map;
@@ -471,6 +498,8 @@ void LLFloaterTools::refresh()
 	std::string prim_count_string;
 	LLResMgr::getInstance()->getIntegerString(prim_count_string, LLSelectMgr::getInstance()->getSelection()->getObjectCount());
 	childSetTextArg("prim_count", "[COUNT]", prim_count_string);
+
+	toolsPrecision();
 
 	// Refresh child tabs
 	mPanelPermissions->refresh();

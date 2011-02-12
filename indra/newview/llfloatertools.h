@@ -79,6 +79,8 @@ public:
 	// button highlights, etc.
 	void updatePopup(LLCoordGL center, MASK mask);
 
+	void toolsPrecision();
+
 	// When the floater is going away, reset any options that need to be 
 	// cleared.
 	void resetToolState();
@@ -192,6 +194,7 @@ public:
 
 private:
 	BOOL					mDirty;
+	U32						mPrecision;
 
 	std::map<std::string, std::string> mStatusText;
 };
