@@ -40,6 +40,7 @@
 #include "llcombobox.h"
 #include "llwind.h"
 #include "llviewernetwork.h"
+#include "llviewerparcelmedia.h"
 #include "pipeline.h"
 
 class LLPrefsInertImpl : public LLPanel
@@ -55,6 +56,7 @@ public:
 
 private:
 	static void onCommitCheckBox(LLUICtrl* ctrl, void* user_data);
+	static void onClickResetFilters(void* user_data);
 	void refreshValues();
 	BOOL mSaveScriptsAsMono;
 	BOOL mDoubleClickTeleport;
@@ -78,6 +80,7 @@ private:
 	BOOL mLegacyNamesForFriends;
 	BOOL mOmitResidentAsLastName;
 	BOOL mNotifyServerVersion;
+	BOOL mMediaEnableFilter;
 	LLColor4 mOwnNameChatColor;
 	std::string mHighlightNicknames;
 	U32 mSpeedRezInterval;
@@ -95,6 +98,7 @@ LLPrefsInertImpl::LLPrefsInertImpl()
 {
 	LLUICtrlFactory::getInstance()->buildPanel(this, "panel_preferences_inert.xml");
 	childSetCommitCallback("speed_rez_check", onCommitCheckBox, this);
+	childSetAction("reset_filters", onClickResetFilters, this);
 	refresh();
 	
 	mInitialEnableClouds = mEnableClouds;
@@ -117,6 +121,11 @@ void LLPrefsInertImpl::onCommitCheckBox(LLUICtrl* ctrl, void* user_data)
 		self->childDisable("speed_rez_interval");
 		self->childDisable("speed_rez_seconds");
 	}
+}
+
+void LLPrefsInertImpl::onClickResetFilters(void*)
+{
+	LLViewerParcelMedia::clearDomainFilterList();
 }
 
 void LLPrefsInertImpl::refreshValues()
@@ -151,6 +160,7 @@ void LLPrefsInertImpl::refreshValues()
 	mLegacyNamesForFriends		= gSavedSettings.getBOOL("LegacyNamesForFriends");
 	mOmitResidentAsLastName		= gSavedSettings.getBOOL("OmitResidentAsLastName");
 	mNotifyServerVersion		= gSavedSettings.getBOOL("NotifyServerVersion");
+	mMediaEnableFilter			= gSavedSettings.getBOOL("MediaEnableFilter");
 }
 
 void LLPrefsInertImpl::refresh()
@@ -160,6 +170,7 @@ void LLPrefsInertImpl::refresh()
 	{
 		childDisable("highlight_nicknames_text");
 		childDisable("highlight_display_name_check");
+		childDisable("reset_filters");
 	}
 	else
 	{
@@ -260,6 +271,7 @@ void LLPrefsInertImpl::cancel()
 	gSavedSettings.setBOOL("LegacyNamesForFriends",		mLegacyNamesForFriends);
 	gSavedSettings.setBOOL("OmitResidentAsLastName",	mOmitResidentAsLastName);
 	gSavedSettings.setBOOL("NotifyServerVersion",		mNotifyServerVersion);
+	gSavedSettings.setBOOL("MediaEnableFilter",			mMediaEnableFilter);
 }
 
 void LLPrefsInertImpl::apply()
