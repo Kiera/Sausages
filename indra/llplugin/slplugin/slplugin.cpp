@@ -237,7 +237,7 @@ int main(int argc, char **argv)
 #if LL_WINDOWS
 	checkExceptionHandler();
 #endif
-
+		
 #if LL_DARWIN
 	EventTargetRef event_target = GetEventDispatcherTarget();
 #endif

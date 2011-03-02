@@ -46,17 +46,27 @@
 #include "llviewerwindow.h"
 #include "llfirstuse.h"
 #include "llpluginclassmedia.h"
+#include "llnotify.h"
+#include "llsdserialize.h"
+#include "llaudioengine.h"
+#include "lloverlaybar.h"
 
 // Static Variables
 
 S32 LLViewerParcelMedia::sMediaParcelLocalID = 0;
 LLUUID LLViewerParcelMedia::sMediaRegionID;
 viewer_media_t LLViewerParcelMedia::sMediaImpl;
-
+bool LLViewerParcelMedia::sIsUserAction = false;
+bool LLViewerParcelMedia::sMediaFilterListLoaded = false;
+LLSD LLViewerParcelMedia::sMediaFilterList;
+std::set<std::string> LLViewerParcelMedia::sMediaQueries;
+std::set<std::string> LLViewerParcelMedia::sAllowedMedia;
+std::set<std::string> LLViewerParcelMedia::sDeniedMedia;
 
 // Local functions
 bool callback_play_media(const LLSD& notification, const LLSD& response, LLParcel* parcel);
-
+void callback_media_alert(const LLSD& notification, const LLSD& response, LLParcel* parcel, U32 type);
+std::string extractdomain(std::string url);
 
 // static
 void LLViewerParcelMedia::initClass()
@@ -175,7 +185,7 @@ void LLViewerParcelMedia::update(LLParcel* parcel)
 }
 
 // static
-void LLViewerParcelMedia::play(LLParcel* parcel)
+void LLViewerParcelMedia::play(LLParcel* parcel, bool filter)
 {
 	lldebugs << "LLViewerParcelMedia::play" << llendl;
 
@@ -183,6 +193,12 @@ void LLViewerParcelMedia::play(LLParcel* parcel)
 
 	if (!gSavedSettings.getBOOL("AudioStreamingVideo"))
 		return;
+
+	if (filter && gSavedSettings.getBOOL("MediaEnableFilter"))
+	{
+		filterMedia(parcel, 0);
+		return;
+	}
 
 	std::string media_url = parcel->getMediaURL();
 	std::string media_current_url = parcel->getMediaCurrentURL();
@@ -200,8 +216,7 @@ void LLViewerParcelMedia::play(LLParcel* parcel)
 						(sMediaImpl->getMediaURL() != media_url ||
 						 sMediaImpl->getMimeType() != mime_type ||
 						 sMediaImpl->getMediaTextureID() != placeholder_texture_id)))
- 	{
-		// If the url and mime type are the same, call play again
+	{
 		if (sMediaImpl)
 		{
 			// Delete the old media impl first so they don't fight over the texture.
@@ -576,3 +591,304 @@ void LLViewerParcelMediaNavigationObserver::onNavigateComplete( const EventType&
 
 }
 */
+
+void LLViewerParcelMedia::playStreamingMusic(LLParcel* parcel, bool filter)
+{
+	if (filter && gSavedSettings.getBOOL("MediaEnableFilter"))
+	{
+		filterMedia(parcel, 1);
+	}
+	else if (gAudiop)
+	{
+		std::string music_url = parcel->getMusicURL();
+		LLStringUtil::trim(music_url);
+		gAudiop->startInternetStream(music_url);
+		if (music_url.empty())
+		{
+			LLOverlayBar::audioFilterStop();
+		}
+		else
+		{
+			LLOverlayBar::audioFilterPlay();
+		}
+	}
+}
+
+void LLViewerParcelMedia::stopStreamingMusic()
+{
+	if (gAudiop)
+	{
+		gAudiop->stopInternetStream();
+		LLOverlayBar::audioFilterStop();
+	}
+}
+
+void LLViewerParcelMedia::filterMedia(LLParcel* parcel, U32 type)
+{
+	std::string media_action;
+	std::string media_url;
+	std::string domain;
+
+	if (type == 0)
+	{
+		media_url = parcel->getMediaURL();
+	}
+	else
+	{
+		media_url = parcel->getMusicURL();
+	}
+	LLStringUtil::trim(media_url);
+
+	domain = extractdomain(media_url);
+
+	if (sMediaQueries.count(domain) > 0)
+	{
+		sIsUserAction = false;
+		return;
+	}
+
+	if (sIsUserAction)
+	{
+		// This was a user manual request to play this media, so give
+		// it another chance...
+		sIsUserAction = false;
+		sDeniedMedia.erase(domain);
+	}
+
+	if (!sMediaFilterListLoaded || sDeniedMedia.count(domain) > 0)
+	{
+		media_action = "ignore";
+	}
+	else if (sAllowedMedia.count(domain) > 0)
+	{
+		media_action = "allow";
+	}
+	else
+	{
+		for (int i = 0; i < (int)sMediaFilterList.size(); i++)
+		{
+			if (sMediaFilterList[i].has(domain))
+			{
+				media_action = sMediaFilterList[i][domain].asString();
+				break;
+			}
+		}
+	}
+
+	if (media_action == "allow" || media_url.empty())
+	{
+		if (type == 0)
+		{
+			play(parcel, false);
+		}
+		else
+		{
+			playStreamingMusic(parcel, false);
+		}
+	}
+	else if (media_action == "deny")
+	{
+		LLSD args;
+		args["DOMAIN"] = domain;
+		LLNotifications::instance().add("MediaBlocked", args);
+		if (type == 1)
+		{
+			LLViewerParcelMedia::stopStreamingMusic();
+		}
+		// So to avoid other "blocked" messages later in the session
+		// for this url should it be requested again by a script.
+		sDeniedMedia.insert(domain);
+	}
+	else if (media_action == "ignore")
+	{
+		if (type == 1)
+		{
+			LLViewerParcelMedia::stopStreamingMusic();
+		}
+	}
+	else
+	{
+		sMediaQueries.insert(domain);
+		LLSD args;
+		args["DOMAIN"] = domain;
+		if (type == 0)
+		{
+			args["TYPE"] = "a media";
+		}
+		else
+		{
+			args["TYPE"] = "an audio";
+		}
+		LLNotifications::instance().add("MediaAlert", args, LLSD(), boost::bind(callback_media_alert, _1, _2, parcel, type));
+	}
+}
+
+void callback_media_alert(const LLSD &notification, const LLSD &response, LLParcel* parcel, U32 type)
+{
+	S32 option = LLNotification::getSelectedOption(notification, response);
+	std::string media_url;
+	if (type == 0)
+	{
+		media_url = parcel->getMediaURL();
+	}
+	else
+	{
+		media_url = parcel->getMusicURL();
+	}
+	LLStringUtil::trim(media_url);
+
+	std::string domain = extractdomain(media_url);
+
+	LLSD args;
+	args["DOMAIN"] = domain;
+
+	if (option == 0 || option == 3) // Allow or Whitelist
+	{
+		LLViewerParcelMedia::sAllowedMedia.insert(domain);
+		if (option == 3) // Whitelist
+		{
+			LLSD newmedia;
+			newmedia[domain] = "allow";
+			LLViewerParcelMedia::sMediaFilterList.append(newmedia);
+			LLViewerParcelMedia::saveDomainFilterList();
+			args["LISTED"] = " whitelisted";
+			LLNotifications::instance().add("MediaListed", args);
+		}
+		if (type == 0)
+		{
+			LLViewerParcelMedia::play(parcel, false);
+		}
+		else
+		{
+			LLViewerParcelMedia::playStreamingMusic(parcel, false);
+		}
+	}
+	else if (option == 1 || option == 2) // Deny or Blacklist
+	{
+		LLViewerParcelMedia::sDeniedMedia.insert(domain);
+		if (type == 1)
+		{
+			LLViewerParcelMedia::stopStreamingMusic();
+		}
+		if (option == 1) // Deny
+		{
+			LLNotifications::instance().add("MediaBlocked", args);
+		}
+		else // Blacklist
+		{
+			LLSD newmedia;
+			newmedia[domain] = "deny";
+			LLViewerParcelMedia::sMediaFilterList.append(newmedia);
+			LLViewerParcelMedia::saveDomainFilterList();
+			args["LISTED"] = " blacklisted";
+			LLNotifications::instance().add("MediaListed", args);
+		}
+	}
+
+	LLViewerParcelMedia::sMediaQueries.erase(domain);
+}
+
+void LLViewerParcelMedia::saveDomainFilterList()
+{
+	std::string medialist_filename = gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, "medialist.xml");
+
+	llofstream medialistFile(medialist_filename);
+	LLSDSerialize::toPrettyXML(sMediaFilterList, medialistFile);
+	medialistFile.close();
+}
+
+bool LLViewerParcelMedia::loadDomainFilterList()
+{
+	sMediaFilterListLoaded = true;
+
+	std::string medialist_filename = gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, "medialist.xml");
+
+	if (!LLFile::isfile(medialist_filename))
+	{
+		LLSD emptyllsd;
+		llofstream medialistFile(medialist_filename);
+		LLSDSerialize::toPrettyXML(emptyllsd, medialistFile);
+		medialistFile.close();
+	}
+
+	if (LLFile::isfile(medialist_filename))
+	{
+		llifstream medialistFile(medialist_filename);
+		LLSDSerialize::fromXML(sMediaFilterList, medialistFile);
+		medialistFile.close();
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void LLViewerParcelMedia::clearDomainFilterList()
+{
+	sMediaFilterList.clear();
+	sAllowedMedia.clear();
+	sDeniedMedia.clear();
+	saveDomainFilterList();
+	LLNotifications::instance().add("MediaFiltersCleared");
+}
+
+std::string extractdomain(std::string url)
+{
+	if (url.empty())
+	{
+		return url;
+	}
+
+	size_t pos = url.find("//");
+
+	if (pos != std::string::npos)
+	{
+		int count = url.size() - pos + 2;
+		url = url.substr(pos + 2, count);
+	}
+
+	if (url.find(gAgent.getRegion()->getHost().getHostName()) == 0)
+	{
+		// This must be a scripted object rezzed in the region:
+		// extend the concept of "domain" to encompass the
+		// scripted object server id and avoid blocking all other
+		// objects at once in this region...
+		pos = url.find("/");
+		if (pos != std::string::npos)
+		{
+			// Get rid of any port number
+			url = gAgent.getRegion()->getHost().getHostName() + url.substr(pos);
+		}
+
+		pos = url.find("?");
+		if (pos != std::string::npos)
+		{
+			// Get rid of any parameter
+			url = url.substr(0, pos);
+		}
+
+		pos = url.rfind("/");
+		if (pos != std::string::npos)
+		{
+			// Get rid of the filename, if any, keeping only the server + path
+			url = url.substr(0, pos);
+		}
+	}
+	else
+	{
+		pos = url.find("/");
+		if (pos != std::string::npos)
+		{
+			url = url.substr(0, pos);
+		}
+
+		pos = url.find(":");  
+		if (pos != std::string::npos)
+		{
+			url = url.substr(0, pos);
+		}
+	}
+
+	return url;
+}
