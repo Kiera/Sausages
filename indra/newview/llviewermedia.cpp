@@ -492,7 +492,14 @@ LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_
 		{
 			LLPluginClassMedia* media_source = new LLPluginClassMedia(owner);
 			media_source->setSize(default_width, default_height);
-			if (media_source->init(launcher_name, plugin_name, false, user_data_path))
+			U32 priority = 0;
+#if LL_DARWIN || LL_LINUX
+			if (!gSavedSettings.getBOOL("PluginPrioForWebkitOnly") || plugin_basename.find("webkit") != std::string::npos)
+			{
+				priority = gSavedSettings.getU32("PluginPriority");
+			}
+#endif
+			if (media_source->init(launcher_name, plugin_name, false, user_data_path, priority))
 			{
 				return media_source;
 			}

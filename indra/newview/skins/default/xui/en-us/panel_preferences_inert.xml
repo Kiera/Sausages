@@ -249,9 +249,6 @@ anything higher than 1 may bluescreen Windows in tcpip.sys)
 				label="Parcel media and audio stream filtering (allow/deny/blacklist/whitelist)" left="10"
 				mouse_opaque="true" name="media_enable_filter_check" radio_style="false"
 				width="390" />
-			<button name="reset_filters" label="Reset filters" font="SansSerifSmall" halign="center"
-				bottom_delta="0" left_delta="395" height="16" width="80" follows="left|top"
-				enabled="true" mouse_opaque="true" />
 			<check_box bottom_delta="-20" control_name="SaveScriptsAsMono" enabled="true"
 			    follows="left|top" font="SansSerifSmall" height="16" initial_value="true"
 	    		label="Save scripts in inventory as Mono scripts instead of LSL2" left="10"

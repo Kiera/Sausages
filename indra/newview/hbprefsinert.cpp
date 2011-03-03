@@ -56,7 +56,6 @@ public:
 
 private:
 	static void onCommitCheckBox(LLUICtrl* ctrl, void* user_data);
-	static void onClickResetFilters(void* user_data);
 	void refreshValues();
 	BOOL mSaveScriptsAsMono;
 	BOOL mDoubleClickTeleport;
@@ -98,7 +97,6 @@ LLPrefsInertImpl::LLPrefsInertImpl()
 {
 	LLUICtrlFactory::getInstance()->buildPanel(this, "panel_preferences_inert.xml");
 	childSetCommitCallback("speed_rez_check", onCommitCheckBox, this);
-	childSetAction("reset_filters", onClickResetFilters, this);
 	refresh();
 	
 	mInitialEnableClouds = mEnableClouds;
@@ -121,11 +119,6 @@ void LLPrefsInertImpl::onCommitCheckBox(LLUICtrl* ctrl, void* user_data)
 		self->childDisable("speed_rez_interval");
 		self->childDisable("speed_rez_seconds");
 	}
-}
-
-void LLPrefsInertImpl::onClickResetFilters(void*)
-{
-	LLViewerParcelMedia::clearDomainFilterList();
 }
 
 void LLPrefsInertImpl::refreshValues()
@@ -170,7 +163,6 @@ void LLPrefsInertImpl::refresh()
 	{
 		childDisable("highlight_nicknames_text");
 		childDisable("highlight_display_name_check");
-		childDisable("reset_filters");
 	}
 	else
 	{

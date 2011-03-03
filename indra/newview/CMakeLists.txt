@@ -187,6 +187,7 @@ set(viewer_SOURCE_FILES
     llfloaterlandholdings.cpp
     llfloaterlandmark.cpp
     llfloatermap.cpp
+    slfloatermediafilter.cpp
     llfloatermemleak.cpp
     llfloatermessagebuilder.cpp
     llfloatermessagelog.cpp
@@ -637,6 +638,7 @@ set(viewer_HEADER_FILES
     llfloaterlandholdings.h
     llfloaterlandmark.h
     llfloatermap.h
+    slfloatermediafilter.h
     llfloatermemleak.h
     llfloatermessagebuilder.h
     llfloatermessagelog.h

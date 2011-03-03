@@ -65,10 +65,12 @@ class LLViewerParcelMedia : public LLViewerMediaObserver
 			// stop the parcel music stream
 
 		static void filterMedia(LLParcel* parcel, U32 type); // type: 0 = media, 1 = streaming music
+		static bool allowedMedia(std::string media_url);
 
 		static bool loadDomainFilterList();
 		static void saveDomainFilterList();
 		static void clearDomainFilterList();
+		static std::string extractDomain(std::string url);
 
 		static void stop();
 			// user clicked stop button in media transport controls

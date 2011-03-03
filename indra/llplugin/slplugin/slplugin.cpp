@@ -203,7 +203,6 @@ int main(int argc, char **argv)
 	// see the missing heartbeat and log appropriately.
 	initExceptionHandler();
 #elif LL_DARWIN || LL_LINUX
-	setpriority(PRIO_PROCESS, getpid(), 19);
 
 	if(argc < 2)
 	{
@@ -214,6 +213,20 @@ int main(int argc, char **argv)
 	if(!LLStringUtil::convertToU32(argv[1], port))
 	{
 		LL_ERRS("slplugin") << "port number must be numeric" << LL_ENDL;
+	}
+	
+	if (argc > 2)
+	{
+		U32 priority = 0;
+		LLStringUtil::convertToU32(argv[1], priority);
+		if (priority > 0)
+		{
+			if (priority > 19)
+			{
+				priority = 19;
+			}
+			setpriority(PRIO_PROCESS, getpid(), (int)priority);
+		}
 	}
 
 	// Catch signals that most kinds of crashes will generate, and exit cleanly so the system crash dialog isn't shown.
