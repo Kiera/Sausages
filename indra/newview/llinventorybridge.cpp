@@ -700,9 +700,9 @@ void LLInvFVBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 	lldebugs << "LLInvFVBridge::buildContextMenu()" << llendl;
 	std::vector<std::string> items;
 	std::vector<std::string> disabled_items;
+	const LLInventoryObject *obj = getInventoryObject();
 	if(isInTrash())
 	{
-		const LLInventoryObject *obj = getInventoryObject();
 		if (obj && obj->getIsLinkType())
 		{
 			items.push_back(std::string("Find Original"));
@@ -722,7 +722,10 @@ void LLInvFVBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 	{
 		items.push_back(std::string("Open"));
 		items.push_back(std::string("Properties"));
-
+		if(obj && obj->getActualType() == LLAssetType::AT_OBJECT)
+		{
+			items.push_back("Restore To World");
+		}
 		getClipboardEntries(true, items, disabled_items, flags);
 	}
 	hideContextEntries(menu, items, disabled_items);

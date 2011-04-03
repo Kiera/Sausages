@@ -161,6 +161,10 @@
 	     name="Open" width="128">
 		<on_click filter="" function="Inventory.DoToSelected" userdata="open" />
 	</menu_item_call>
+	<menu_item_call bottom_delta="-18" height="18" label="Restore to World" left="0" mouse_opaque="true"
+	     name="Restore To World" width="128">
+		<on_click filter="" function="Inventory.DoToSelected" userdata="restoreToWorld" />
+	</menu_item_call>
 	<menu_item_call bottom_delta="-18" height="18" label="Properties" left="0" mouse_opaque="true"
 	     name="Properties" width="128">
 		<on_click filter="" function="Inventory.DoToSelected" userdata="properties" />
