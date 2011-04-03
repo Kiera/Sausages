@@ -253,7 +253,6 @@ void JCFloaterAreaSearch::results()
 	S32 i;
 	S32 total = gObjectList.getNumObjects();
 	LLViewerRegion* our_region = gAgent.getRegion();
-	int requested = 0;
 	for (i = 0; i < total; i++)
 	{
 		LLViewerObject *objectp = gObjectList.getObject(i);
@@ -261,16 +260,14 @@ void JCFloaterAreaSearch::results()
 		//check if this is a valid and non-temporary root prim
 		if (objectp &&
 			objectp->getRegion() == our_region && !objectp->isAvatar() && objectp->isRoot() &&
-			!objectp->flagTemporary() && !objectp->flagTemporaryOnRez())
+			!objectp->flagTemporary() && !objectp->flagTemporaryOnRez() && !objectp->isAttachment())
 		{
 			LLUUID object_id = objectp->getID();
 
 			//request information about this prim if necessary
 			if (sObjectDetails.count(object_id) == 0)
 			{
-				if(requested++ < 300){
-					requestIfNeeded(objectp);
-				}
+				requestIfNeeded(objectp);
 			}
 			else
 			{
@@ -286,10 +283,10 @@ void JCFloaterAreaSearch::results()
 					bool found = true;
 
 					//check that all of the fields are either a match or not required
-					if (found) found = (!sSearchingName || details->name.find(sSearchedName) != -1);
-					if (found) found = (!sSearchingDesc || details->desc.find(sSearchedDesc) != -1);
-					if (found) found = (!sSearchingOwner || haveOwner && object_owner.find(sSearchedOwner) != -1);
-					if (found) found = (!sSearchingGroup || haveGroup && object_group.find(sSearchedGroup) != -1);
+					if (found && sSearchingName) found = (details->name.find(sSearchedName) != -1);
+					if (found && sSearchingDesc) found = (details->desc.find(sSearchedDesc) != -1);
+					if (found && sSearchingOwner) found = (haveOwner && object_owner.find(sSearchedOwner) != -1);
+					if (found && sSearchingGroup) found = (haveGroup && object_group.find(sSearchedGroup) != -1);
 
 					if(found)
 					{
