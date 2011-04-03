@@ -8,6 +8,8 @@
 #include "llsdserialize.h"
 #include "llagent.h"
 #include "llvoavatar.h"
+#include "llinventorymodel.h"
+#include <boost/foreach.hpp>
 
 //static variables
 std::list<LLUUID> LLAO::mStandOverrides;
@@ -16,6 +18,28 @@ LLFloaterAO* LLFloaterAO::sInstance;
 BOOL LLAO::mEnabled = FALSE;
 F32 LLAO::mPeriod;
 LLAOStandTimer* LLAO::mTimer = NULL;
+std::vector< AOLineEditor* > LLFloaterAO::sLineEditorDrop;
+//local file only
+static const AO_Pair ao_pair_list[] = {AO_Pair("line_walking",LLUUID("6ed24bd8-91aa-4b12-ccc7-c97c857ab4e0")),
+	AO_Pair("line_running",LLUUID("05ddbff8-aaa9-92a1-2b74-8fe77a29b445")),
+	AO_Pair("line_crouchwalk",LLUUID("47f5f6fb-22e5-ae44-f871-73aaaf4a6022")),
+	AO_Pair("line_flying",LLUUID("aec4610c-757f-bc4e-c092-c6e9caf18daf")),
+	AO_Pair("line_turn_left",LLUUID("56e0ba0d-4a9f-7f27-6117-32f2ebbf6135")),
+	AO_Pair("line_turn_right",LLUUID("2d6daa51-3192-6794-8e2e-a15f8338ec30")),
+	AO_Pair("line_jumping",LLUUID("2305bd75-1ca9-b03b-1faa-b176b8a8c49e")),
+	AO_Pair("line_fly_up",LLUUID("62c5de58-cb33-5743-3d07-9e4cd4352864")),
+	AO_Pair("line_crouching",LLUUID("201f3fdf-cb1f-dbec-201f-7333e328ae7c")),
+	AO_Pair("line_fly_down",LLUUID("20f063ea-8306-2562-0b07-5c853b37b31e")),
+	AO_Pair("line_hover",LLUUID("4ae8016b-31b9-03bb-c401-b1ea941db41d")),
+	AO_Pair("line_sitting",LLUUID("1a5fe8ac-a804-8a5d-7cbd-56bd83184568")),
+	AO_Pair("line_prejump",LLUUID("7a4e87fe-de39-6fcb-6223-024b00893244")),
+	AO_Pair("line_falling",LLUUID("666307d9-a860-572d-6fd4-c3ab8865c094")),
+	AO_Pair("line_stride",LLUUID("1cb562b0-ba21-2202-efb3-30f82cdf9595")),
+	AO_Pair("line_soft_landing",LLUUID("7a17b059-12b2-41b1-570a-186368b6aa6f")),
+	AO_Pair("line_medium_landing",LLUUID("f4f00d6e-b9fe-9292-f4cb-0ae06ea58d57")),
+	AO_Pair("line_hard_landing",LLUUID("3da1d753-028a-5446-24f3-9c9b856d9422")),
+	AO_Pair("line_flying_slow",LLUUID("2b5a38b2-5e00-3a97-a495-4c826bc443e6")),
+	AO_Pair("line_sitting_on_ground",LLUUID("1a2bd58e-87ff-0df8-0b4c-53e047b0bb6e"))};
 
 LLAOStandTimer::LLAOStandTimer(F32 period) : LLEventTimer(period)
 {
@@ -105,6 +129,47 @@ void LLAOStandTimer::reset()
 {
 	mEventTimer.reset();
 }
+
+AOLineEditor::AOLineEditor(const std::string& name, const LLRect& rect,
+						  void (*callback)(LLViewerInventoryItem*,const char*),const char* field) :
+	LLView(name, rect, NOT_MOUSE_OPAQUE, FOLLOWS_ALL),
+	mCallback(callback),
+	mField(field)
+{
+}
+
+AOLineEditor::~AOLineEditor()
+{
+}
+
+BOOL AOLineEditor::handleDragAndDrop(S32 x, S32 y, MASK mask, BOOL drop,
+									 EDragAndDropType cargo_type,
+									 void* cargo_data,
+									 EAcceptance* accept,
+									 std::string& tooltip_msg)
+{
+	if(getParent())
+	{
+		LLViewerInventoryItem* inv_item = (LLViewerInventoryItem*)cargo_data;
+		if(gInventory.getItem(inv_item->getUUID()))
+		{
+			*accept = ACCEPT_YES_COPY_SINGLE;
+			if(drop)
+			{
+				mCallback(inv_item,mField);
+			}
+		}
+		else
+		{
+			*accept = ACCEPT_NO;
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+// -------------------------------------------------------
+
 //static
 void LLAO::setup()
 {
@@ -230,44 +295,53 @@ LLFloaterAO::LLFloaterAO()
 LLFloaterAO::~LLFloaterAO()
 {
 	sInstance = NULL;
+	while(!sLineEditorDrop.empty()) delete sLineEditorDrop.back(), sLineEditorDrop.pop_back();
 }
 
 BOOL LLFloaterAO::postBuild(void)
 {
 	childSetAction("btn_save", onClickSave, this);
 	childSetAction("btn_load", onClickLoad, this);
-
-	childSetCommitCallback("line_walking", onCommitAnim, this);
-	childSetCommitCallback("line_running", onCommitAnim, this);
-	childSetCommitCallback("line_crouchwalk", onCommitAnim, this);
-	childSetCommitCallback("line_flying", onCommitAnim, this);
-	childSetCommitCallback("line_turn_left", onCommitAnim, this);
-	childSetCommitCallback("line_turn_right", onCommitAnim, this);
-	childSetCommitCallback("line_jumping", onCommitAnim, this);
-	childSetCommitCallback("line_fly_up", onCommitAnim, this);
-	childSetCommitCallback("line_crouching", onCommitAnim, this);
-	childSetCommitCallback("line_fly_down", onCommitAnim, this);
+	//empty local list line_editor_drop
+	while(!sLineEditorDrop.empty()) delete sLineEditorDrop.back(), sLineEditorDrop.pop_back();
+	BOOST_FOREACH(AO_Pair pair,ao_pair_list)
+	{
+		LLLineEditor* editor = getChild<LLLineEditor>(pair.field);
+		sLineEditorDrop.push_back(new AOLineEditor(std::string("drop target ").append(pair.field), editor->getRect(), LLFloaterAO::onAnimDrop, pair.field));
+		addChild(sLineEditorDrop.back());
+		childSetCommitCallback(pair.field, onCommitAnim, this);
+	}
 	LLComboBox* combo = getChild<LLComboBox>( "combo_stands");
 	combo->setAllowTextEntry(TRUE,36,TRUE);
 	combo->setCommitCallback(onCommitStands);
 	combo->setCallbackUserData(this);
+	sLineEditorDrop.push_back(new AOLineEditor(std::string("drop target stands"), combo->getRect(), LLFloaterAO::onAnimDrop, "stands"));
+	addChild(sLineEditorDrop.back());
 	mStandsCombo = combo;
+	
 	childSetAction("combo_stands_add", onClickStandAdd, this);
 	childSetAction("combo_stands_delete", onClickStandRemove, this);
-	childSetCommitCallback("line_hover", onCommitAnim, this);
-	childSetCommitCallback("line_sitting", onCommitAnim, this);
-	childSetCommitCallback("line_prejump", onCommitAnim, this);
-	childSetCommitCallback("line_falling", onCommitAnim, this);
-	childSetCommitCallback("line_stride", onCommitAnim, this);
-	childSetCommitCallback("line_soft_landing", onCommitAnim, this);
-	childSetCommitCallback("line_medium_landing", onCommitAnim, this);
-	childSetCommitCallback("line_hard_landing", onCommitAnim, this);
-	childSetCommitCallback("line_flying_slow", onCommitAnim, this);
-	childSetCommitCallback("line_sitting_on_ground", onCommitAnim, this);
 	refresh();
 	return TRUE;
 }
-
+void LLFloaterAO::onAnimDrop(LLViewerInventoryItem* item, const char* field)
+{
+	LLUUID uuid = LLUUID::null;
+	if(item && item->getIsLinkType())
+		uuid = item->getLinkedItem()->getAssetUUID();
+	else
+		uuid = item->getAssetUUID();
+	if(sInstance){
+		if(strcmp(field,"stands") == 0){
+			sInstance->mStandsCombo->setLabel(uuid.asString());
+			onClickStandAdd(sInstance);
+		}
+		else{
+			sInstance->childSetText(field, uuid.asString());
+			onCommitAnim(NULL,sInstance);
+		}
+	}
+}
 std::string LLFloaterAO::idstr(LLUUID id)
 {
 	if(id.notNull()) return id.asString();
@@ -276,16 +350,10 @@ std::string LLFloaterAO::idstr(LLUUID id)
 
 void LLFloaterAO::refresh()
 {
-	childSetText("line_walking", idstr(LLAO::mOverrides[LLUUID("6ed24bd8-91aa-4b12-ccc7-c97c857ab4e0")]));
-	childSetText("line_running", idstr(LLAO::mOverrides[LLUUID("05ddbff8-aaa9-92a1-2b74-8fe77a29b445")]));
-	childSetText("line_crouchwalk", idstr(LLAO::mOverrides[LLUUID("47f5f6fb-22e5-ae44-f871-73aaaf4a6022")]));
-	childSetText("line_flying", idstr(LLAO::mOverrides[LLUUID("aec4610c-757f-bc4e-c092-c6e9caf18daf")]));
-	childSetText("line_turn_left", idstr(LLAO::mOverrides[LLUUID("56e0ba0d-4a9f-7f27-6117-32f2ebbf6135")]));
-	childSetText("line_turn_right", idstr(LLAO::mOverrides[LLUUID("2d6daa51-3192-6794-8e2e-a15f8338ec30")]));
-	childSetText("line_jumping", idstr(LLAO::mOverrides[LLUUID("2305bd75-1ca9-b03b-1faa-b176b8a8c49e")]));
-	childSetText("line_fly_up", idstr(LLAO::mOverrides[LLUUID("62c5de58-cb33-5743-3d07-9e4cd4352864")]));
-	childSetText("line_crouching", idstr(LLAO::mOverrides[LLUUID("201f3fdf-cb1f-dbec-201f-7333e328ae7c")]));
-	childSetText("line_fly_down", idstr(LLAO::mOverrides[LLUUID("20f063ea-8306-2562-0b07-5c853b37b31e")]));
+	BOOST_FOREACH(AO_Pair pair,ao_pair_list)
+	{
+		childSetText(pair.field, idstr(LLAO::mOverrides[pair.uuid]));
+	}
 	mStandsCombo->clearRows();
 	for(std::list<LLUUID>::iterator itr = LLAO::mStandOverrides.begin();itr != LLAO::mStandOverrides.end();
 		itr++)
@@ -293,16 +361,6 @@ void LLFloaterAO::refresh()
 		mStandsCombo->add((*itr).asString());
 	}
 	mStandsCombo->setSimple(LLStringExplicit(LLAO::mStandOverrides.back().asString()));
-	childSetText("line_hover", idstr(LLAO::mOverrides[LLUUID("4ae8016b-31b9-03bb-c401-b1ea941db41d")]));
-	childSetText("line_sitting", idstr(LLAO::mOverrides[LLUUID("1a5fe8ac-a804-8a5d-7cbd-56bd83184568")]));
-	childSetText("line_prejump", idstr(LLAO::mOverrides[LLUUID("7a4e87fe-de39-6fcb-6223-024b00893244")]));
-	childSetText("line_falling", idstr(LLAO::mOverrides[LLUUID("666307d9-a860-572d-6fd4-c3ab8865c094")]));
-	childSetText("line_stride", idstr(LLAO::mOverrides[LLUUID("1cb562b0-ba21-2202-efb3-30f82cdf9595")]));
-	childSetText("line_soft_landing", idstr(LLAO::mOverrides[LLUUID("7a17b059-12b2-41b1-570a-186368b6aa6f")]));
-	childSetText("line_medium_landing", idstr(LLAO::mOverrides[LLUUID("f4f00d6e-b9fe-9292-f4cb-0ae06ea58d57")]));
-	childSetText("line_hard_landing", idstr(LLAO::mOverrides[LLUUID("3da1d753-028a-5446-24f3-9c9b856d9422")]));
-	childSetText("line_flying_slow", idstr(LLAO::mOverrides[LLUUID("2b5a38b2-5e00-3a97-a495-4c826bc443e6")]));
-	childSetText("line_sitting_on_ground", idstr(LLAO::mOverrides[LLUUID("1a2bd58e-87ff-0df8-0b4c-53e047b0bb6e")]));
 }
 // static
 void LLFloaterAO::onCommitStands(LLUICtrl* ctrl, void* user_data)
@@ -314,8 +372,10 @@ void LLFloaterAO::onCommitStands(LLUICtrl* ctrl, void* user_data)
 	if(id.notNull() && itr != LLAO::mStandOverrides.end())
 	{
 		//back is always last played
-		avatarp->stopMotion(LLAO::mStandOverrides.back());
-		avatarp->startMotion(id);
+		if(LLAO::isEnabled()){
+			avatarp->stopMotion(LLAO::mStandOverrides.back());
+			avatarp->startMotion(id);
+		}
 		LLAO::mStandOverrides.push_back(id);
 		LLAO::mStandOverrides.erase(itr);
 
@@ -329,47 +389,10 @@ void LLFloaterAO::onCommitAnim(LLUICtrl* ctrl, void* user_data)
 	LLFloaterAO* floater = (LLFloaterAO*)user_data;
 
 	LLSD overrides;
-	LLUUID id;
-	id = LLUUID(floater->childGetValue("line_walking").asString());
-	if(id.notNull()) overrides["6ed24bd8-91aa-4b12-ccc7-c97c857ab4e0"] = id;
-	id = LLUUID(floater->childGetValue("line_running").asString());
-	if(id.notNull()) overrides["05ddbff8-aaa9-92a1-2b74-8fe77a29b445"] = id;
-	id = LLUUID(floater->childGetValue("line_crouchwalk").asString());
-	if(id.notNull()) overrides["47f5f6fb-22e5-ae44-f871-73aaaf4a6022"] = id;
-	id = LLUUID(floater->childGetValue("line_flying").asString());
-	if(id.notNull()) overrides["aec4610c-757f-bc4e-c092-c6e9caf18daf"] = id;
-	id = LLUUID(floater->childGetValue("line_turn_left").asString());
-	if(id.notNull()) overrides["56e0ba0d-4a9f-7f27-6117-32f2ebbf6135"] = id;
-	id = LLUUID(floater->childGetValue("line_turn_right").asString());
-	if(id.notNull()) overrides["2d6daa51-3192-6794-8e2e-a15f8338ec30"] = id;
-	id = LLUUID(floater->childGetValue("line_jumping").asString());
-	if(id.notNull()) overrides["2305bd75-1ca9-b03b-1faa-b176b8a8c49e"] = id;
-	id = LLUUID(floater->childGetValue("line_fly_up").asString());
-	if(id.notNull()) overrides["62c5de58-cb33-5743-3d07-9e4cd4352864"] = id;
-	id = LLUUID(floater->childGetValue("line_crouching").asString());
-	if(id.notNull()) overrides["201f3fdf-cb1f-dbec-201f-7333e328ae7c"] = id;
-	id = LLUUID(floater->childGetValue("line_fly_down").asString());
-	if(id.notNull()) overrides["20f063ea-8306-2562-0b07-5c853b37b31e"] = id;
-	id = LLUUID(floater->childGetValue("line_hover").asString());
-	if(id.notNull()) overrides["4ae8016b-31b9-03bb-c401-b1ea941db41d"] = id;
-	id = LLUUID(floater->childGetValue("line_sitting").asString());
-	if(id.notNull()) overrides["1a5fe8ac-a804-8a5d-7cbd-56bd83184568"] = id;
-	id = LLUUID(floater->childGetValue("line_prejump").asString());
-	if(id.notNull()) overrides["7a4e87fe-de39-6fcb-6223-024b00893244"] = id;
-	id = LLUUID(floater->childGetValue("line_falling").asString());
-	if(id.notNull()) overrides["666307d9-a860-572d-6fd4-c3ab8865c094"] = id;
-	id = LLUUID(floater->childGetValue("line_stride").asString());
-	if(id.notNull()) overrides["1cb562b0-ba21-2202-efb3-30f82cdf9595"] = id;
-	id = LLUUID(floater->childGetValue("line_soft_landing").asString());
-	if(id.notNull()) overrides["7a17b059-12b2-41b1-570a-186368b6aa6f"] = id;
-	id = LLUUID(floater->childGetValue("line_medium_landing").asString());
-	if(id.notNull()) overrides["f4f00d6e-b9fe-9292-f4cb-0ae06ea58d57"] = id;
-	id = LLUUID(floater->childGetValue("line_hard_landing").asString());
-	if(id.notNull()) overrides["3da1d753-028a-5446-24f3-9c9b856d9422"] = id;
-	id = LLUUID(floater->childGetValue("line_flying_slow").asString());
-	if(id.notNull()) overrides["2b5a38b2-5e00-3a97-a495-4c826bc443e6"] = id;
-	id = LLUUID(floater->childGetValue("line_sitting_on_ground").asString());
-	if(id.notNull()) overrides["1a2bd58e-87ff-0df8-0b4c-53e047b0bb6e"] = id;
+	BOOST_FOREACH(AO_Pair pair,ao_pair_list){
+		LLUUID id = LLUUID(floater->childGetValue(pair.field).asString());
+		if(id.notNull()) overrides[pair.uuid.asString()] = id;
+	}
 	for(std::list<LLUUID>::iterator itr = LLAO::mStandOverrides.begin();itr != LLAO::mStandOverrides.end();
 		itr++)
 	{
@@ -393,9 +416,11 @@ void LLFloaterAO::onClickStandRemove(void* user_data)
 	if(id.notNull() && itr != LLAO::mStandOverrides.end())
 	{
 		//back is always last played, front is next
-		avatarp->stopMotion(id);
+		if(LLAO::isEnabled()){
+			avatarp->stopMotion(id);
+			avatarp->startMotion(LLAO::mStandOverrides.front());
+		}
 		LLAO::mStandOverrides.erase(itr);
-		avatarp->startMotion(LLAO::mStandOverrides.front());
 		LLAO::mStandOverrides.push_back(LLAO::mStandOverrides.front());
 		LLAO::mStandOverrides.pop_front();
 
@@ -414,8 +439,10 @@ void LLFloaterAO::onClickStandAdd(void* user_data)
 	if(id.notNull() && itr == LLAO::mStandOverrides.end())
 	{
 		//back is always last played
-		avatarp->stopMotion(LLAO::mStandOverrides.back());
-		avatarp->startMotion(id);
+		if(LLAO::isEnabled()){
+			avatarp->stopMotion(LLAO::mStandOverrides.back());
+			avatarp->startMotion(id);
+		}
 		LLAO::mStandOverrides.push_back(id);
 
 		floater->refresh();
