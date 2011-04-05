@@ -4383,6 +4383,11 @@ void LLSelectMgr::processObjectProperties(LLMessageSystem* msg, void** user_data
 			}
 		}
 
+		// <LUNA>
+		// @hook OnObjectProperties(id,name,desc)
+		LUA_CALL("OnObjectProperties") << id << name << desc << LUA_END;
+		// </LUNA>
+
 		// Iterate through nodes at end, since it can be on both the regular AND hover list
 		struct f : public LLSelectedNodeFunctor
 		{
@@ -4530,6 +4535,10 @@ void LLSelectMgr::processObjectPropertiesFamily(LLMessageSystem* msg, void** use
 	// <edit> Send to export floaters
 	LLFloaterExport::receiveObjectProperties(id, name, desc);
 	// </edit>
+	// <LUNA>
+	// @hook OnObjectProperties(id,name,desc)
+	LUA_CALL("OnObjectProperties") << id << name << desc << LUA_END;
+	// </LUNA>
 	// the reporter widget askes the server for info about picked objects
 	if (request_flags & (COMPLAINT_REPORT_REQUEST | BUG_REPORT_REQUEST))
 	{

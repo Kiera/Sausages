@@ -1023,6 +1023,9 @@ U32 LLViewerObject::processUpdateMessage(LLMessageSystem *mesgsys,
 					mText->setColor(LLColor4(coloru));
 					mText->setStringUTF8(temp_string);
 					
+					// @hook OnSetText(id,string) Someone set this object's llSetText.
+					LUA_CALL("OnSetText") << getID() << temp_string << LUA_END;
+
 					if (mDrawable.notNull())
 					{
 						setChanged(MOVED | SILHOUETTE);
@@ -1441,6 +1444,7 @@ U32 LLViewerObject::processUpdateMessage(LLMessageSystem *mesgsys,
 					mText->setStringUTF8(temp_string);
 
 					setChanged(TEXTURE);
+					LUA_CALL("OnSetText") << temp_string << getID() << LUA_END;
 				}
 				else if(mText.notNull())
 				{
@@ -4232,6 +4236,8 @@ void LLViewerObject::setParticleSource(const LLPartSysData& particle_parameters,
 			else
 			{
 				image = gImageList.getImage(mPartSourcep->mPartSysData.mPartImageID);
+				// @hook OnAttachedParticles(id,owner,image_id,particle_system) Particle data.
+				LUA_CALL("OnAttachedParticles") << getID() << owner_id << mPartSourcep->getImage()->getID() << mPartSourcep->mPartSysData.serialize() << LUA_END;
 			}
 			mPartSourcep->setImage(image);
 		}
@@ -4281,6 +4287,8 @@ void LLViewerObject::unpackParticleSource(const S32 block_num, const LLUUID& own
 			else
 			{
 				image = gImageList.getImage(mPartSourcep->mPartSysData.mPartImageID);
+				// @hook OnAttachedParticles(id,owner,image_id,particle_system) Particle data.
+				LUA_CALL("OnAttachedParticles") << getID() << owner_id << mPartSourcep->getImage()->getID() << mPartSourcep->mPartSysData.serialize() << LUA_END;
 			}
 			mPartSourcep->setImage(image);
 		}
@@ -4403,6 +4411,8 @@ void LLViewerObject::setAttachedSound(const LLUUID &audio_uuid, const LLUUID& ow
 		}
 		return;
 	}
+	// @hook OnAttachedSound(id,audio_uuid,owner,gain,flags) Object playing a sound (includes looped sounds).
+	LUA_CALL("OnAttachedSound") << getID() << audio_uuid << owner_id << gain << flags << LUA_END;
 	if (flags & LL_SOUND_FLAG_LOOP
 		&& mAudioSourcep && mAudioSourcep->isLoop() && mAudioSourcep->getCurrentData()
 		&& mAudioSourcep->getCurrentData()->getID() == audio_uuid)

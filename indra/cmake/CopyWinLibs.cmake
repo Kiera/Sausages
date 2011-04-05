@@ -214,6 +214,9 @@ set(release_files
     libaprutil-1.dll
     libapriconv-1.dll
     openjpeg.dll
+	lua5.1.dll
+	lfs.dll
+	bit.dll
     )
     
 copy_if_different(

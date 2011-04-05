@@ -64,7 +64,7 @@ include_directories(
     ${LLXML_INCLUDE_DIRS}
     ${LSCRIPT_INCLUDE_DIRS}
     ${LSCRIPT_INCLUDE_DIRS}/lscript_compile
-	${LUA_INCLUDE_DIR} # LUNA
+	${LUA_INCLUDE_DIR}
     )
 
 set(viewer_SOURCE_FILES
@@ -1412,7 +1412,7 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${WINDOWS_LIBRARIES}
     ${XMLRPCEPI_LIBRARIES}
     ${ELFIO_LIBRARIES}
-	 ${LUA_LIBRARY}
+	${LUA_LIBRARY}
     )
 
 if (LINUX)

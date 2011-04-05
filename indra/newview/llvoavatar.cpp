@@ -3078,9 +3078,14 @@ void LLVOAvatar::idleUpdateLoadingEffect()
 		if (isFullyLoaded())
 		{
 			deleteParticleSource();
+			// @hook OnAvatarLoaded(id,name,region_id) Triggered when an avatar has been fully loaded.
+			LUA_CALL("OnAvatarLoaded") << getID() << getFullname() << getRegion()->getRegionID() << LUA_END;
 		}
 		else
 		{
+			// @hook OnAvatarLoading(id,name,region_id) Trigger loading effect plugin :V
+			LUA_CALL("OnAvatarLoading") << getID() << getFullname() << getRegion()->getRegionID() << LUA_END;
+			/*
 			LLPartSysData particle_parameters;
 
 			// fancy particle cloud designed by Brent
@@ -3109,6 +3114,7 @@ void LLVOAvatar::idleUpdateLoadingEffect()
 																 LLPartData::LL_PART_TARGET_POS_MASK );
 			
 			setParticleSource(particle_parameters, getID());
+			*/
 		}
 	}
 }	
@@ -6700,6 +6706,9 @@ LLViewerJointAttachment* LLVOAvatar::getTargetAttachmentPoint(LLViewerObject* vi
 BOOL LLVOAvatar::attachObject(LLViewerObject *viewer_object)
 {
 	LLViewerJointAttachment* attachment = getTargetAttachmentPoint(viewer_object);
+
+	// @hook OnAttach(UUID, Name) Object UUID has attached to avatar Name.
+	LUA_CALL("OnAttach") << viewer_object->getID() << getFullname() << LUA_END;
 
 	// <edit> testzone attachpt
 	if(!attachment)

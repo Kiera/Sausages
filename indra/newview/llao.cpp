@@ -48,6 +48,8 @@ BOOL LLAOStandTimer::tick()
 {
 	if(!mPaused && LLAO::isEnabled() && !LLAO::mStandOverrides.empty())
 	{
+		//todo dont make this dependent on isEnabled;
+		//LUA_CALL0("AOChangeStand");
 #ifdef AO_DEBUG
 		llinfos << "tick" << llendl;
 #endif

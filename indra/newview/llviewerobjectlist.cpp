@@ -1368,6 +1368,9 @@ LLViewerObject *LLViewerObjectList::createObjectViewer(const LLPCode pcode, LLVi
 	mObjects.put(objectp);
 
 	updateActive(objectp);
+	
+	// @hook OnObjectCreated(id) An object has rezzed/appeared.
+	LUA_CALL("OnObjectCreated") << fullid << LUA_END;
 
 	return objectp;
 }

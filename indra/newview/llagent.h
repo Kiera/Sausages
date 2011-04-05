@@ -410,6 +410,14 @@ public:
 	void			setFlying(BOOL fly);
 	void			toggleFlying();
 
+	static BOOL			getPhantom();
+	static void			setPhantom(BOOL phantom);
+	static void			togglePhantom();
+
+	static BOOL			isTPosed() { return mForceTPose; }
+	static void			setTPosed(BOOL TPose) { mForceTPose = TPose; }
+	static void			toggleTPosed();
+
 	// Does this parcel allow you to fly?
 	BOOL canFly();
 
@@ -808,6 +816,8 @@ public:
 	// </edit>
 
 private:
+	static BOOL exlPhantom;
+	static BOOL mForceTPose;
 	bool mbTeleportKeepsLookAt; // try to keep look-at after teleport is complete
 	bool mbAlwaysRun; // should the avatar run by default rather than walk
 	bool mbRunning;	// is the avatar trying to run right now
