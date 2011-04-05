@@ -88,14 +88,14 @@ private:
 };
 
 
-LLExportable::LLExportable(LLViewerObject* object, std::string name, std::map<U32,std::string>& primNameMap)
+LLExportable::LLExportable(LLViewerObject* object, std::string name, std::map<U32,std::pair<std::string, std::string> >& primNameMap)
 :	mObject(object),
 	mType(EXPORTABLE_OBJECT),
 	mPrimNameMap(&primNameMap)
 {
 }
 
-LLExportable::LLExportable(LLVOAvatar* avatar, EWearableType type, std::map<U32,std::string>& primNameMap)
+LLExportable::LLExportable(LLVOAvatar* avatar, EWearableType type, std::map<U32,std::pair<std::string, std::string> >& primNameMap)
 :	mAvatar(avatar),
 	mType(EXPORTABLE_WEARABLE),
 	mWearableType(type),
@@ -195,9 +195,12 @@ LLSD LLExportable::asLLSD()
 			}
 			prim_llsd["textures"] = te_llsd;
 
-			std::map<U32,std::string>::iterator pos = (*mPrimNameMap).find(object->getLocalID());
+			std::map<U32,std::pair<std::string, std::string> >::iterator pos = (*mPrimNameMap).find(object->getLocalID());
 			if(pos != (*mPrimNameMap).end())
-				prim_llsd["name"] = (*mPrimNameMap)[object->getLocalID()];
+			{
+				prim_llsd["name"] = (*mPrimNameMap)[object->getLocalID()].first;
+				prim_llsd["description"] = (*mPrimNameMap)[object->getLocalID()].second;
+			}
 
 			llsd[llformat("%d", object->getLocalID())] = prim_llsd;
 		}
@@ -293,7 +296,7 @@ BOOL LLFloaterExport::postBuild(void)
 		LLViewerObject* objectp = nodep->getObject();
 		U32 localid = objectp->getLocalID();
 		std::string name = nodep->mName;
-		mPrimNameMap[localid] = name;
+		mPrimNameMap[localid] = std::pair<std::string, std::string>(name, nodep->mDescription);
 	}
 
 	// Older stuff
@@ -756,8 +759,9 @@ void LLFloaterExport::onClickSaveAs(void* user_data)
 				LLSD item = (*map_iter).second;
 				if(item["type"].asString() == "prim")
 				{
-					std::string name = floater->mPrimNameMap[key];
+					std::string name = floater->mPrimNameMap[key].first;
 					item["name"] = name;
+					item["description"] = floater->mPrimNameMap[key].second;
 					// I don't understand C++ :(
 					sd[(*map_iter).first] = item;
 
@@ -862,13 +866,13 @@ void LLFloaterExport::updateNamesProgress()
 	childSetText("names_progress_text", llformat("Names retrieved: %d of %d", mPrimNameMap.size(), mPrimList.size()));
 }
 
-void LLFloaterExport::receivePrimName(LLViewerObject* object, std::string name)
+void LLFloaterExport::receivePrimName(LLViewerObject* object, std::string name, std::string desc)
 {
 	LLUUID fullid = object->getID();
 	U32 localid = object->getLocalID();
 	if(std::find(mPrimList.begin(), mPrimList.end(), localid) != mPrimList.end())
 	{
-		mPrimNameMap[localid] = name;
+		mPrimNameMap[localid] = std::pair<std::string, std::string>(name, desc);
 		LLScrollListCtrl* list = getChild<LLScrollListCtrl>("export_list");
 		S32 item_index = list->getItemIndex(fullid);
 		if(item_index != -1)
@@ -897,7 +901,7 @@ void LLFloaterExport::receiveObjectProperties(LLUUID fullid, std::string name, s
 	std::vector<LLFloaterExport*>::iterator end = LLFloaterExport::instances.end();
 	for( ; iter != end; ++iter)
 	{
-		(*iter)->receivePrimName(object, name);
+		(*iter)->receivePrimName(object, name, desc);
 	}
 }
 

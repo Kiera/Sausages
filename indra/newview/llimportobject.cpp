@@ -539,6 +539,10 @@ LLImportObject::LLImportObject(std::string id, LLSD prim)
 	{
 		mPrimName = prim["name"].asString();
 	}
+	if(prim.has("description"))
+	{
+		mPrimDescription = prim["description"].asString();
+	}
 }
 		
 void LLXmlImport::rez_supply()
@@ -984,6 +988,19 @@ void LLXmlImport::onNewPrim(LLViewerObject* object)
 		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
 		gMessageSystem->addU32Fast(_PREHASH_LocalID, object->getLocalID());
 		gMessageSystem->addStringFast(_PREHASH_Name, from->mPrimName);
+		gMessageSystem->sendReliable(gAgent.getRegionHost());
+	}
+
+	//Description
+	if(from->mPrimDescription != "")
+	{
+		gMessageSystem->newMessageFast(_PREHASH_ObjectDescription);
+		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
+		gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+		gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
+		gMessageSystem->addU32Fast(_PREHASH_LocalID, object->getLocalID());
+		gMessageSystem->addStringFast(_PREHASH_Description, from->mPrimDescription);
 		gMessageSystem->sendReliable(gAgent.getRegionHost());
 	}
 
