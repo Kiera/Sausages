@@ -45,6 +45,15 @@ class ViewerManifest(LLManifest):
         self.exclude("*.svn*")
         self.path(src="../../scripts/messages/message_template.msg", dst="app_settings/message_template.msg")
         self.path(src="../../etc/message.xml", dst="app_settings/message.xml")
+		if self.prefix(src="lua"):
+                self.path("*.lua")
+                # Plugins
+                self.path("Hooks")
+                # Macros
+                self.path("Macros")
+                # Libraries
+                self.path("lib")
+                self.end_prefix("lua")
 
         if self.prefix(src="app_settings"):
             self.exclude("logcontrol.xml")
@@ -238,6 +247,8 @@ class WindowsManifest(ViewerManifest):
 
         # For WebKit/Qt plugin runtimes (image format plugins)
         if self.prefix(src="../../libraries/i686-win32/lib/release/imageformats", dst="llplugin/imageformats"):
+			self.path("lfs.dll") # Lua filesystem module
+            self.path("bit.dll") # Bitwise operators
             self.path("qgif4.dll")
             self.path("qico4.dll")
             self.path("qjpeg4.dll")
