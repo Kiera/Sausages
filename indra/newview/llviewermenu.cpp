@@ -241,7 +241,6 @@
 #include "llao.h"
 #include "llfloatervfs.h"
 #include "llfloatervfsexplorer.h"
-#include "llfloaterexportregion.h"
 #include "llfloaterkeytool.h"
 #include "llfloaterattachments.h"
 // </edit>
@@ -5742,10 +5741,6 @@ class LLShowFloater : public view_listener_t
 		else if (floater_name == "areasearch")
 		{
 			JCFloaterAreaSearch::toggle();
-		}
-		else if (floater_name == "export region")
-		{
-			LLFloaterExportRegion::toggleInstance(LLSD());
 		}
 		else if (floater_name == "grid options")
 		{
