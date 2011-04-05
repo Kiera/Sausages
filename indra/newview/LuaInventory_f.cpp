@@ -160,7 +160,7 @@ void giveInventoryItem_Event(LLUUID &to_agent, LLUUID &item_id, LLUUID &im_sessi
 	LLViewerInventoryItem *item = gInventory.getItem(item_id);
 	if(!item) 
 	{
-		std::string dongs = llformat("Could not find item %s.",item_id.asString());
+		std::string dongs = llformat("Could not find item %s.",item_id.asString().c_str());
 		LuaError(dongs.c_str());
 		return;
 	}
@@ -262,7 +262,7 @@ void requestInventoryAsset_Event(LLUUID &reqID,LLUUID &task_id,LLUUID &item_id)
 	LLViewerInventoryItem *item = gInventory.getItem(item_id);
 	if(!item)
 	{
-		LuaError(llformat("Could not find item %s.",item_id.asString()).c_str());
+		LuaError(llformat("Could not find item %s.",item_id.asString().c_str()).c_str());
 		return;
 	}
 	
@@ -272,7 +272,7 @@ void requestInventoryAsset_Event(LLUUID &reqID,LLUUID &task_id,LLUUID &item_id)
 	{
 		LuaError(llformat("You do not have copy permission on %s %s.",
 			LLAssetType::lookupHumanReadable(item->getActualType()),
-			item->getName()).c_str());
+			item->getName().c_str()).c_str());
 		return;
 	}
 	

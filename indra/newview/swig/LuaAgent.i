@@ -43,11 +43,11 @@ int getPlayingAnimations(lua_State*L)
 		return luaL_error(L,"getPlayAnimation(target_id): Parameter 1 does not target an avatar.");
 
 	LLVOAvatar *av=(LLVOAvatar *)o;
-	LLVOAvatar::AnimIterator it = av->mPlayingAnimations.begin();
+	LLVOAvatar::AnimIterator it;
 	
 	lua_newtable(L);
     int index = 1;
-	for(it;it!=av->mPlayingAnimations.end();it++)
+	for(it = av->mPlayingAnimations.begin();it!=av->mPlayingAnimations.end();it++)
 	{
 		//key
 		lua_pushinteger(L,index);

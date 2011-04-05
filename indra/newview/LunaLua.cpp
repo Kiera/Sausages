@@ -644,8 +644,8 @@ std::string  Lua_getErrorMessage(lua_State *L)
 void PushTable(lua_State*L, std::map<std::string,std::string> dongs)
 {
 	lua_newtable(L);
-	std::map<std::string,std::string>::iterator it=dongs.begin();
-	for(it;it!=dongs.end();it++)
+	std::map<std::string,std::string>::iterator it;
+	for(it=dongs.begin();it!=dongs.end();it++)
 	{
 		//key
 		lua_pushlstring(L,(&it->first)->data(),(&it->first)->size());
@@ -663,9 +663,9 @@ void PushTable(lua_State*L, std::map<std::string,std::string> dongs)
 void PushTable(lua_State*L, std::vector<std::string> dongs)
 {
 	lua_newtable(L);
-	std::vector<std::string>::iterator it=dongs.begin();
+	std::vector<std::string>::iterator it;
 	int idx=0;
-	for(it;it!=dongs.end();it++)
+	for(it=dongs.begin();it!=dongs.end();it++)
 	{
 		//key
 		lua_pushinteger(L,++idx);
