@@ -28,4 +28,4 @@ local test = function (name,godlevel)
 	return true
 end;
 
-SetHook("OnLuaAgent",test)
+SetHook("OnAgentInit",test)

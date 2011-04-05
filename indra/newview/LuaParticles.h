@@ -297,7 +297,7 @@ public:
 	}
 
 	// This isnt supported in LUA
-	//operator LLPartSysData() { return asParticleSystem(); }
+	operator LLPartSysData() { return asParticleSystem(); }
 private:
 	LLUUID 		mPartImageID;
 	LLUUID		mTargetID;

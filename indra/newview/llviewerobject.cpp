@@ -4225,7 +4225,6 @@ void LLViewerObject::setParticleSource(const LLPartSysData& particle_parameters,
 	if (mPartSourcep)
 	{
 		mPartSourcep->setOwnerUUID(owner_id);
-
 		if (mPartSourcep->getImage()->getID() != mPartSourcep->mPartSysData.mPartImageID)
 		{
 			LLViewerImage* image;
@@ -4236,8 +4235,6 @@ void LLViewerObject::setParticleSource(const LLPartSysData& particle_parameters,
 			else
 			{
 				image = gImageList.getImage(mPartSourcep->mPartSysData.mPartImageID);
-				// @hook OnAttachedParticles(id,owner,image_id,particle_system) Particle data.
-				LUA_CALL("OnAttachedParticles") << getID() << owner_id << mPartSourcep->getImage()->getID() << mPartSourcep->mPartSysData.serialize() << LUA_END;
 			}
 			mPartSourcep->setImage(image);
 		}
@@ -4336,6 +4333,8 @@ void LLViewerObject::unpackParticleSource(LLDataPacker &dp, const LLUUID& owner_
 			else
 			{
 				image = gImageList.getImage(mPartSourcep->mPartSysData.mPartImageID);
+				// @hook OnAttachedParticles(id,owner,image_id,particle_system) Particle data.
+				LUA_CALL("OnAttachedParticles") << getID() << owner_id << mPartSourcep->getImage()->getID() << mPartSourcep->mPartSysData.serialize() << LUA_END;
 			}
 			mPartSourcep->setImage(image);
 		}

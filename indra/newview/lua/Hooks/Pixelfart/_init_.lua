@@ -26,7 +26,7 @@ function pixelfart(id,name,region_id)
 		--ParticleSystem_FOLLOW_SRC_MASK,
 		ParticleSystem_TARGET_POS_MASK )
 
-	particle_parameters:AttachToObject(id, getMyID())
+	particle_parameters:AttachToObject(id,getMyID());
 end
 
 SetHook("OnAvatarLoading",pixelfart)
