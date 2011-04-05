@@ -3631,7 +3631,9 @@ void LLAppViewer::idle()
 		{
 		    audio_update_volume(false);
 			audio_update_listener();
-			audio_update_wind(false);
+
+			if(gLLWindEnabled)
+				audio_update_wind(false);
 
 			// this line actually commits the changes we've made to source positions, etc.
 			const F32 max_audio_decode_time = 0.002f; // 2 ms decode time

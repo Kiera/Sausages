@@ -153,7 +153,7 @@ void audio_update_volume(bool force_update)
 		gAudiop->setRolloffFactor(gSavedSettings.getF32("AudioLevelRolloff"));
 		gAudiop->setMuted(mute_audio);
 		
-		if (force_update)
+		if (force_update && gLLWindEnabled)
 		{
 			audio_update_wind(true);
 		}
