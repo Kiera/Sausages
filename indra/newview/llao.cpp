@@ -9,6 +9,10 @@
 #include "llagent.h"
 #include "llvoavatar.h"
 #include "llinventorymodel.h"
+
+//stupid boost / xutil interaction workaround
+#undef Bool
+
 #include <boost/foreach.hpp>
 
 //static variables
