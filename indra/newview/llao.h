@@ -7,6 +7,7 @@
 
 #include "llfloater.h"
 #include "llcombobox.h"
+#include "llviewerinventory.h"
 
 class LLAOStandTimer : public LLEventTimer
 {
@@ -19,7 +20,30 @@ public:
 private:
 	BOOL mPaused;
 };
-
+typedef struct aopair
+{
+	const char* field;
+	const LLUUID uuid;
+	aopair(const char* f,const LLUUID u):
+		field(f),
+		uuid(u)
+	{
+	}
+} AO_Pair;
+class AOLineEditor : public LLView
+{
+public:
+	AOLineEditor(const std::string& name, const LLRect& rect, void (*callback)(LLViewerInventoryItem*,const char*),const char*);
+	~AOLineEditor();
+	virtual BOOL handleDragAndDrop(S32 x, S32 y, MASK mask, BOOL drop,
+								   EDragAndDropType cargo_type,
+								   void* cargo_data,
+								   EAcceptance* accept,
+								   std::string& tooltip_msg);
+protected:
+	void	(*mCallback)(LLViewerInventoryItem*,const char*);
+	const char* mField;
+};
 class LLAO
 {
 public:
@@ -46,6 +70,7 @@ public:
 	LLFloaterAO();
 	BOOL postBuild(void);
 	void refresh();
+	static void onAnimDrop(LLViewerInventoryItem* item, const char* field);
 	static void onCommitAnim(LLUICtrl* ctrl, void* user_data);
 	static void onCommitStands(LLUICtrl* ctrl,void* user_data);
 	static void onClickStandRemove(void* user_data);
@@ -55,6 +80,7 @@ public:
 private:
 	virtual ~LLFloaterAO();
 	std::string idstr(LLUUID id); // silly utility
+	static std::vector< AOLineEditor* > sLineEditorDrop;
 public:
 	LLComboBox* mStandsCombo;
 };

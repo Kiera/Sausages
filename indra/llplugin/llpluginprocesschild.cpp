@@ -280,7 +280,6 @@ void LLPluginProcessChild::sendMessageToPlugin(const LLPluginMessage &message)
 	{
 		std::string buffer = message.generate();
 
-
 		LL_DEBUGS("Plugin") << "Sending to plugin: " << buffer << LL_ENDL;
 		LLTimer elapsed;
 	

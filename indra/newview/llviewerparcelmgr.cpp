@@ -53,6 +53,7 @@
 #include "llfloatergroups.h"
 //#include "llfloaterhtml.h"
 #include "llfloatersellland.h"
+#include "llfloaterteleporthistory.h"
 #include "llfloatertools.h"
 #include "llnotify.h"
 #include "llparcelselection.h"
@@ -84,7 +85,7 @@ LLPointer<LLViewerImage> sBlockedImage;
 LLPointer<LLViewerImage> sPassImage;
 
 // Local functions
-void optionally_start_music(const std::string& music_url);
+void optionally_start_music(LLParcel* parcel);
 void callback_start_music(S32 option, void* data);
 void optionally_prepare_video(const LLParcel *parcelp);
 void callback_prepare_video(S32 option, void* data);
@@ -1516,6 +1517,9 @@ void LLViewerParcelMgr::processParcelProperties(LLMessageSystem *msg, void **use
 		}
 	}
 
+	// Add any pending entry to the TP history now that we got the *new* parcel name.
+	gFloaterTeleportHistory->addEntry(LLViewerParcelMgr::getInstance()->getAgentParcelName());
+
 	// Handle updating selections, if necessary.
 	if (sequence_id == SELECTED_PARCEL_SEQ_ID)
 	{
@@ -1676,7 +1680,7 @@ void LLViewerParcelMgr::processParcelProperties(LLMessageSystem *msg, void **use
 					{
 						if (music_url.substr(0,7) == "http://")
 						{
-							optionally_start_music(music_url);
+							optionally_start_music(parcel);
 						}
 					}
 					else if (!gAudiop->getInternetStreamURL().empty())
@@ -1698,18 +1702,18 @@ void LLViewerParcelMgr::processParcelProperties(LLMessageSystem *msg, void **use
 	};
 }
 
-void optionally_start_music(const std::string& music_url)
+void optionally_start_music(LLParcel* parcel)
 {
 	if (gSavedSettings.getBOOL("AudioStreamingMusic"))
 	{
 		// Make the user click the start button on the overlay bar. JC
-		//		llinfos << "Starting parcel music " << music_url << llendl;
+		//		llinfos << "Starting parcel music " << parcel->getMusicURL() << llendl;
 
 		// now only play music when you enter a new parcel if the control is in PLAY state
 		// changed as part of SL-4878
-		if ( gOverlayBar && gOverlayBar->musicPlaying())
+		if (gOverlayBar && gOverlayBar->musicPlaying())
 		{
-			gAudiop->startInternetStream(music_url);
+			LLViewerParcelMedia::playStreamingMusic(parcel);
 		}
 	}
 }

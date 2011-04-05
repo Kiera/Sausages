@@ -181,6 +181,7 @@ private:
 			return false;
 		}
 		std::string application_dir = std::string( cwd );
+
 #if LL_LINUX
 		// take care to initialize glib properly, because some
 		// versions of Qt don't, and we indirectly need it for (some
@@ -645,11 +646,12 @@ void MediaPluginWebKit::receiveMessage(const char *message_string)
 		{
 			if(message_name == "init")
 			{
+				std::string user_data_path = message_in.getValue("user_data_path"); // n.b. always has trailing platform-specific dir-delimiter
+				mProfileDir = user_data_path + "browser_profile";
+
 				// This is the media init message -- all necessary data for initialization should have been received.
 				if (initBrowser())
 				{
-					std::string user_data_path = message_in.getValue("user_data_path"); // n.b. always has trailing platform-specific dir-delimiter
-					mProfileDir = user_data_path + "browser_profile";
 					LLPluginMessage message("base", "init_response");
 					LLSD versions = LLSD::emptyMap();
 					versions[LLPLUGIN_MESSAGE_CLASS_BASE] = LLPLUGIN_MESSAGE_CLASS_BASE_VERSION;
@@ -792,12 +794,10 @@ void MediaPluginWebKit::receiveMessage(const char *message_string)
 						{
 							// Setting up the browser window failed.  This is a fatal error.
 							mDeleteMe = true;
-							return;
 						}
-						
+
 						mTextureWidth = texture_width;
 						mTextureHeight = texture_height;
-						
 					};
 				};
 

@@ -38,12 +38,9 @@
 #include "llstat.h"
 #include "llstl.h"
 
-// <edit> VWR-2546
-#include "llmsgvariabletype.h"
-#include <list>
-#include <algorithm>
-#include <functional>
-// </edit>
+#include <boost/signals.hpp>
+#include <boost/signals/connection.hpp>
+#include <boost/bind.hpp>
 
 class LLMsgVarData
 {
@@ -398,54 +395,41 @@ public:
 		return mDeprecation;
 	}
 	
-	// <edit> VWR-2546
-
-	void addHandlerFunc(message_handler_func_t handler, void **user_data)
+	void setHandlerFunc(message_handler_func_t handler_func, void **user_data)
 	{
-		LLMessageTemplateHandlerEntry h(handler, user_data);
-		if ( std::find(mHandlers.begin(), mHandlers.end(), h ) != mHandlers.end() )
-			return;
-
-		mHandlers.push_back( h );
+		if(!mMessageSignal.empty() || mConnectionMap.size() > 0){
+			mMessageSignal.disconnect_all_slots();
+			mConnectionMap.erase(mConnectionMap.begin(),mConnectionMap.end());
+		}
+		addHandlerFunc(handler_func,user_data);
 	}
 
-	//void setHandlerFunc(void (*handler_func)(LLMessageSystem *msgsystem, void **user_data), void **user_data)
-	//{
-	//	mHandlerFunc = handler_func;
-	//	mUserData = user_data;
-	//}
-
-	void setHandlerFunc(message_handler_func_t handler, void **user_data)
+	void addHandlerFunc(message_handler_func_t handler_func, void **user_data)
 	{
-		mHandlers.clear();
-		if(handler)
-			addHandlerFunc(handler, user_data);
+		if(mConnectionMap.find(handler_func) == mConnectionMap.end())
+			mConnectionMap[handler_func] = mMessageSignal.connect(boost::bind(handler_func,_1,user_data));
 	}
 
-	void delHandlerFunc(message_handler_func_t handler)
+	void delHandlerFunc(message_handler_func_t handler_func)
 	{
-		mHandlers.remove( LLMessageTemplateHandlerEntry(handler) );
+		connection_map_t::iterator iter = mConnectionMap.find(handler_func);
+		if(iter != mConnectionMap.end())
+		{
+			//make sure to disconnect first
+			mConnectionMap[handler_func].disconnect();
+			mConnectionMap.erase(iter);
+		}
 	}
-
-	// </edit>
 
 	BOOL callHandlerFunc(LLMessageSystem *msgsystem) const
 	{
-		// <edit> VWR-2546
-		//if (mHandlerFunc)
-		//{
-        //    LLPerfBlock msg_cb_time("msg_cb", mName);
-		//	mHandlerFunc(msgsystem, mUserData);
-		//	return TRUE;
-		//}
-		//return FALSE;
-		if(mHandlers.empty())
-			return FALSE;
-		// Allow handlers to remove themselves...
-		std::list<LLMessageTemplateHandlerEntry> handlers(mHandlers);
-		std::for_each(handlers.begin(), handlers.end(), callHandler(msgsystem));
-		return TRUE;
-		// </edit>
+		if (!mMessageSignal.empty())
+		{
+            LLPerfBlock msg_cb_time("msg_cb", mName);
+			mMessageSignal(msgsystem);
+			return TRUE;
+		}
+		return FALSE;
 	}
 
 	bool isUdpBanned() const
@@ -490,12 +474,11 @@ public:
 	bool									mBanFromUntrusted;
 
 private:
-	// message handler function (this is set by each application)
-	// <edit> VWR-2546
-	//void									(*mHandlerFunc)(LLMessageSystem *msgsystem, void **user_data);
-	//void									**mUserData;
-	std::list<LLMessageTemplateHandlerEntry> mHandlers;
-	// </edit>
+	// message handler functions (this is set by each application)
+	typedef boost::signal<void (LLMessageSystem*)> message_signal_t;
+	message_signal_t mMessageSignal;
+	typedef std::map<message_handler_func_t,boost::signals::connection> connection_map_t;
+	connection_map_t mConnectionMap;
 };
 
 #endif // LL_LLMESSAGETEMPLATE_H

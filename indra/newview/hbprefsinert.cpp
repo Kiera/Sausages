@@ -40,6 +40,7 @@
 #include "llcombobox.h"
 #include "llwind.h"
 #include "llviewernetwork.h"
+#include "llviewerparcelmedia.h"
 #include "pipeline.h"
 
 class LLPrefsInertImpl : public LLPanel
@@ -78,6 +79,7 @@ private:
 	BOOL mLegacyNamesForFriends;
 	BOOL mOmitResidentAsLastName;
 	BOOL mNotifyServerVersion;
+	BOOL mMediaEnableFilter;
 	LLColor4 mOwnNameChatColor;
 	std::string mHighlightNicknames;
 	U32 mSpeedRezInterval;
@@ -151,6 +153,7 @@ void LLPrefsInertImpl::refreshValues()
 	mLegacyNamesForFriends		= gSavedSettings.getBOOL("LegacyNamesForFriends");
 	mOmitResidentAsLastName		= gSavedSettings.getBOOL("OmitResidentAsLastName");
 	mNotifyServerVersion		= gSavedSettings.getBOOL("NotifyServerVersion");
+	mMediaEnableFilter			= gSavedSettings.getBOOL("MediaEnableFilter");
 }
 
 void LLPrefsInertImpl::refresh()
@@ -260,6 +263,7 @@ void LLPrefsInertImpl::cancel()
 	gSavedSettings.setBOOL("LegacyNamesForFriends",		mLegacyNamesForFriends);
 	gSavedSettings.setBOOL("OmitResidentAsLastName",	mOmitResidentAsLastName);
 	gSavedSettings.setBOOL("NotifyServerVersion",		mNotifyServerVersion);
+	gSavedSettings.setBOOL("MediaEnableFilter",			mMediaEnableFilter);
 }
 
 void LLPrefsInertImpl::apply()

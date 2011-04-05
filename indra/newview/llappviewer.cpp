@@ -853,6 +853,8 @@ bool LLAppViewer::init()
 
 	LLViewerJoystick::getInstance()->init(false);
 
+	// Luna Lua Engine startup!
+	FLLua::init();
 	return true;
 }
 
@@ -1049,6 +1051,10 @@ bool LLAppViewer::mainLoop()
 					{
 						ms_sleep(llmin(io_pending/100,100)); // give the vfs some time to catch up
 					}
+
+					//llinfos << "LUA:IN" << llendl;
+					FLLua::execClientEvents();
+					//llinfos << "LUA:OUT" << llendl;
 
 					F64 frame_time = frameTimer.getElapsedTimeF64();
 					F64 idle_time = idleTimer.getElapsedTimeF64();

@@ -95,14 +95,15 @@ void LLPluginProcessParent::errorState(void)
 		setState(STATE_ERROR);
 }
 
-void LLPluginProcessParent::init(const std::string &launcher_filename, const std::string &plugin_filename, bool debug, const std::string &user_data_path)
+void LLPluginProcessParent::init(const std::string &launcher_filename, const std::string &plugin_filename, bool debug, const std::string &user_data_path, U32 priority)
 {	
 	mProcess.setExecutable(launcher_filename);
 	mPluginFile = plugin_filename;
 	mCPUUsage = 0.0f;
 	mDebug = debug;
 	mUserDataPath = user_data_path;
-	
+	mPriority = priority;
+
 	setState(STATE_INITIALIZED);
 }
 
@@ -285,7 +286,16 @@ void LLPluginProcessParent::idle(void)
 				// Only argument to the launcher is the port number we're listening on
 				std::stringstream stream;
 				stream << mBoundPort;
-				mProcess.addArgument(stream.str());
+				mProcess.addArgument(stream.str());			
+#if LL_DARWIN || LL_LINUX
+				// Also add the "nice" priority under for Darwin and Linux...
+				if (mPriority != 0)
+				{
+					std::stringstream prio;
+					prio << mPriority;
+					mProcess.addArgument(prio.str());
+				}
+#endif
 				if(mProcess.launch() != 0)
 				{
 					errorState();

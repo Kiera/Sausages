@@ -2603,20 +2603,46 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 			{
 			case CHAT_TYPE_WHISPER:
 				verb = " " + LLTrans::getString("whisper") + " ";
+				// @hook OnChatWhisper(from_id,owner_id,message) Triggered when someone whispers something in local chat
+				LUA_CALL("OnChatWhisper") << from_id << owner_id << mesg << LUA_END;
 				break;
 			case CHAT_TYPE_DEBUG_MSG:
 			case CHAT_TYPE_OWNER:
+				// Bridge message;  Hide it.
+				// *** DO NOT CHANGE THIS TO LUNA, IT'LL BREAK COMPATIBILITY WITH OLD BRIDGE SYSTEMS ***
+				if(mesg.find("&FLEXLIFE;")==0)
+				{
+					// @hook OnBridgeCommand(from_id,owner_id,message) Triggered when an object tries to communicate via the debug channel or the llOwnerSay channel using a command prefixed with &FLEXLIFE;
+					LUA_CALL("OnBridgeCommand") << from_id << owner_id << mesg << LUA_END;
+					return;
+				}
+				if(chat.mChatType!=CHAT_TYPE_DEBUG_MSG)
+				{
+					// @hook OnChatSay(from_id,owner_id,message) Triggered when an object uses llOwnerSay.
+					LUA_CALL("OnOwnerSay") << from_id << owner_id << mesg << LUA_END;
+				}
+				else
+				{
+					// @hook OnChatDebug(from_id,owner_id,message) Triggered when an object states something on the debug channel.
+					LUA_CALL("OnChatDebug") << from_id << owner_id << mesg << LUA_END;
+				}
 			case CHAT_TYPE_NORMAL:
 				verb = ": ";
+				// @hook OnChatSay(from_id,owner_id,message) Triggered when someone says something in local chat.
+				LUA_CALL("OnChatSay") << from_id << owner_id << mesg << LUA_END;
 				break;
 			case CHAT_TYPE_SHOUT:
 				verb = " " + LLTrans::getString("shout") + " ";
+				// @hook OnChatShout(from_id,owner_id,message) Triggered when someone shouts something in local chat.
+				LUA_CALL("OnChatShout") << from_id << owner_id << mesg << LUA_END;
 				break;
 			case CHAT_TYPE_START:
 			case CHAT_TYPE_STOP:
 				LL_WARNS("Messaging") << "Got chat type start/stop in main chat processing." << LL_ENDL;
 				break;
 			default:
+				// @hook OnChatUnknown(type,from_id,owner_id,message) Triggered when someone uses an unknown chat method.
+				LUA_CALL("OnChatUnknown") << chat.mChatType << from_id << owner_id << mesg << LUA_END;
 				LL_WARNS("Messaging") << "Unknown type " << chat.mChatType << " in chat!" << LL_ENDL;
 				verb = " say, ";
 				break;
@@ -3087,7 +3113,7 @@ void process_agent_movement_complete(LLMessageSystem* msg, void**)
 		}
 
 		// add teleport destination to the list of visited places
-		gFloaterTeleportHistory->addEntry(regionp->getName(),(S16)agent_pos.mV[0],(S16)agent_pos.mV[1],(S16)agent_pos.mV[2]);
+		gFloaterTeleportHistory->addPendingEntry(regionp->getName(),(S16)agent_pos.mV[0],(S16)agent_pos.mV[1],(S16)agent_pos.mV[2]);
 	}
 	else
 	{
@@ -3662,6 +3688,9 @@ void process_sound_trigger(LLMessageSystem *msg, void **)
 	//gAudiop->triggerSound(sound_id, owner_id, gain, LLAudioEngine::AUDIO_TYPE_SFX, pos_global);
 	gAudiop->triggerSound(sound_id, owner_id, gain, LLAudioEngine::AUDIO_TYPE_SFX, pos_global, object_id);
 	// </edit>
+
+	// @hook OnSoundTriggered(sound_id,owner_id,gain,object_id,parent_id) Triggered when a sound is triggered.
+	LUA_CALL("OnSoundTriggered") << sound_id << owner_id << gain << object_id << parent_id << LUA_END;
 }
 
 void process_preload_sound(LLMessageSystem *msg, void **user_data)

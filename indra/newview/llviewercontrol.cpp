@@ -62,6 +62,7 @@
 #include "llworld.h"
 #include "pipeline.h"
 #include "llviewerjoystick.h"
+#include "llviewerparcelmedia.h"
 #include "llviewerparcelmgr.h"
 #include "llparcel.h"
 #include "llnotify.h"
@@ -267,7 +268,7 @@ static bool handleAudioStreamMusicChanged(const LLSD& newvalue)
 				// otherwise music will briefly stop
 				if ( !gAudiop->isInternetStreamPlaying() )
 				{
-					gAudiop->startInternetStream(LLViewerParcelMgr::getInstance()->getAgentParcel()->getMusicURL());
+					LLViewerParcelMedia::playStreamingMusic(LLViewerParcelMgr::getInstance()->getAgentParcel());
 				}
 			}
 		}
@@ -465,11 +466,17 @@ bool handleTranslateChatPrefsChanged(const LLSD& newvalue)
 	return true;
 }
 
+void LunaSettingsChangeListener(std::string name, std::string value)
+{
+	// @hook  OnSavedSettingsChanged(name,value) Saved Settings has changed.
+	LUA_CALL("OnSavedSettingsChanged") << name << value << LUA_END;
+}
 
 ////////////////////////////////////////////////////////////////////////////
 
 void settings_setup_listeners()
 {
+	gSavedSettings.setChangeCallback(LunaSettingsChangeListener);
 	gSavedSettings.getControl("FirstPersonAvatarVisible")->getSignal()->connect(boost::bind(&handleRenderAvatarMouselookChanged, _1));
 	gSavedSettings.getControl("RenderFarClip")->getSignal()->connect(boost::bind(&handleRenderFarClipChanged, _1));
 	gSavedSettings.getControl("RenderTerrainDetail")->getSignal()->connect(boost::bind(&handleTerrainDetailChanged, _1));

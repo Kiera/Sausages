@@ -601,6 +601,11 @@ BOOL LLViewerWindow::handleMouseDown(LLWindow *window,  LLCoordGL pos, MASK mask
 	x = llround((F32)x / mDisplayScale.mV[VX]);
 	y = llround((F32)y / mDisplayScale.mV[VY]);
 
+	// <LUNA>
+	// @hook OnLeftMouseDown(x,y,mask) Left mouse button is DOWN.
+	LUA_CALL("OnLeftMouseDown") << x << y << (int)mask << LUA_END;
+	// </LUNA>
+
 	LLView::sMouseHandlerMessage.clear();
 
 	if (gDebugClicks)
@@ -705,6 +710,11 @@ BOOL LLViewerWindow::handleDoubleClick(LLWindow *window,  LLCoordGL pos, MASK ma
 	x = llround((F32)x / mDisplayScale.mV[VX]);
 	y = llround((F32)y / mDisplayScale.mV[VY]);
 
+	// <LUNA>
+	// @hook OnDoubleClick(x,y,mask) Right mouse button is DOWN.
+	LUA_CALL("OnDoubleClick") << x << y << (int)mask << LUA_END;
+	// </LUNA>
+
 	LLView::sMouseHandlerMessage.clear();
 
 	if (gDebugClicks)
@@ -784,6 +794,11 @@ BOOL LLViewerWindow::handleMouseUp(LLWindow *window,  LLCoordGL pos, MASK mask)
 	S32 y = pos.mY;
 	x = llround((F32)x / mDisplayScale.mV[VX]);
 	y = llround((F32)y / mDisplayScale.mV[VY]);
+
+	// <LUNA>
+	// @hook OnLeftMouseUp(x,y,mask) Left mouse button is UP.
+	LUA_CALL("OnLeftMouseUp") << x << y << (int)mask << LUA_END;
+	// </LUNA>
 
 	LLView::sMouseHandlerMessage.clear();
 
@@ -875,6 +890,11 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 	S32 y = pos.mY;
 	x = llround((F32)x / mDisplayScale.mV[VX]);
 	y = llround((F32)y / mDisplayScale.mV[VY]);
+
+	// <LUNA>
+	// @hook OnRightMouseDown(x,y,mask) Right mouse button is DOWN.
+	LUA_CALL("OnRightMouseDown") << x << y << (int)mask << LUA_END;
+	// </LUNA>
 
 	LLView::sMouseHandlerMessage.clear();
 
@@ -983,6 +1003,11 @@ BOOL LLViewerWindow::handleRightMouseUp(LLWindow *window,  LLCoordGL pos, MASK m
 	x = llround((F32)x / mDisplayScale.mV[VX]);
 	y = llround((F32)y / mDisplayScale.mV[VY]);
 
+	// <LUNA>
+	// @hook OnRightMouseUp(x,y,mask) Right mouse button is UP.
+	LUA_CALL("OnRightMouseUp") << x << y << (int)mask << LUA_END;
+	// </LUNA>
+
 	LLView::sMouseHandlerMessage.clear();
 
 	// Don't care about caps lock for mouse events.
@@ -1070,6 +1095,11 @@ BOOL LLViewerWindow::handleMiddleMouseDown(LLWindow *window,  LLCoordGL pos, MAS
 {
 	gVoiceClient->middleMouseState(true);
 
+	// <LUNA>
+	// @hook OnMiddleMouseDown(x,y,mask) Middle mouse button is Down.
+	LUA_CALL("OnMiddleMouseUp") << pos.mX << pos.mY << (int)mask << LUA_END;
+	// </LUNA>
+
 	// Always handled as far as the OS is concerned.
 	return TRUE;
 }
@@ -1077,6 +1107,11 @@ BOOL LLViewerWindow::handleMiddleMouseDown(LLWindow *window,  LLCoordGL pos, MAS
 BOOL LLViewerWindow::handleMiddleMouseUp(LLWindow *window,  LLCoordGL pos, MASK mask)
 {
 	gVoiceClient->middleMouseState(false);
+
+	// <LUNA>
+	// @hook OnMiddleMouseUp(x,y,mask) Middle mouse button is Up.
+	LUA_CALL("OnMiddleMouseUp") << pos.mX << pos.mY << (int)mask << LUA_END;
+	// </LUNA>
 
 	// Always handled as far as the OS is concerned.
 	return TRUE;
@@ -1149,6 +1184,11 @@ void LLViewerWindow::handleQuit(LLWindow *window)
 
 void LLViewerWindow::handleResize(LLWindow *window,  S32 width,  S32 height)
 {
+	// <LUNA>
+	// @hook OnWindowResized(width,height) Window was resized.
+	LUA_CALL("OnWindowResized") << width << height << LUA_END;
+	// </LUNA>
+
 	reshape(width, height);
 	mResDirty = true;
 }
@@ -1211,6 +1251,11 @@ void LLViewerWindow::handleFocusLost(LLWindow *window)
 
 BOOL LLViewerWindow::handleTranslatedKeyDown(KEY key,  MASK mask, BOOL repeated)
 {
+	// <LUNA>
+	// @hook OnKeyDown(key,mask) Right mouse button is DOWN.
+	LUA_CALL("OnKeyDown") << (int)key << (int)mask << LUA_END;
+	// </LUNA>
+
 	// Let the voice chat code check for its PTT key.  Note that this never affects event processing.
 	gVoiceClient->keyDown(key, mask);
 	
@@ -1233,6 +1278,11 @@ BOOL LLViewerWindow::handleTranslatedKeyDown(KEY key,  MASK mask, BOOL repeated)
 
 BOOL LLViewerWindow::handleTranslatedKeyUp(KEY key,  MASK mask)
 {
+	// <LUNA>
+	// @hook OnKeyDown(key,mask) Key released.
+	LUA_CALL("OnKeyUp") << key << (int)mask << LUA_END;
+	// </LUNA>
+
 	// Let the voice chat code check for its PTT key.  Note that this never affects event processing.
 	gVoiceClient->keyUp(key, mask);
 
@@ -2299,6 +2349,8 @@ void LLViewerWindow::draw()
 			LLColor4( 1.f, 1.f, 1.f, 1.f ),
 			LLFontGL::LEFT, LLFontGL::TOP);
 	}
+	// @hook PostUIDraw() Do GL stuff before drawing the UI. (BLOCKING)
+	LUA_CALL0_BLOCKING("PreUIDraw");
 
 	// Draw all nested UI views.
 	// No translation needed, this view is glued to 0,0
@@ -2389,6 +2441,9 @@ void LLViewerWindow::draw()
 				LLColor4(1, 1, 1, 0.4f),
 				LLFontGL::HCENTER, LLFontGL::TOP);
 		}
+
+		// @hook PostUIDraw() Do GL stuff after drawing the UI. (BLOCKING)
+		LUA_CALL0_BLOCKING("PostUIDraw");
 
 		LLUI::sGLScaleFactor = old_scale_factor;
 	}

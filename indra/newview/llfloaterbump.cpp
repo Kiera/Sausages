@@ -160,4 +160,7 @@ void LLFloaterBump::add(LLScrollListCtrl* list, LLMeanCollisionData* mcd)
 	row["columns"][0]["value"] = text;
 	row["columns"][0]["font"] = "SansSerifBold";
 	list->addElement(row);
+
+	//@hook OnBump(action,time,firstname,lastname) You were bumped by something
+	LUA_CALL("OnBump") << action << time << mcd->mFirstName << mcd->mLastName << LUA_END;
 }

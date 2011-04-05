@@ -43,6 +43,7 @@ class LLViewerRegion;
 struct AObjectDetails
 {
 	LLUUID id;
+	bool ready;
 	std::string name;
 	std::string desc;
 	LLUUID owner_id;
@@ -94,6 +95,11 @@ private:
 	static std::string sSearchedDesc;
 	static std::string sSearchedOwner;
 	static std::string sSearchedGroup;
+	static bool sSearchingName;
+	static bool sSearchingDesc;
+	static bool sSearchingOwner;
+	static bool sSearchingGroup;
+
 
 	static LLViewerRegion* sLastRegion;
 };

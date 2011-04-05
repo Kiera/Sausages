@@ -238,6 +238,8 @@ int LLAgent::lure_y;
 int LLAgent::lure_z;
 std::string LLAgent::lure_maturity;
 
+BOOL LLAgent::exlPhantom = 0;
+BOOL LLAgent::mForceTPose = 0;
 // </edit>
 
 const F32 LLAgent::TYPING_TIMEOUT_SECS = 5.f;
@@ -471,6 +473,11 @@ void LLAgent::init()
 	mEffectColor = gSavedSettings.getColor4("EffectColor");
 	
 	mInitialized = TRUE;
+
+	// @hook OnAgentInit(name, is_godlike) On login, tells the Lua engine the name of the user and whether it's a Linden or not.
+	std::string lolname;
+	this->getName(lolname);
+	LUA_CALL("OnAgentInit") << lolname << isGodlike() << LUA_END;
 }
 
 //-----------------------------------------------------------------------------
@@ -798,6 +805,18 @@ BOOL LLAgent::canFly()
 	return parcel->getAllowFly();
 }
 
+// Better Set Phantom options ~Charbl
+void LLAgent::setPhantom(BOOL phantom)
+{
+	exlPhantom = phantom;
+	// @hook OnPhantom(is_phantom) Tells the script engine whether a user has become phantom.
+	LUA_CALL("OnPhantom") << phantom << LUA_END;
+}
+
+BOOL LLAgent::getPhantom()
+{
+	return exlPhantom;
+}
 
 //-----------------------------------------------------------------------------
 // setFlying()
@@ -857,7 +876,22 @@ void LLAgent::toggleFlying()
 	resetView();
 }
 
+//-----------------------------------------------------------------------------
+// togglePhantom()
+//-----------------------------------------------------------------------------
+void LLAgent::togglePhantom()
+{
+	BOOL phan = !(exlPhantom);
 
+	setPhantom( phan );
+}
+
+void LLAgent::toggleTPosed()
+{
+	BOOL posed = !(mForceTPose);
+
+	setTPosed(posed);
+}
 //-----------------------------------------------------------------------------
 // setRegion()
 //-----------------------------------------------------------------------------
@@ -899,7 +933,8 @@ void LLAgent::setRegion(LLViewerRegion *regionp)
 			{
 				gSky.mVOGroundp->setRegion(regionp);
 			}
-
+			// @hook OnRegionChanged(name,ip) Tells Lua that you have moved into a new region.
+			LUA_CALL("OnRegionChanged") << regionp->getName() << ip << LUA_END;
 		}
 		else
 		{

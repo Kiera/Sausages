@@ -67,6 +67,7 @@
 #include "llfloaterexploreanimations.h"
 #include "llfloaterexploresounds.h"
 #include "llfloaterblacklist.h"
+#include "lunaconsole.h"
 // </edit>
 #include "lltimer.h"
 #include "llvfile.h"
@@ -131,6 +132,7 @@
 #include "llfloaterland.h"
 #include "llfloaterlandholdings.h"
 #include "llfloatermap.h"
+#include "slfloatermediafilter.h"
 #include "llfloatermute.h"
 #include "llfloateropenobject.h"
 #include "llfloaterpermissionsmgr.h"
@@ -416,6 +418,7 @@ void handle_vfs_explorer(void*);
 void handle_sounds_explorer(void*);
 void handle_blacklist(void*);
 void handle_keytool_from_clipboard(void*);
+void handle_lua_console(void*);
 // </edit>
 
 BOOL is_inventory_visible( void* user_data );
@@ -796,6 +799,9 @@ void init_client_menu(LLMenuGL* menu)
 											NULL,
 											&menu_check_control,
 											(void*)"ReSit"));
+		sub->append(new LLMenuItemCallGL(  "LUA Console",
+											&handle_lua_console,
+											NULL));
 		//these should always be last in a sub menu
 		sub->createJumpKeys();
 		menu->appendMenu(sub);
@@ -3166,6 +3172,11 @@ void handle_sounds_explorer(void*)
 void handle_blacklist(void*)
 {
 	LLFloaterBlacklist::show();
+}
+
+void handle_lua_console(void*)
+{
+	LLFloaterLuaConsole::toggle(NULL);
 }
 
 void handle_close_all_notifications(void*)
@@ -5692,6 +5703,10 @@ class LLShowFloater : public view_listener_t
 		{
 			LLFloaterMute::toggleInstance();
 		}
+		else if (floater_name == "media filter")
+		{
+			SLFloaterMediaFilter::toggleInstance();
+		}
 		else if (floater_name == "camera controls")
 		{
 			LLFloaterCamera::toggleInstance();
@@ -5844,6 +5859,10 @@ class LLFloaterVisible : public view_listener_t
 		else if (floater_name == "mute list")
 		{
 			new_value = LLFloaterMute::instanceVisible();
+		}
+		else if (floater_name == "media filter")
+		{
+			new_value = SLFloaterMediaFilter::instanceVisible();
 		}
 		else if (floater_name == "camera controls")
 		{
