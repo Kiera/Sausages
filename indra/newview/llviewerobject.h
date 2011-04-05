@@ -579,7 +579,7 @@ protected:
 	static void processTaskInvFile(void** user_data, S32 error_code, LLExtStat ext_status);
 	void loadTaskInvFile(const std::string& filename);
 	void doInventoryCallback();
-	
+public: //for lua
 	BOOL isOnMap();
 
 	void unpackParticleSource(const S32 block_num, const LLUUID& owner_id);

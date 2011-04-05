@@ -34,9 +34,12 @@ include(GooglePerfTools)
 include(TemplateCheck)
 include(UI)
 include(LLKDU)
+include(LUA)
 include(ViewerMiscLibs)
 include(ViewerArtwork.cmake)
 
+# OH BOY MORE HACKED-TOGETHER SHIT
+include(SWIG)
 if (WINDOWS)
     include(CopyWinLibs)
 endif (WINDOWS)
@@ -61,6 +64,7 @@ include_directories(
     ${LLXML_INCLUDE_DIRS}
     ${LSCRIPT_INCLUDE_DIRS}
     ${LSCRIPT_INCLUDE_DIRS}/lscript_compile
+	${LUA_INCLUDE_DIR} # LUNA
     )
 
 set(viewer_SOURCE_FILES
@@ -489,6 +493,30 @@ set(viewer_SOURCE_FILES
     llxmlrpctransaction.cpp
     noise.cpp
     pipeline.cpp
+   lunaconsole.cpp
+#    LunaVoxelSurface.cpp
+#    LunaVOVoxelSurface.cpp
+    LuaUI.cpp
+# SL module -----------------
+    LuaAgent_f.cpp
+    LuaAvatar_f.cpp
+    LuaBuild_f.cpp
+    LuaBase_f.cpp
+    LuaInventory_f.cpp
+    LuaSettings.cpp
+    LuaWindlight.cpp
+    _LuaSL.cpp 
+# GL Module -----------------
+    LunaGL.cpp
+#    _LuaGL.cpp
+# Region Module -------------
+#    _LuaRegion.cpp
+    LunaRegion.cpp
+# Object Module -------------
+#    _LuaObject.cpp
+#    LunaObject.cpp
+#----------------------------
+    LunaLua.cpp
     )
 
 # This gets renamed in the packaging step
@@ -955,6 +983,7 @@ source_group("CMake Rules" FILES ViewerInstall.cmake)
 if (DARWIN)
   LIST(APPEND viewer_SOURCE_FILES llappviewermacosx.cpp)
 
+
   find_library(AGL_LIBRARY AGL)
   find_library(APPKIT_LIBRARY AppKit)
   find_library(COCOA_LIBRARY Cocoa)
@@ -1383,6 +1412,7 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${WINDOWS_LIBRARIES}
     ${XMLRPCEPI_LIBRARIES}
     ${ELFIO_LIBRARIES}
+	 ${LUA_LIBRARY}
     )
 
 if (LINUX)

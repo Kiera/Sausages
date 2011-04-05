@@ -5465,6 +5465,12 @@ BOOL LLVOAvatar::startMotion(const LLUUID& id, F32 time_offset)
 {
 	LLMemType mt(LLMemType::MTYPE_AVATAR);
 
+	//if(!sentFromLua)
+	{
+		// @hook OnAnimStart(avID,animID,time_offset) For AOs.
+		LUA_CALL("OnAnimStart") << mID << id << time_offset << LUA_END;
+	}
+
 	// <edit>
 	if(mIsSelf)
 	{
@@ -5523,6 +5529,57 @@ BOOL LLVOAvatar::stopMotion(const LLUUID& id, BOOL stop_immediate)
 			}
 		}
 		// </edit>
+		gAgent.onAnimStop(id);
+	}
+
+	//if(!sentFromLua)
+	{
+		// @hook OnAnimStop(avID,animID) For AOs.
+		LUA_CALL("OnAnimStop") << mID << id << LUA_END;
+	}
+
+	if (id == ANIM_AGENT_WALK)
+	{
+		LLCharacter::stopMotion(ANIM_AGENT_FEMALE_WALK, stop_immediate);
+	}
+	else if (id == ANIM_AGENT_SIT)
+	{
+		LLCharacter::stopMotion(ANIM_AGENT_SIT_FEMALE, stop_immediate);
+	}
+
+	return LLCharacter::stopMotion(id, stop_immediate);
+}
+BOOL LLVOAvatar::startLUAMotion(const LLUUID& id, F32 time_offset)
+{
+	LLMemType mt(LLMemType::MTYPE_AVATAR);
+
+	// start special case female walk for female avatars
+	if (getSex() == SEX_FEMALE)
+	{
+		if (id == ANIM_AGENT_WALK)
+		{
+			return LLCharacter::startMotion(ANIM_AGENT_FEMALE_WALK, time_offset);
+		}
+		else if (id == ANIM_AGENT_SIT)
+		{
+			return LLCharacter::startMotion(ANIM_AGENT_SIT_FEMALE, time_offset);
+		}
+	}
+
+	if (mIsSelf && id == ANIM_AGENT_AWAY)
+	{
+		gAgent.setAFK();
+	}
+
+	return LLCharacter::startMotion(id, time_offset);
+}
+//-----------------------------------------------------------------------------
+// stopLUAMotion()
+//-----------------------------------------------------------------------------
+BOOL LLVOAvatar::stopLUAMotion(const LLUUID& id, BOOL stop_immediate)
+{
+	if (mIsSelf)
+	{
 		gAgent.onAnimStop(id);
 	}
 

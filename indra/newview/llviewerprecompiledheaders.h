@@ -224,4 +224,5 @@
 #include "llvfile.h"
 #include "llvfs.h"
 
+#include "LunaLua.h"
 #endif

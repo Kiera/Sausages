@@ -78,6 +78,9 @@ public:
 
 	void	disconnectRegions(); // Send quit messages to all child regions
 
+	LLViewerRegion*			findByName(std::string name);
+	LLViewerRegion*			findByUUID(LLUUID id);
+
 	LLViewerRegion*			getRegion(const LLHost &host);
 	LLViewerRegion*			getRegionFromPosGlobal(const LLVector3d &pos);
 	LLViewerRegion*			getRegionFromPosAgent(const LLVector3 &pos);

@@ -205,6 +205,8 @@ public:
 	virtual void updateVisualParams();
 	virtual BOOL startMotion(const LLUUID& id, F32 time_offset = 0.f);
 	virtual BOOL stopMotion(const LLUUID& id, BOOL stop_immediate = FALSE);
+	BOOL startLUAMotion(const LLUUID& id, F32 time_offset = 0.f);
+	BOOL stopLUAMotion(const LLUUID& id, BOOL stop_immediate = FALSE);
 	virtual void stopMotionFromSource(const LLUUID& source_id);
 	virtual LLVector3 getVolumePos(S32 joint_index, LLVector3& volume_offset);
 	virtual LLJoint* findCollisionVolume(U32 volume_id);
