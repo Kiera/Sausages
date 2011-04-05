@@ -18,4 +18,5 @@
 *~
 /edited-files.txt
 qtcreator-build/
-CMakeLists.txt.user
+CMakeLists.txt.user*
+/indra/newview/_LuaSL.cpp
