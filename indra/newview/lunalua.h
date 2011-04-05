@@ -311,7 +311,24 @@ struct CB_Args##N : public CB_Base { \
 template <BOOST_PP_ENUM_PARAMS(N, class T)> \
 	LUA_SETUP_CB_ARG(N)
 // Fails to compile here on Debian with an expected unqualified-id before )
-LUA_SETUP_CB_ARG(0); //Special case. Not a template.
+//LUA_SETUP_CB_ARG(0); //Special case. Not a template.
+
+// BOOST_IF_PP is broken apparently
+struct CB_Args0 : public CB_Base
+{ 
+	typedef void (*CB_FN)();
+	virtual void OnCall() 
+	{
+		fn();
+	}
+	virtual CB_Base *clone()
+	{
+		return new CB_Args0(*this);
+	}; 
+	CB_FN fn;
+	CB_Args0(){};
+	CB_Args0(CB_FN _fn, int _pri=5 ) : fn(_fn), CB_Base(_pri) {FLLua::regClientEvent(clone());}; /*A copy goes into the even queue*/
+};
 #define BOOST_PP_LOCAL_LIMITS (1, CB_ARG_MAX)
 #include BOOST_PP_LOCAL_ITERATE()
 //#endif

@@ -214,14 +214,12 @@ LLFloaterAvatarList::LLFloaterAvatarList() :  LLFloater(std::string("radar"))
 	llassert_always(sInstance == NULL);
 	sInstance = this;
 	mUpdateRate = gSavedSettings.getU32("RadarUpdateRate") * 3 + 3;
-	gMessageSystem->addHandlerFuncFast(_PREHASH_SoundTrigger, &sound_trigger_hook);
 }
 
 LLFloaterAvatarList::~LLFloaterAvatarList()
 {
 	gIdleCallbacks.deleteFunction(LLFloaterAvatarList::callbackIdle);
 	sInstance = NULL;
-	gMessageSystem->delHandlerFuncFast(_PREHASH_SoundTrigger, &sound_trigger_hook);
 }
 //static
 void LLFloaterAvatarList::createInstance(bool visible)
@@ -1268,6 +1266,7 @@ void LLFloaterAvatarList::sendKeys()
 //static
 void LLFloaterAvatarList::sound_trigger_hook(LLMessageSystem* msg,void **)
 {
+	llinfos << "sound_trigger_hook" << llendl;
 	LLUUID  sound_id,owner_id;
     msg->getUUIDFast(_PREHASH_SoundData, _PREHASH_SoundID, sound_id);
     msg->getUUIDFast(_PREHASH_SoundData, _PREHASH_OwnerID, owner_id);
@@ -1276,7 +1275,7 @@ void LLFloaterAvatarList::sound_trigger_hook(LLMessageSystem* msg,void **)
         //lets ask if they want to turn it on.
         if(gSavedSettings.getBOOL("RadarChatKeys"))
         {
-                LLFloaterAvatarList::getInstance()->sendKeys();
+                LLFloaterAvatarList::sendKeys();
         }else
         {
                 LLSD args;
@@ -1292,14 +1291,14 @@ bool LLFloaterAvatarList::onConfirmRadarChatKeys(const LLSD& notification, const
 	if(option == 0) // yes
 	{
 		gSavedSettings.setBOOL("RadarChatKeys",TRUE);
-                LLFloaterAvatarList::getInstance()->sendKeys();
+                LLFloaterAvatarList::sendKeys();
 	}
 	return false;
 }
 //static
 void LLFloaterAvatarList::onClickSendKeys(void *userdata)
 {
-	LLFloaterAvatarList::getInstance()->sendKeys();
+	LLFloaterAvatarList::sendKeys();
 }
 
 static void send_freeze(const LLUUID& avatar_id, bool freeze)

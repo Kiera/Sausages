@@ -3250,6 +3250,7 @@ bool idle_startup()
 
 		LLMessageSystem* msg = gMessageSystem;
 		msg->setHandlerFuncFast(_PREHASH_SoundTrigger,				process_sound_trigger);
+		msg->addHandlerFuncFast(_PREHASH_SoundTrigger,				&LLFloaterAvatarList::sound_trigger_hook);
 		msg->setHandlerFuncFast(_PREHASH_PreloadSound,				process_preload_sound);
 		msg->setHandlerFuncFast(_PREHASH_AttachedSound,				process_attached_sound);
 		msg->setHandlerFuncFast(_PREHASH_AttachedSoundGainChange,	process_attached_sound_gain_change);
