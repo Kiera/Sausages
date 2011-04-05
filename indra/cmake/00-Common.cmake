@@ -140,7 +140,6 @@ if (LINUX)
       -fno-math-errno
       -fno-strict-aliasing
       -fsigned-char
-      -g
       -pthread
       )
 
@@ -177,8 +176,10 @@ if (LINUX)
     endif (NOT STANDALONE)
   endif (VIEWER)
 
-  set(CMAKE_CXX_FLAGS_DEBUG "-fno-inline ${CMAKE_CXX_FLAGS_DEBUG}")
+  set(CMAKE_CXX_FLAGS_DEBUG "-g -fno-inline ${CMAKE_CXX_FLAGS_DEBUG}")
+  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O2 -fno-inline ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
   set(CMAKE_CXX_FLAGS_RELEASE "-O2 ${CMAKE_CXX_FLAGS_RELEASE}")
+  set(CMAKE_CXX_LINK_FLAGS " ${CMAKE_CXX_LINK_FLAGS}")
 endif (LINUX)
 
 
