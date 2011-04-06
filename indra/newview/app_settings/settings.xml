@@ -10,7 +10,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>175.0</real>
+      <real>50.0</real>
     </map>
   <key>RenderSculptSAThreshold</key>
     <map>
@@ -21,7 +21,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>175.0</real>
+      <real>115.0</real>
     </map>
     <key>RenderVolumeSAFrameMax</key>
     <map>
