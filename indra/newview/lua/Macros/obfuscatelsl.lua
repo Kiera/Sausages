@@ -19,10 +19,10 @@ function GenerateNewName()
 end
 
 function CheckLineForVars(line)
-	a,b,c,name=string.find(line,"%s*(float|integer|key|list|rotation|string)%s+(%a+)%s*")
-	--if name==nil then return end
+	_,_,_,name=string.find(line,"%s*(float|integer|key|list|rotation|string)%s+(%a+)%s*")
+	if name==nil then return end
 	local newname = GenerateNewName()
-	print (a..b..c..name" -> "..newname)
+	print (name.." -> "..newname)
 	table.insert(gVariables,name,newname)
 end
 
@@ -41,9 +41,8 @@ while (true) do
 	line= (string.gsub(line, "^%s*(.-)%s*$", "%1"))
 	
 	if string.len(line)>0 then
-	CheckLineForVars(line)
+	print(line)
 	line=string.gsub(line,"//(.*)","");	
-	
     buffer=(buffer.." "..line);
     count = count + 1
 	end
