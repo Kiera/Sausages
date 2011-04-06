@@ -429,6 +429,7 @@ public:
 	static BOOL				sRenderAttachedParticles;
 	static BOOL				sRenderDeferred;
 	static S32				sVisibleLightCount;
+	static F32				sVolumeSAFrame;
 
 	//screen texture
 	LLRenderTarget			mScreen;
