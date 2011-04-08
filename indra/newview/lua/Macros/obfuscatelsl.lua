@@ -21,7 +21,7 @@ end
 function CheckLineForVars(line)
 	_,_,_,name=string.find(line,"%s*(float|integer|key|list|rotation|string)%s+(%a+)%s*")
 	if name==nil then return end
-	local newname = generateNewName()
+	local newname = GenerateNewName()
 	print (name.." -> "..newname)
 	table.insert(gVariables,name,newname)
 end
@@ -34,23 +34,22 @@ end
 
 f=io.open("lua/tempfile","r")
 buffer=""
+count = 0
 while (true) do
 	local line = f:read()
     if line == nil then break end
 	line= (string.gsub(line, "^%s*(.-)%s*$", "%1"))
 	
 	if string.len(line)>0 then
-	
+	print(line)
 	line=string.gsub(line,"//(.*)","");	
-	
-	
     buffer=(buffer.." "..line);
     count = count + 1
 	end
 end
-
 buffer=FixNames(buffer)
-
-nf = io.tmpfile()
-nf:write(buffer)
-nf:close()
+print(buffer)
+f:close()
+--nf = io.tmpfile()
+--nf:write(buffer)
+--nf:close()

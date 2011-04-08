@@ -221,6 +221,7 @@ protected:
 public:
 	LLViewerTextureAnim *mTextureAnimp;
 	U8 mTexAnimMode;
+	F32      mVolumeSurfaceArea;
 private:
 	friend class LLDrawable;
 	
