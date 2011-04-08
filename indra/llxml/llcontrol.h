@@ -122,7 +122,7 @@ public:
 	bool isSaveValueDefault();
 	bool isPersisted() { return mPersist; }
 	bool isHiddenFromSettingsEditor() { return mHideFromSettingsEditor; }
-	LLSD get()			const	{ return getValue(); }
+	LLSD get()			const;
 	LLSD getValue()		const	{ return mValues.back(); }
 	LLSD getDefault()	const	{ return mValues.front(); }
 	LLSD getSaveValue() const;
@@ -247,5 +247,10 @@ public:
 	// Resets all ignorables
 	void resetWarnings();
 };
+//#define JC_PROFILE_GSAVED
+#ifdef JC_PROFILE_GSAVED
+extern std::map<std::string, int> get_gsaved_calls();
+#endif
+///////////////////////
 
 #endif

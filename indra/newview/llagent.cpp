@@ -39,6 +39,7 @@
 
 #include "llcamera.h"
 #include "llcoordframe.h"
+#include "llcontrol.h"
 #include "indra_constants.h"
 #include "llmath.h"
 #include "llcriticaldamp.h"
@@ -543,8 +544,8 @@ void LLAgent::resetView(BOOL reset_camera, BOOL change_camera)
 		// Hide all popup menus
 		gMenuHolder->hideMenus();
 	}
-
-	if (change_camera && !gSavedSettings.getBOOL("FreezeTime"))
+	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+	if (change_camera && !(*sFreezeTime))
 	{
 		changeCameraToDefault();
 		
@@ -568,7 +569,7 @@ void LLAgent::resetView(BOOL reset_camera, BOOL change_camera)
 	}
 
 
-	if (reset_camera && !gSavedSettings.getBOOL("FreezeTime"))
+	if (reset_camera && !(*sFreezeTime))
 	{
 		if (!gViewerWindow->getLeftMouseDown() && cameraThirdPerson())
 		{
@@ -1958,7 +1959,9 @@ void LLAgent::cameraOrbitIn(const F32 meters)
 		
 		mCameraZoomFraction = (mTargetCameraDistance - meters) / camera_offset_dist;
 
-		if (!gSavedSettings.getBOOL("FreezeTime") && mCameraZoomFraction < MIN_ZOOM_FRACTION && meters > 0.f)
+		static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+
+		if (!(*sFreezeTime) && mCameraZoomFraction < MIN_ZOOM_FRACTION && meters > 0.f)
 		{
 			// No need to animate, camera is already there.
 			changeCameraToMouselook(FALSE);
@@ -6399,7 +6402,10 @@ void LLAgent::teleportViaLocationLookAt(const LLVector3d& pos_global)
 void LLAgent::setTeleportState(ETeleportState state)
 {
 	mTeleportState = state;
-	if (mTeleportState > TELEPORT_NONE && gSavedSettings.getBOOL("FreezeTime"))
+
+	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+
+	if (mTeleportState > TELEPORT_NONE && (*sFreezeTime))
 	{
 		LLFloaterSnapshot::hide(0);
 	}

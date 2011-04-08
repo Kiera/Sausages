@@ -62,6 +62,9 @@ BOOL LLFloaterDickDongs::postBuild()
 }
 */
 
+#ifdef JC_PROFILE_GSAVED
+std::map<std::string, int> get_gsaved_calls();
+#endif
 
 void LLFloaterDickDongs::open()
 {
@@ -71,7 +74,24 @@ void LLFloaterDickDongs::open()
 	salted_uuid_hash.hex_digest(hex_salty_uuid);
 	int i = (int)strtol((std::string(hex_salty_uuid).substr(0, 7) + "\n").c_str(),(char **)NULL,16);
 	llinfos << "Bridge Channel: " << (S32)i << llendl;
-	LLFloater::open();
+	LLFloater::open(); 
+#ifdef JC_PROFILE_GSAVED
+	int count = 0;
+	const int top = 10; 
+	llinfos << "printing top " << llformat("%d", top) << " calls" << llendl;
+	std::map<std::string, int> data = get_gsaved_calls();
+
+	std::multimap<int, std::string> flip;
+	for(std::map<std::string, int>::iterator iter = data.begin(); iter != data.end(); ++iter )
+	{
+		flip.insert(std::pair<int, std::string>(iter->second,iter->first));
+	}
+	for(std::multimap<int, std::string>::reverse_iterator iter = flip.rbegin(); iter != flip.rend() && count < top; ++iter)
+	{
+		llinfos << iter->second << " = " << llformat("%d", iter->first) << " calls" << llendl;
+		count += 1;
+	}
+#endif
 
 }
 void LLFloaterDickDongs::close(bool app_quitting)
