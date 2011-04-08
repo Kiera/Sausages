@@ -1266,7 +1266,7 @@ void LLFloaterAvatarList::sendKeys()
 //static
 void LLFloaterAvatarList::sound_trigger_hook(LLMessageSystem* msg,void **)
 {
-	llinfos << "sound_trigger_hook" << llendl;
+	//llinfos << "sound_trigger_hook" << llendl;
 	LLUUID  sound_id,owner_id;
     msg->getUUIDFast(_PREHASH_SoundData, _PREHASH_SoundID, sound_id);
     msg->getUUIDFast(_PREHASH_SoundData, _PREHASH_OwnerID, owner_id);
