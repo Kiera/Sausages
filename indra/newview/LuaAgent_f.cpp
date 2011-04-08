@@ -145,6 +145,11 @@ std::string getMyName()
 	return name;
 }
 
+std::string getCurrentRegionHost()
+{
+	return gAgent.getRegionHost().getString();
+}
+
 // Internal
 LLVOAvatar* LuaGetAvatar(const LLUUID& id)
 {

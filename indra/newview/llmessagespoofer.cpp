@@ -225,7 +225,15 @@ void LLMessageSpoofer::spoofMessage(const LLHost& region_host, const std::string
 	return;
 }
 
+//wrapper so we can spoof messages from LUA
+void LLMessageSpoofer::spoofMessage(const std::string& region_host, const std::string &str_message)
+{
+	LLHost proper_region_host = LLHost(region_host);
 
+	//check that this was a valid host
+	if(proper_region_host.isOk())
+		spoofMessage(proper_region_host, str_message);
+}
 
 std::string LLMessageSpoofer::mvtstr(e_message_variable_type var_type)
 {

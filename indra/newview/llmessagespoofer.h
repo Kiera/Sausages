@@ -9,6 +9,7 @@ public:
 	LLMessageSpoofer();
 
 	void spoofMessage(const LLHost& region_host, const std::string& str_message );
+	void spoofMessage(const std::string& region_host, const std::string &str_message);
 
 private:
 	std::string mvtstr(e_message_variable_type var_type);

@@ -202,3 +202,5 @@ extern LLAgent *gAgent;
 %import "../LuaSettings.h"
 
 %import "../LuaUI.h"
+
+%include "LuaMessages.i"

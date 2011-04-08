@@ -18,6 +18,7 @@ LLUUID getParcelOwner(LLParcel* parcel);
 // Yes, we are working on bindings for LLAgent, but these are needed ASAP.
 LLUUID getMyID();
 std::string getMyName();
+std::string getCurrentRegionHost();
 
 // Internal
 LLVOAvatar* LuaGetAvatar(const LLUUID& id);
