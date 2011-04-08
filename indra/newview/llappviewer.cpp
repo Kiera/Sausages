@@ -2211,7 +2211,7 @@ bool LLAppViewer::initWindow()
 	BOOL ignorePixelDepth = gSavedSettings.getBOOL("IgnorePixelDepth");
 	// <edit>
 	//gViewerWindow = new LLViewerWindow(gWindowTitle, "Second Life",
-	gViewerWindow = new LLViewerWindow("Inertia", "Second Life",
+	gViewerWindow = new LLViewerWindow("Sausages", "Second Life",
 	// </edit>
 		gSavedSettings.getS32("WindowX"), gSavedSettings.getS32("WindowY"),
 		gSavedSettings.getS32("WindowWidth"), gSavedSettings.getS32("WindowHeight"),

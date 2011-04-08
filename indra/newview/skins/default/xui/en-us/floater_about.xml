@@ -2,19 +2,19 @@
 <floater can_close="true" can_drag_on_left="false" can_minimize="true"
      can_resize="false" height="440" min_height="100" min_width="100"
      name="floater_about" rect_control="FloaterAboutRect"
-     title="Aboot Inertia" width="470">
+     title="Aboot Sausages" width="470">
 	<text_editor bottom="-434" embedded_items="false"
 	     follows="left|top|right|bottom" font="SansSerifSmall" height="168" left="6"
   max_length="65536" mouse_opaque="true" name="credits_editor" width="458"
   word_wrap="true">
   
-  Inertia is a fork of snowglobe 1 trunk focusing on speed, security and making it easy to debug issues within SL
+  Sausages is a fork of snowglobe 1.5 trunk focusing on speed, security and making it easy to debug issues within SL
   
-  Inertia includes source code contributions of the following people: Hazim Gazov, phr0z3nt0ast, Henri Beauchamp, Simman Federal, Apelsin, JCool410 Wildcat
-  
-  Inertia binary builds and support by: Simman Federal, electronbeam, asianman
+  Sausages includes source code contributions of the following people: Hazim Gazov, phr0z3nt0ast, Henri Beauchamp, Simman Federal, Apelsin, JCool410 Wildcat
   
   Significant contribution of the entire source base for SLPE and support of said source by: Philip
+  
+  LUA scripting implementation blatantly stolen from Luna (http://luna.nexisonline.net/)
   
   Decryption advice and source code provided by: Anonymous, Anonymous furry
   
