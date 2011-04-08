@@ -2,8 +2,8 @@
 #ifndef LL_LLFLOATERMESSAGEBUILDER_H
 #define LL_LLFLOATERMESSAGEBUILDER_H
 #include "llfloater.h"
-#include "lltemplatemessagereader.h"
 #include "llmessagelog.h"
+#include "llmessagespoofer.h"
 
 class LLNetListItem
 {
@@ -25,24 +25,12 @@ public:
 	static std::list<LLNetListItem*> sNetListItems;
 	BOOL postBuild();
 	BOOL tick();
-	static BOOL addField(e_message_variable_type var_type, const char* var_name, std::string input, BOOL hex);
 	static void onClickSend(void* user_data);
 	static void onCommitPacketCombo(LLUICtrl* ctrl, void* user_data);
 	static LLFloaterMessageBuilder* sInstance;
 	BOOL handleKeyHere(KEY key, MASK mask);
 	std::string mInitialText;
-	struct parts_var
-	{
-		std::string name;
-		std::string value;
-		BOOL hex;
-		e_message_variable_type var_type;
-	};
-	struct parts_block
-	{
-		std::string name;
-		std::vector<parts_var> vars;
-	};
+
 	static LLNetListItem* findNetListItem(LLHost host);
 	static LLNetListItem* findNetListItem(LLUUID id);
 	void refreshNetList();
@@ -50,6 +38,8 @@ public:
 	ENetInfoMode mNetInfoMode;
 	static void onCommitMessageLog(LLUICtrl* ctrl, void* user_data);
 	static void onCommitFilter(LLUICtrl* ctrl, void* user_data);
+
+	LLMessageSpoofer mSpoofer;
 };
 #endif
 // </edit>
