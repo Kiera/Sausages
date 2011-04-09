@@ -123,6 +123,7 @@ set(viewer_SOURCE_FILES
     lldrawpoolwlsky.cpp
     lldriverparam.cpp
     lldynamictexture.cpp
+    lleasymessagesender.cpp
     llemote.cpp
     lleventinfo.cpp
     lleventnotifier.cpp
@@ -277,7 +278,6 @@ set(viewer_SOURCE_FILES
     llmediaremotectrl.cpp
     llmemoryview.cpp
     llmenucommands.cpp
-    llmessagespoofer.cpp
     llmimetypes.cpp
     llmorphview.cpp
     llmoveview.cpp
@@ -598,6 +598,7 @@ set(viewer_HEADER_FILES
     lldrawpoolwlsky.h
     lldriverparam.h
     lldynamictexture.h
+    lleasymessagesender.h
     llemote.h
     lleventinfo.h
     lleventnotifier.h
@@ -751,7 +752,6 @@ set(viewer_HEADER_FILES
     llmediaremotectrl.h
     llmemoryview.h
     llmenucommands.h
-    llmessagespoofer.h
     llmimetypes.h
     llmorphview.h
     llmoveview.h

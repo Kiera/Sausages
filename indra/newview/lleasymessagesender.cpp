@@ -1,5 +1,5 @@
 #include "llviewerprecompiledheaders.h"
-#include "llmessagespoofer.h"
+#include "lleasymessagesender.h"
 #include "llfloaterchat.h"
 #include "llchat.h"
 #include "llmessagetemplate.h"
@@ -7,23 +7,25 @@
 #include "lltemplatemessagereader.h"
 #include "llagent.h"
 
-LLMessageSpoofer::LLMessageSpoofer()
+//we don't use static methods to prepare for when this class will use its own message builder.
+
+LLEasyMessageSender::LLEasyMessageSender()
 {
 }
 
-void LLMessageSpoofer::spoofMessage(const LLHost& region_host, const std::string& str_message)
+bool LLEasyMessageSender::sendMessage(const LLHost& region_host, const std::string& str_message)
 {
 	std::vector<std::string> lines = split(str_message, "\n");
 	if(!lines.size())
 	{
-		LLFloaterChat::addChat(LLChat("Not enough information :O"));
-		return;
+		printError("Not enough information :O");
+		return false;
 	}
 	std::vector<std::string> tokens = split(lines[0], " ");
 	if(!tokens.size())
 	{
-		LLFloaterChat::addChat(LLChat("Not enough information :O"));
-		return;
+		printError("Not enough information :O");
+		return false;
 	}
 	std::string dir_str = tokens[0];
 	LLStringUtil::toLower(dir_str);
@@ -35,8 +37,8 @@ void LLMessageSpoofer::spoofMessage(const LLHost& region_host, const std::string
 		outgoing = FALSE;
 	else
 	{
-		LLFloaterChat::addChat(LLChat("Expected direction 'in' or 'out'"));
-		return;
+		printError("Expected direction 'in' or 'out'");
+		return false;
 	}
 	// Message
 	std::string message = "Invalid";
@@ -44,8 +46,8 @@ void LLMessageSpoofer::spoofMessage(const LLHost& region_host, const std::string
 	{
 		if(tokens.size() > 2)
 		{
-			LLFloaterChat::addChat(LLChat("Unexpected extra stuff at the top"));
-			return;
+			printError("Unexpected extra stuff at the top");
+			return false;
 		}
 		message = tokens[1];
 		LLStringUtil::trim(message);
@@ -63,8 +65,12 @@ void LLMessageSpoofer::spoofMessage(const LLHost& region_host, const std::string
 		{
 			std::string line = (*line_iter);
 			LLStringUtil::trim(line);
+
+			//skip empty lines
 			if(!line.length())
 				continue;
+
+			//check if this line is the start of a new block
 			if(line.substr(0, 1) == "[" && line.substr(line.size() - 1, 1) == "]")
 			{
 				current_block = line.substr(1, line.length() - 2);
@@ -74,29 +80,35 @@ void LLMessageSpoofer::spoofMessage(const LLHost& region_host, const std::string
 				pb.name = current_block;
 				parts.push_back(pb);
 			}
+			//should be a key->value pair
 			else
 			{
 				if(current_block.empty())
 				{
-					LLFloaterChat::addChat(LLChat("Unexpected field when no block yet"));
-					return;
+					printError("Got a field before the start of a block");
+					return false;
 				}
+
 				int eqpos = line.find("=");
 				if(eqpos == line.npos)
 				{
-					LLFloaterChat::addChat(LLChat("Missing an equal sign"));
-					return;
+					printError("Missing an equal sign");
+					return false;
 				}
+
 				std::string field = line.substr(0, eqpos);
 				LLStringUtil::trim(field);
 				if(!field.length())
 				{
-					LLFloaterChat::addChat(LLChat("Missing name of field"));
-					return;
+					printError("Missing name of field");
+					return false;
 				}
+
 				std::string value = line.substr(eqpos + 1);
 				LLStringUtil::trim(value);
 				parts_var pv;
+
+				//check if this is a hex value
 				if(value.substr(0, 1) == "|")
 				{
 					pv.hex = TRUE;
@@ -105,51 +117,52 @@ void LLMessageSpoofer::spoofMessage(const LLHost& region_host, const std::string
 				}
 				else
 					pv.hex = FALSE;
+
 				pv.name = field;
 				pv.value = value;
 				parts[current_block_index].vars.push_back(pv);
 			}
 		}
 	}
-	// Verification
+
+	//Make sure everything's kosher with the message we built
+
+	//check if the message type is one that we know about
 	std::map<const char *, LLMessageTemplate*>::iterator template_iter;
 	template_iter = gMessageSystem->mMessageTemplates.find( LLMessageStringTable::getInstance()->getString(message.c_str()) );
 	if(template_iter == gMessageSystem->mMessageTemplates.end())
 	{
-		LLFloaterChat::addChat(LLChat(llformat("Don't know how to build a '%s' message", message.c_str())));
-		return;
+		printError(llformat("Don't know how to build a '%s' message", message.c_str()));
+		return false;
 	}
+
 	LLMessageTemplate* temp = (*template_iter).second;
+
 	std::vector<parts_block>::iterator parts_end = parts.end();
 	std::vector<parts_block>::iterator parts_iter = parts.begin();
 	LLMessageTemplate::message_block_map_t::iterator blocks_end = temp->mMemberBlocks.end();
+
 	for (LLMessageTemplate::message_block_map_t::iterator blocks_iter = temp->mMemberBlocks.begin();
 		 blocks_iter != blocks_end; )
 	{
 		LLMessageBlock* block = (*blocks_iter);
 		const char* block_name = block->mName;
-		if(parts_iter == parts_end)
+
+		//are we at the end of the block or does this block belongs at this spot in the message?
+		if(parts_iter == parts_end || (*parts_iter).name != block_name)
 		{
+			//did the block end too early?
 			if(block->mType != MBT_VARIABLE)
-				LLFloaterChat::addChat(LLChat(llformat("Expected '%s' block", block_name)));
-			else
 			{
-				++blocks_iter;
-				continue;
+				printError(llformat("Expected '%s' block", block_name));
+				return false;
 			}
-			return;
+
+			//skip to the next block
+			++blocks_iter;
+			continue;
 		}
-		else if((*parts_iter).name != block_name)
-		{
-			if(block->mType != MBT_VARIABLE)
-				LLFloaterChat::addChat(LLChat(llformat("Expected '%s' block", block_name)));
-			else
-			{
-				++blocks_iter;
-				continue;
-			}
-			return;
-		}
+
 		std::vector<parts_var>::iterator part_var_end = (*parts_iter).vars.end();
 		std::vector<parts_var>::iterator part_var_iter = (*parts_iter).vars.begin();
 		LLMessageBlock::message_variable_map_t::iterator var_end = block->mMemberVariables.end();
@@ -158,37 +171,42 @@ void LLMessageSpoofer::spoofMessage(const LLHost& region_host, const std::string
 		{
 			LLMessageVariable* variable = (*var_iter);
 			const char* var_name = variable->getName();
-			if(part_var_iter == part_var_end)
+
+			//are there less keypairs in this block than there should be?
+			if(part_var_iter == part_var_end || (*part_var_iter).name != var_name)
 			{
-				LLFloaterChat::addChat(LLChat(llformat("Expected '%s' field under '%s' block", var_name, block_name)));
-				return;
+				printError(llformat("Expected '%s' field under '%s' block", var_name, block_name));
+				return false;
 			}
-			else if((*part_var_iter).name != var_name)
-			{
-				LLFloaterChat::addChat(LLChat(llformat("Expected '%s' field under '%s' block", var_name, block_name)));
-				return;
-			}
+
+			//keep the type of data that this value is supposed to contain for later
 			(*part_var_iter).var_type = variable->getType();
+
 			++part_var_iter;
 		}
+
+		//there were more keypairs in the block than there should have been
 		if(part_var_iter != part_var_end)
 		{
-			LLFloaterChat::addChat(LLChat(llformat("Unexpected field(s) at end of '%s' block", block_name)));
-			return;
+			printError(llformat("Unexpected field(s) at end of '%s' block", block_name));
+			return false;
 		}
+
 		++parts_iter;
-		// test
-		if((block->mType != MBT_SINGLE) && (parts_iter != parts_end) && ((*parts_iter).name == block_name))
-		{
-			// block will repeat
-		}
-		else ++blocks_iter;
+
+		//if this block isn't going to repeat, change to the next block
+		if(!((block->mType != MBT_SINGLE) && (parts_iter != parts_end) && ((*parts_iter).name == block_name)))
+			++blocks_iter;
+
 	}
+
+	//there were more blocks specified in the message than there should have been
 	if(parts_iter != parts_end)
 	{
-		LLFloaterChat::addChat(LLChat("Unexpected block(s) at end"));
-		return;
+		printError(llformat("Unexpected block(s) at end: %s", (*parts_iter).name.c_str()));
+		return false;
 	}
+
 	// Build and send
 	gMessageSystem->newMessage( message.c_str() );
 	for(parts_iter = parts.begin(); parts_iter != parts_end; ++parts_iter)
@@ -202,110 +220,40 @@ void LLMessageSpoofer::spoofMessage(const LLHost& region_host, const std::string
 			parts_var pv = (*part_var_iter);
 			if(!addField(pv.var_type, pv.name.c_str(), pv.value, pv.hex))
 			{
-				LLFloaterChat::addChat(LLChat(llformat("Error adding the provided data for %s '%s' to '%s' block", mvtstr(pv.var_type).c_str(), pv.name.c_str(), block_name)));
+				printError(llformat("Error adding the provided data for %s '%s' to '%s' block", mvtstr(pv.var_type).c_str(), pv.name.c_str(), block_name));
 				gMessageSystem->clearMessage();
-				return;
+				return false;
 			}
 		}
 	}
 
 
 	if(outgoing)
-		gMessageSystem->sendMessage(region_host);
+		return(gMessageSystem->sendMessage(region_host) > 0);
 	else
 	{
 		U8 builtMessageBuffer[MAX_BUFFER_SIZE];
 
 		S32 message_size = gMessageSystem->mTemplateMessageBuilder->buildMessage(builtMessageBuffer, MAX_BUFFER_SIZE, 0);
 		gMessageSystem->clearMessage();
-		gMessageSystem->checkMessages(0, true, builtMessageBuffer, region_host, message_size);
-
+		return gMessageSystem->checkMessages(0, true, builtMessageBuffer, region_host, message_size);
 	}
-
-	return;
 }
 
-//wrapper so we can spoof messages from LUA
-void LLMessageSpoofer::spoofMessage(const std::string& region_host, const std::string &str_message)
+//wrapper so we can send messages from LUA
+bool LLEasyMessageSender::sendMessage(const std::string& region_host, const std::string& str_message)
 {
 	LLHost proper_region_host = LLHost(region_host);
 
 	//check that this was a valid host
 	if(proper_region_host.isOk())
-		spoofMessage(proper_region_host, str_message);
+		return sendMessage(proper_region_host, str_message);
+
+	return false;
 }
 
-std::string LLMessageSpoofer::mvtstr(e_message_variable_type var_type)
-{
-	switch(var_type)
-	{
-	case MVT_U8:
-		return "U8";
-		break;
-	case MVT_U16:
-		return "U16";
-		break;
-	case MVT_U32:
-		return "U32";
-		break;
-	case MVT_U64:
-		return "U64";
-		break;
-	case MVT_S8:
-		return "S8";
-		break;
-	case MVT_S16:
-		return "S16";
-		break;
-	case MVT_S32:
-		return "S32";
-		break;
-	case MVT_S64:
-		return "S64";
-		break;
-	case MVT_F32:
-		return "F32";
-		break;
-	case MVT_F64:
-		return "F64";
-		break;
-	case MVT_LLVector3:
-		return "LLVector3";
-		break;
-	case MVT_LLVector3d:
-		return "LLVector3d";
-		break;
-	case MVT_LLVector4:
-		return "LLVector4";
-		break;
-	case MVT_LLQuaternion:
-		return "LLQuaternion";
-		break;
-	case MVT_LLUUID:
-		return "LLUUID";
-		break;
-	case MVT_BOOL:
-		return "BOOL";
-		break;
-	case MVT_IP_ADDR:
-		return "IPADDR";
-		break;
-	case MVT_IP_PORT:
-		return "IPPORT";
-		break;
-	case MVT_VARIABLE:
-		return "Variable";
-		break;
-	case MVT_FIXED:
-		return "Fixed";
-		break;
-	default:
-		return "Missingno.";
-		break;
-	}
-}
 // static
-BOOL LLMessageSpoofer::addField(e_message_variable_type var_type, const char* var_name, std::string input, BOOL hex)
+BOOL LLEasyMessageSender::addField(e_message_variable_type var_type, const char* var_name, std::string input, BOOL hex)
 {
 	LLStringUtil::trim(input);
 	if(input.length() < 1 && var_type != MVT_VARIABLE)
@@ -328,6 +276,7 @@ BOOL LLMessageSpoofer::addField(e_message_variable_type var_type, const char* va
 	BOOL valueBOOL;
 	std::string input_lower = input;
 	LLStringUtil::toLower(input_lower);
+
 	if(input_lower == "$agentid")
 		input = gAgent.getID().asString();
 	else if(input_lower == "$sessionid")
@@ -357,15 +306,19 @@ BOOL LLMessageSpoofer::addField(e_message_variable_type var_type, const char* va
 		temp_stream << "<" << valueVector3[0] << ", " << valueVector3[1] << ", " << valueVector3[2] << ">";
 		input = temp_stream.str();
 	}
+
+	//convert from a text representation of hex to binary
 	if(hex)
 	{
 		if(var_type != MVT_VARIABLE && var_type != MVT_FIXED)
 			return FALSE;
+
 		int len = input_lower.length();
 		const char* cstr = input_lower.c_str();
 		std::string new_input("");
 		BOOL nibble = FALSE;
 		char byte = 0;
+
 		for(int i = 0; i < len; i++)
 		{
 			char c = cstr[i];
@@ -383,12 +336,16 @@ BOOL LLMessageSpoofer::addField(e_message_variable_type var_type, const char* va
 				new_input.push_back(byte | c);
 			nibble = !nibble;
 		}
+
 		if(nibble)
 			return FALSE;
+
 		input = new_input;
 	}
+
 	std::stringstream stream(input);
 	std::vector<std::string> tokens;
+
 	switch(var_type)
 	{
 	case MVT_U8:
@@ -611,7 +568,83 @@ BOOL LLMessageSpoofer::addField(e_message_variable_type var_type, const char* va
 	return FALSE;
 }
 
-inline std::vector<std::string> LLMessageSpoofer::split(std::string input, std::string separator)
+void LLEasyMessageSender::printError(const std::string& error)
+{
+	LLFloaterChat::addChat(LLChat(llformat("Easy Message Sender Error: %s", error.c_str())));
+}
+
+//convert a message variable type to it's string representation
+std::string LLEasyMessageSender::mvtstr(e_message_variable_type var_type)
+{
+	switch(var_type)
+	{
+	case MVT_U8:
+		return "U8";
+		break;
+	case MVT_U16:
+		return "U16";
+		break;
+	case MVT_U32:
+		return "U32";
+		break;
+	case MVT_U64:
+		return "U64";
+		break;
+	case MVT_S8:
+		return "S8";
+		break;
+	case MVT_S16:
+		return "S16";
+		break;
+	case MVT_S32:
+		return "S32";
+		break;
+	case MVT_S64:
+		return "S64";
+		break;
+	case MVT_F32:
+		return "F32";
+		break;
+	case MVT_F64:
+		return "F64";
+		break;
+	case MVT_LLVector3:
+		return "LLVector3";
+		break;
+	case MVT_LLVector3d:
+		return "LLVector3d";
+		break;
+	case MVT_LLVector4:
+		return "LLVector4";
+		break;
+	case MVT_LLQuaternion:
+		return "LLQuaternion";
+		break;
+	case MVT_LLUUID:
+		return "LLUUID";
+		break;
+	case MVT_BOOL:
+		return "BOOL";
+		break;
+	case MVT_IP_ADDR:
+		return "IPADDR";
+		break;
+	case MVT_IP_PORT:
+		return "IPPORT";
+		break;
+	case MVT_VARIABLE:
+		return "Variable";
+		break;
+	case MVT_FIXED:
+		return "Fixed";
+		break;
+	default:
+		return "Missingno.";
+		break;
+	}
+}
+
+inline std::vector<std::string> LLEasyMessageSender::split(std::string input, std::string separator)
 {
 	S32 size = input.length();
 	char* buffer = new char[size + 1];

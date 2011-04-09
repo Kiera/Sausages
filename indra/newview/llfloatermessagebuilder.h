@@ -3,7 +3,7 @@
 #define LL_LLFLOATERMESSAGEBUILDER_H
 #include "llfloater.h"
 #include "llmessagelog.h"
-#include "llmessagespoofer.h"
+#include "lleasymessagesender.h"
 
 class LLNetListItem
 {
@@ -39,7 +39,7 @@ public:
 	static void onCommitMessageLog(LLUICtrl* ctrl, void* user_data);
 	static void onCommitFilter(LLUICtrl* ctrl, void* user_data);
 
-	LLMessageSpoofer mSpoofer;
+	LLEasyMessageSender mMessageSender;
 };
 #endif
 // </edit>

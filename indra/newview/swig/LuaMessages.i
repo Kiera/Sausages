@@ -1,5 +1,7 @@
 %{
-#include "llmessagespoofer.h"
+#include "lleasymessagesender.h"
 %}
 
-%include "../llmessagespoofer.h"
+%rename (MessageSender) LLEasyMessageSender;
+
+%include "../lleasymessagesender.h"

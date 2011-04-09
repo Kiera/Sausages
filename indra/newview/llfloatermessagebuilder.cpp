@@ -362,11 +362,11 @@ void LLFloaterMessageBuilder::onClickSend(void* user_data)
 			return;
 		}
 
-		floaterp->mSpoofer.spoofMessage(itemp->mCircuitData->getHost(), floaterp->childGetText("message_edit"));
+		floaterp->mMessageSender.sendMessage(itemp->mCircuitData->getHost(), floaterp->childGetText("message_edit"));
 	}
 	else
 	{
-		floaterp->mSpoofer.spoofMessage(gAgent.getRegionHost(), floaterp->childGetText("message_edit"));
+		floaterp->mMessageSender.sendMessage(gAgent.getRegionHost(), floaterp->childGetText("message_edit"));
 	}
 }
 
