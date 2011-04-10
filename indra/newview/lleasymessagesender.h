@@ -10,14 +10,11 @@ public:
 
 	bool sendMessage(const LLHost& region_host, const std::string& str_message );
 
-//only make this interface public if we're using this class through swig
-#ifdef SWIGLUA
-public:
-#else
-	private:
-#endif
-	bool luaSendMessage(const std::string& region_host, const std::string &str_message);
+	bool luaSendRawMessage(const std::string& region_host, const std::string str_message);
+	bool luaSendRawMessage(const std::string& str_message);
+
 	bool luaSendMessage(const std::string& region_host);
+	bool luaSendMessage();
 
 	void luaNewMessage(const std::string& message_name, const std::string& direction, bool include_agent_boilerplate=false);
 	void luaClearMessage();

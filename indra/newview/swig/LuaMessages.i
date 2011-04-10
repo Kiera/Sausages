@@ -2,8 +2,11 @@
 #include "lleasymessagesender.h"
 %}
 
-%rename (sendMessage) LLEasyMessageSender::luaSendMessage(const std::string&, const std::string&);
+%rename (sendRawMessage) LLEasyMessageSender::luaSendRawMessage(const std::string&, const std::string);
+%rename (sendRawMessage) LLEasyMessageSender::luaSendRawMessage(const std::string&);
+
 %rename (sendMessage) LLEasyMessageSender::luaSendMessage(const std::string&);
+%rename (sendMessage) LLEasyMessageSender::luaSendMessage();
 
 %rename (newMessage) LLEasyMessageSender::luaNewMessage(const std::string&, const std::string&, bool);
 %rename (newMessage) LLEasyMessageSender::luaNewMessage(const std::string&, const std::string&);

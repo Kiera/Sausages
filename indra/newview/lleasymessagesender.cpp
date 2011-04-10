@@ -240,9 +240,14 @@ bool LLEasyMessageSender::sendMessage(const LLHost& region_host, const std::stri
 	}
 }
 
+
+
+
 //wrapper so we can send whole message-builder format messages from LUA
-bool LLEasyMessageSender::luaSendMessage(const std::string& region_host, const std::string& str_message)
+bool LLEasyMessageSender::luaSendRawMessage(const std::string& region_host, const std::string str_message)
 {
+	luaClearMessage();
+
 	LLHost proper_region_host = LLHost(region_host);
 
 	//check that this was a valid host
@@ -252,15 +257,23 @@ bool LLEasyMessageSender::luaSendMessage(const std::string& region_host, const s
 	return false;
 }
 
+bool LLEasyMessageSender::luaSendRawMessage(const std::string& str_message)
+{
+	return luaSendRawMessage(gAgent.getRegionHost().getString(), str_message);
+}
+
+
+
+
 //buffered message builder methods
 bool LLEasyMessageSender::luaSendMessage(const std::string& region_host)
 {
-	bool retval = luaSendMessage(region_host, mMessageBuffer);
+	return luaSendRawMessage(region_host, mMessageBuffer);
+}
 
-	//clear out the message buffer now that we're done
-	luaClearMessage();
-
-	return retval;
+bool LLEasyMessageSender::luaSendMessage()
+{
+	return luaSendRawMessage(gAgent.getRegionHost().getString(), mMessageBuffer);
 }
 
 void LLEasyMessageSender::luaNewMessage(const std::string& message_name, const std::string& direction, bool include_agent_boilerplate)
