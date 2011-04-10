@@ -240,8 +240,8 @@ bool LLEasyMessageSender::sendMessage(const LLHost& region_host, const std::stri
 	}
 }
 
-//wrapper so we can send messages from LUA
-bool LLEasyMessageSender::sendMessage(const std::string& region_host, const std::string& str_message)
+//wrapper so we can send whole message-builder format messages from LUA
+bool LLEasyMessageSender::luaSendMessage(const std::string& region_host, const std::string& str_message)
 {
 	LLHost proper_region_host = LLHost(region_host);
 
@@ -250,6 +250,49 @@ bool LLEasyMessageSender::sendMessage(const std::string& region_host, const std:
 		return sendMessage(proper_region_host, str_message);
 
 	return false;
+}
+
+//buffered message builder methods
+bool LLEasyMessageSender::luaSendMessage(const std::string& region_host)
+{
+	bool retval = luaSendMessage(region_host, mMessageBuffer);
+
+	//clear out the message buffer now that we're done
+	luaClearMessage();
+
+	return retval;
+}
+
+void LLEasyMessageSender::luaNewMessage(const std::string& message_name, const std::string& direction, bool include_agent_boilerplate)
+{
+	//clear out any message that may be in the buffer
+	luaClearMessage();
+
+	mMessageBuffer = direction + " " + message_name + "\n";
+
+	//include the agentdata block with our agentid and sessionid automagically
+	if(include_agent_boilerplate)
+		mMessageBuffer += "[AgentData]\nAgentID = $AgentID\nSessionID = $SessionID\n";
+}
+
+void LLEasyMessageSender::luaClearMessage()
+{
+	mMessageBuffer = "";
+}
+
+void LLEasyMessageSender::luaAddBlock(const std::string& blockname)
+{
+	mMessageBuffer += "[" + blockname + "]\n";
+}
+
+void LLEasyMessageSender::luaAddField(const std::string& name, const std::string& value)
+{
+	mMessageBuffer += name + " = " + value + "\n";
+}
+
+void LLEasyMessageSender::luaAddHexField(const std::string& name, const std::string& value)
+{
+	mMessageBuffer += name + " =| " + value + "\n";
 }
 
 // static

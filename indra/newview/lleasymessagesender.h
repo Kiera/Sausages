@@ -9,7 +9,23 @@ public:
 	LLEasyMessageSender();
 
 	bool sendMessage(const LLHost& region_host, const std::string& str_message );
-	bool sendMessage(const std::string& region_host, const std::string &str_message);
+
+//only make this interface public if we're using this class through swig
+#ifdef SWIGLUA
+public:
+#else
+	private:
+#endif
+	bool luaSendMessage(const std::string& region_host, const std::string &str_message);
+	bool luaSendMessage(const std::string& region_host);
+
+	void luaNewMessage(const std::string& message_name, const std::string& direction, bool include_agent_boilerplate=false);
+	void luaClearMessage();
+
+	void luaAddBlock(const std::string& blockname);
+
+	void luaAddField(const std::string& name, const std::string& value);
+	void luaAddHexField(const std::string& name, const std::string& value);
 
 private:
 
@@ -30,6 +46,8 @@ private:
 		std::string name;
 		std::vector<parts_var> vars;
 	};
+
+	std::string mMessageBuffer;
 
 	void printError(const std::string& error);
 	std::string mvtstr(e_message_variable_type var_type);
