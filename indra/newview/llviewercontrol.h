@@ -113,6 +113,35 @@ public:
 			boost::bind(&LLCachedControl<T>::handleValueChange, this, _1)
 			);
 	}
+	//<edit>
+	LLCachedControl(const std::string& name, 
+					const T& default_value,
+					const LLControlGroup control_group,
+					const std::string& comment = "Declared In Code")
+	{
+		mControl = control_group.getControl(name);
+		if(mControl.isNull())
+		{
+			declareTypedControl(control_group, name, default_value, comment);
+			mControl = control_group.getControl(name);
+			if(mControl.isNull())
+			{
+				llerrs << "The control could not be created!!!" << llendl;
+			}
+
+			mCachedValue = default_value;
+		}
+		else
+		{
+			mCachedValue = (const T&)mControl->getValue();
+		}
+
+		// Add a listener to the controls signal...
+		mControl->getSignal()->connect(
+			boost::bind(&LLCachedControl<T>::handleValueChange, this, _1)
+			);
+	}
+	//</edit>
 
 	~LLCachedControl()
 	{
@@ -172,8 +201,5 @@ template <> eControlType get_control_type<LLColor4U>(const LLColor4U& in, LLSD& 
 template <> eControlType get_control_type<LLSD>(const LLSD& in, LLSD& out);
 
 //#define TEST_CACHED_CONTROL 1
-#ifdef TEST_CACHED_CONTROL
-void test_cached_control();
-#endif // TEST_CACHED_CONTROL
 
 #endif // LL_LLVIEWERCONTROL_H

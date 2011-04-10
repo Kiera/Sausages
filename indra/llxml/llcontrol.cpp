@@ -245,6 +245,20 @@ bool LLControlVariable::isSaveValueDefault()
         || ((mValues.size() > 1) && llsd_compare(mValues[1], mValues[0]));
 }
 
+#ifdef JC_PROFILE_GSAVED
+std::map<std::string, int> gSavedCalls;
+std::map<std::string, int> get_gsaved_calls(){ return gSavedCalls; }
+#endif
+
+LLSD LLControlVariable::get() const
+{
+#ifdef JC_PROFILE_GSAVED
+	if(gSavedCalls.find(mName) == gSavedCalls.end())gSavedCalls[mName] = 0;
+	else gSavedCalls[mName] = gSavedCalls[mName] + 1;
+#endif
+	return getValue();
+}
+
 LLSD LLControlVariable::getSaveValue() const
 {
 	//The first level of the stack is default

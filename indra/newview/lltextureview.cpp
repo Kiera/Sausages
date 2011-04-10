@@ -490,7 +490,7 @@ void LLGLTexMemBar::draw()
 	S32 left = 0 ;
 #endif
 	//----------------------------------------------------------------------------
-
+	static F32* sThrottleBandwidthKBPS = (F32*)rebind_llcontrol<LLSD::Real>("ThrottleBandwidthKBPS", &gSavedSettings, true);
 	text = llformat("Textures: %d Fetch: %d(%d) Pkts:%d(%d) Cache R/W: %d/%d LFS:%d IW:%d RAW:%d HTP:%d BW: %.0f/%.0f",
 					gImageList.getNumImages(),
 					LLAppViewer::getTextureFetch()->getNumRequests(),
@@ -504,7 +504,7 @@ void LLGLTexMemBar::draw()
 					LLImageRaw::sRawImageCount,
 					LLAppViewer::getTextureFetch()->getNumHTTPRequests(),
 					LLAppViewer::getTextureFetch()->getTextureBandwidth(),
-					gSavedSettings.getF32("ThrottleBandwidthKBPS"));
+					(*sThrottleBandwidthKBPS));
 
 	LLFontGL::getFontMonospace()->renderUTF8(text, 0, 0, line_height*2,
 									 text_color, LLFontGL::LEFT, LLFontGL::TOP);
