@@ -296,8 +296,10 @@ public:
 		return psys;
 	}
 
+#ifndef SWIG
 	// This isnt supported in LUA
 	operator LLPartSysData() { return asParticleSystem(); }
+#endif
 private:
 	LLUUID 		mPartImageID;
 	LLUUID		mTargetID;

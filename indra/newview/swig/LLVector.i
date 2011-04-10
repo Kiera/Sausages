@@ -14,6 +14,19 @@
 %ignore LLVector4::rotVec(F32, LLVector4 const&);
 %ignore LLVector4::rotVec(F32, F32, F32, F32);
 %ignore LLVector3::parseVector3(std::string const&,LLVector3*);
+
+//ignore operators that LUA hates
+%ignore operator+=;
+%ignore operator-=;
+%ignore operator%=;
+%ignore operator*=;
+%ignore operator*=;
+%ignore operator/=;
+%ignore operator*=;
+%ignore operator<<;
+
+%ignore LLColor4::operator const LLColor4U() const;
+
 %include "../../llmath/v2math.h"
 %include "../../llmath/v3math.h"
 %include "../../llmath/v4math.h"
