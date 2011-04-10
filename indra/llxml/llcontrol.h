@@ -316,7 +316,7 @@ public:
 using namespace jc_you_suck;
 #define rebind_llcontrol jc_rebind::rebind_llcontrol
 
-#define JC_PROFILE_GSAVED
+//#define JC_PROFILE_GSAVED
 #ifdef JC_PROFILE_GSAVED
 extern std::map<std::string, int> get_gsaved_calls();
 #endif
