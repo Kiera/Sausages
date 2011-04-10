@@ -10,12 +10,7 @@ public:
 
 	bool sendMessage(const LLHost& region_host, const std::string& str_message );
 
-//only make this interface public if we're using this class through swig
-#ifdef SWIGLUA
-public:
-#else
-	private:
-#endif
+	//only make this interface public if we're using this class through swig
 	bool luaSendMessage(const std::string& region_host, const std::string &str_message);
 	bool luaSendMessage(const std::string& region_host);
 

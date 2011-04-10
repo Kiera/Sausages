@@ -1270,7 +1270,8 @@ void LLToolDragAndDrop::dropScript(LLViewerObject* hit_obj,
 		hit_obj->saveScript(new_script, active, true);
 		gFloaterTools->dirty();
 		// <edit>
- 		if(gSavedSettings.getBOOL("BroadcastViewerEffects"))
+		static BOOL* sBroadcastViewerEffects = rebind_llcontrol<BOOL>("BroadcastViewerEffects", &gSavedSettings, true);
+ 		if((*sBroadcastViewerEffects))
 		{
  		// </edit>
 		// VEFFECT: SetScript
@@ -1451,7 +1452,8 @@ void LLToolDragAndDrop::dropObject(LLViewerObject* raycast_target,
 		gInventory.notifyObservers();
 	}
 	// <edit>
-	if(gSavedSettings.getBOOL("BroadcastViewerEffects"))
+	static BOOL* sBroadcastViewerEffects = rebind_llcontrol<BOOL>("BroadcastViewerEffects", &gSavedSettings, true);
+	if((*sBroadcastViewerEffects))
 	{
 	// </edit>
 	// VEFFECT: DropObject
@@ -1519,7 +1521,8 @@ void LLToolDragAndDrop::dropInventory(LLViewerObject* hit_obj,
 		gFloaterTools->showPanel(LLFloaterTools::PANEL_CONTENTS);
 	}
 	// <edit>
-	if(gSavedSettings.getBOOL("BroadcastViewerEffects"))
+	static BOOL* sBroadcastViewerEffects = rebind_llcontrol<BOOL>("BroadcastViewerEffects", &gSavedSettings, true);
+	if((*sBroadcastViewerEffects))
 	{
 	// </edit>
 	// VEFFECT: AddToInventory
@@ -1635,7 +1638,8 @@ void LLToolDragAndDrop::commitGiveInventoryItem(const LLUUID& to_agent,
 		BUCKET_SIZE);
 	gAgent.sendReliableMessage(); 
 	// <edit>
-	if(gSavedSettings.getBOOL("BroadcastViewerEffects"))
+	static BOOL* sBroadcastViewerEffects = rebind_llcontrol<BOOL>("BroadcastViewerEffects", &gSavedSettings, true);
+	if((*sBroadcastViewerEffects))
 	{
 	// </edit>
 	// VEFFECT: giveInventory
@@ -1858,7 +1862,8 @@ void LLToolDragAndDrop::commitGiveInventoryCategory(const LLUUID& to_agent,
 		gAgent.sendReliableMessage();
 		delete[] bucket;
 		// <edit>
- 		if(gSavedSettings.getBOOL("BroadcastViewerEffects"))
+		static BOOL* sBroadcastViewerEffects = rebind_llcontrol<BOOL>("BroadcastViewerEffects", &gSavedSettings, true);
+ 		if((*sBroadcastViewerEffects))
 		{
  		// </edit>
 		// VEFFECT: giveInventoryCategory

@@ -89,7 +89,8 @@ void LLHUDManager::sendEffects()
 			continue;
 		}
 		//<edit>
-		if (hep->mType != LLHUDObject::LL_HUD_EFFECT_BEAM && !gSavedSettings.getBOOL("BroadcastViewerEffects"))
+		static BOOL* sBroadcastViewerEffects = rebind_llcontrol<BOOL>("BroadcastViewerEffects", &gSavedSettings, true);
+		if (hep->mType != LLHUDObject::LL_HUD_EFFECT_BEAM && !(*sBroadcastViewerEffects))
 			continue;
 		//</edit>
 		if (hep->mType < LLHUDObject::LL_HUD_EFFECT_BEAM)

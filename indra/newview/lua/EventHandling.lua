@@ -115,7 +115,7 @@ function DumpAllHooks2Wiki()
 		else 
 			hookdesc="''EVENT LACKS A DESCRIPTION!''" 
 		end
-		txt=txt.."\n;[["..name.."]]\n:"..gEventDescs[name].."\n"
+		txt=txt.."\n[["..name.."]]\n:"..gEventDescs[name].."\n"
 	end
 	return txt
 end
