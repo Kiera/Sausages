@@ -5113,7 +5113,6 @@ The string [STRING_NAME] is missing from strings.xml
 
   <notification
    icon="alertmodal.tga"
-   icon="alertmodal.tga"
    name="SetDisplayNameSuccess"
    type="alert">
 Hi [DISPLAY_NAME]!
