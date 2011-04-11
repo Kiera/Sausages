@@ -62,7 +62,9 @@ public:
 	// UI Handlers
 	static void onClickMap(void* data);
 	static void onClickOwner(void* data);
-	static void onClickMute(void* data);
+	static void onClickMuteOwner(void* data);
+	static void onClickMuteObject(void* data);
+	static void onClickMuteByName(void* data);
 
 	static void nameCallback(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data);
 
@@ -89,7 +91,9 @@ LLFloaterObjectIMInfo::LLFloaterObjectIMInfo(const LLSD& seed)
 
 BOOL LLFloaterObjectIMInfo::postBuild(void)
 {
-	childSetAction("Mute",onClickMute,this);
+	childSetAction("MuteOwner", onClickMuteOwner, this);
+	childSetAction("MuteObject", onClickMuteObject, this);
+	childSetAction("MuteByName", onClickMuteByName, this);
 	childSetActionTextbox("OwnerName",onClickOwner, this);
 	childSetActionTextbox("Slurl",onClickMap, this);
 
@@ -109,8 +113,10 @@ void LLFloaterObjectIMInfo::update(const LLUUID& object_id, const std::string& n
 	childSetText("OwnerName",std::string(""));
 
 	bool my_object = (owner_id == gAgentID);
-	childSetEnabled("Mute",!my_object);
-	
+	childSetEnabled("MuteOwner", !my_object);
+	childSetEnabled("MuteObject", !my_object);
+	childSetEnabled("MuteByName", !my_object);
+
 	mObjectID = object_id;
 	mObjectName = name;
 	mSlurl = slurl;
@@ -146,12 +152,34 @@ void LLFloaterObjectIMInfo::onClickOwner(void* data)
 }
 
 //static 
-void LLFloaterObjectIMInfo::onClickMute(void* data)
+void LLFloaterObjectIMInfo::onClickMuteOwner(void* data)
 {
 	LLFloaterObjectIMInfo* self = (LLFloaterObjectIMInfo*)data;
 
 	LLMute::EType mute_type = (self->mOwnerIsGroup) ? LLMute::GROUP : LLMute::AGENT;
 	LLMute mute(self->mOwnerID, self->mOwnerName, mute_type);
+	LLMuteList::getInstance()->add(mute);
+	LLFloaterMute::showInstance();
+	self->close();
+}
+
+//static 
+void LLFloaterObjectIMInfo::onClickMuteObject(void* data)
+{
+	LLFloaterObjectIMInfo* self = (LLFloaterObjectIMInfo*)data;
+
+	LLMute mute(self->mObjectID, self->mObjectName, LLMute::OBJECT);
+	LLMuteList::getInstance()->add(mute);
+	LLFloaterMute::showInstance();
+	self->close();
+}
+
+//static 
+void LLFloaterObjectIMInfo::onClickMuteByName(void* data)
+{
+	LLFloaterObjectIMInfo* self = (LLFloaterObjectIMInfo*)data;
+
+	LLMute mute(LLUUID::null, self->mObjectName, LLMute::BY_NAME);
 	LLMuteList::getInstance()->add(mute);
 	LLFloaterMute::showInstance();
 	self->close();

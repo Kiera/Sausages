@@ -242,6 +242,9 @@ BOOL LLPanelDisplay::postBuild()
 	// Avatar Render Mode
 	mCtrlAvatarCloth = getChild<LLCheckBoxCtrl>("AvatarCloth");
 	mCtrlAvatarImpostors = getChild<LLCheckBoxCtrl>("AvatarImpostors");
+	mCtrlAvatarImpostors->setCommitCallback(&LLPanelDisplay::onVertexShaderEnable);
+	mCtrlAvatarImpostors->setCallbackUserData(this);
+	mCtrlNonImpostors = getChild<LLSliderCtrl>("AvatarMaxVisible");
 
 	//----------------------------------------------------------------------------
 	// radio set for lighting detail
@@ -389,6 +392,7 @@ void LLPanelDisplay::refresh()
 
 	// avatar settings
 	mAvatarImpostors = gSavedSettings.getBOOL("RenderUseImpostors");
+	mNonImpostors = gSavedSettings.getS32("RenderAvatarMaxVisible");
 	mAvatarCloth = gSavedSettings.getBOOL("RenderAvatarCloth");
 
 	// Draw distance
@@ -475,6 +479,9 @@ void LLPanelDisplay::refreshEnabledState()
 		mCtrlAvatarCloth->setEnabled(true);
 	}
 
+	// Disable max non-impostors slider if avatar impostors are off
+	mCtrlNonImpostors->setEnabled(gSavedSettings.getBOOL("RenderUseImpostors"));
+
 	// Vertex Shaders
 	mCtrlShaderEnable->setEnabled(LLFeatureManager::getInstance()->isFeatureAvailable("VertexShaderEnable"));
 
@@ -556,6 +563,7 @@ void LLPanelDisplay::disableUnavailableSettings()
 	{
 		mCtrlAvatarImpostors->setEnabled(FALSE);
 		mCtrlAvatarImpostors->setValue(FALSE);
+		mCtrlNonImpostors->setEnabled(FALSE);
 	}
 }
 
@@ -588,6 +596,7 @@ void LLPanelDisplay::setHiddenGraphicsState(bool isHidden)
 	llassert(mCtrlAvatarVP != NULL);
 	llassert(mCtrlShaderEnable != NULL);
 	llassert(mCtrlAvatarImpostors != NULL);
+	llassert(mCtrlNonImpostors != NULL);
 	llassert(mCtrlAvatarCloth != NULL);
 	llassert(mRadioLightingDetail2 != NULL);
 
@@ -635,6 +644,7 @@ void LLPanelDisplay::setHiddenGraphicsState(bool isHidden)
 	mCtrlAvatarVP->setVisible(!isHidden);
 	mCtrlShaderEnable->setVisible(!isHidden);
 	mCtrlAvatarImpostors->setVisible(!isHidden);
+	mCtrlNonImpostors->setVisible(!isHidden);
 	mCtrlAvatarCloth->setVisible(!isHidden);
 	mRadioLightingDetail2->setVisible(!isHidden);
 
@@ -677,6 +687,7 @@ void LLPanelDisplay::cancel()
 	gSavedSettings.setS32("RenderReflectionDetail", mReflectionDetail);
 
 	gSavedSettings.setBOOL("RenderUseImpostors", mAvatarImpostors);
+	gSavedSettings.setS32("RenderAvatarMaxVisible", mNonImpostors);
 	gSavedSettings.setBOOL("RenderAvatarCloth", mAvatarCloth);
 
 	gSavedSettings.setS32("RenderLightingDetail", mLightingDetail);
@@ -920,6 +931,11 @@ void LLPanelDisplay::onVertexShaderEnable(LLUICtrl* self, void* data)
 void LLPanelDisplay::setHardwareDefaults(void* user_data)
 {
 	LLFeatureManager::getInstance()->applyRecommendedSettings();
+	LLControlVariable* controlp = gSavedSettings.getControl("RenderAvatarMaxVisible");
+	if (controlp)
+	{
+		controlp->resetToDefault(true);
+	}
 	LLFloaterPreference::refreshEnabledGraphics();
 }
 

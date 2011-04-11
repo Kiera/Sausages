@@ -1533,7 +1533,8 @@ bool idle_startup()
 		requested_options.push_back("buddy-list");
 		requested_options.push_back("ui-config");
 #endif
-		requested_options.push_back("max-agent-groups");
+		requested_options.push_back("max_groups");			// OpenSim
+		requested_options.push_back("max-agent-groups");	// SL
 		requested_options.push_back("map-server-url");
 		requested_options.push_back("tutorial_setting");
 		requested_options.push_back("login-flags");
@@ -2446,6 +2447,10 @@ bool idle_startup()
 			}
 
 			std::string max_agent_groups = LLUserAuth::getInstance()->getResponse("max-agent-groups");
+			if (max_agent_groups.empty())
+			{
+				max_agent_groups = LLUserAuth::getInstance()->getResponse("max_groups");
+			}
 			if (!max_agent_groups.empty())
 			{
 				gMaxAgentGroups = atoi(max_agent_groups.c_str());
@@ -2453,7 +2458,8 @@ bool idle_startup()
 			}
 			else
 			{
-				gMaxAgentGroups = DEFAULT_MAX_AGENT_GROUPS;
+				gMaxAgentGroups = (gIsInSecondLife ? DEFAULT_MAX_AGENT_GROUPS : OPENSIM_DEFAULT_MAX_AGENT_GROUPS);
+				LL_INFOS("LLStartup") << "gMaxAgentGroups set to default: " << gMaxAgentGroups << LL_ENDL;
 			}
 
 			std::string map_server_url = LLUserAuth::getInstance()->getResponse("map-server-url");

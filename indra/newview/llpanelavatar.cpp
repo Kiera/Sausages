@@ -1322,7 +1322,12 @@ void LLPanelAvatar::setAvatarID(const LLUUID &avatar_id, const std::string &name
 		}
 		else
 		{
-			name_edit->setText(name);
+			std::string avname = name;
+			if (LLAvatarName::sOmitResidentAsLastName)
+			{
+				LLStringUtil::replaceString(avname, " Resident", "");
+			}
+			name_edit->setText(avname);
 		}
 		childSetVisible("name", TRUE);
 	}

@@ -47,6 +47,7 @@ public:
 	void cancel();
 
 private:
+	static void onHttpTextureFetchToggled(LLUICtrl* ctrl, void* data);
 	static void onClickClearCache(void*);
 	static void onClickSetCache(void*);
 	static void onClickResetCache(void*);

@@ -212,7 +212,6 @@ const F32 DEFAULT_AFK_TIMEOUT = 5.f * 60.f; // time with no input before user fl
 F32 gSimLastTime; // Used in LLAppViewer::init and send_stats()
 F32 gSimFrames;
 
-BOOL gAllowIdleAFK = TRUE;
 BOOL gAllowTapTapHoldRun = TRUE;
 BOOL gShowObjectUpdates = FALSE;
 BOOL gUseQuickTime = TRUE;
@@ -317,8 +316,15 @@ LLAppViewer::LLUpdaterInfo *LLAppViewer::sUpdaterInfo = NULL ;
 
 void idle_afk_check()
 {
+	static LLCachedControl<S32> afk_timeout("AFKTimeout", 300);
+	F32 timeout = (F32)afk_timeout;
+	if (timeout != 0 && timeout < 30.0f)
+	{
+		timeout = 30.0f;
+		gSavedSettings.setS32("AFKTimeout", 30);
+	}
 	// check idle timers
-	if (gAllowIdleAFK && (gAwayTriggerTimer.getElapsedTimeF32() > gSavedSettings.getF32("AFKTimeout")))
+	if (afk_timeout > 0 && gAwayTriggerTimer.getElapsedTimeF32() > timeout)
 	{
 		gAgent.setAFK();
 	}
@@ -412,7 +418,6 @@ static void settings_to_globals()
 	gAgent.mHideGroupTitle		= gSavedSettings.getBOOL("RenderHideGroupTitle");
 
 	gDebugWindowProc = gSavedSettings.getBOOL("DebugWindowProc");
-	gAllowIdleAFK = gSavedSettings.getBOOL("AllowIdleAFK");
 	gAllowTapTapHoldRun = gSavedSettings.getBOOL("AllowTapTapHoldRun");
 	gShowObjectUpdates = gSavedSettings.getBOOL("ShowObjectUpdates");
 	LLWorldMapView::sMapScale = gSavedSettings.getF32("MapScale");
@@ -1417,9 +1422,9 @@ bool LLAppViewer::cleanup()
 	}
 	
 	// Delete workers first
-	// shotdown all worker threads before deleting them in case of co-dependencies
-	sTextureCache->shutdown();
+	// shutdown all worker threads before deleting them in case of co-dependencies
 	sTextureFetch->shutdown();
+	sTextureCache->shutdown();
 	sImageDecodeThread->shutdown();
 	sTextureFetch->shutDownTextureCacheThread();
 	sTextureFetch->shutDownImageDecodeThread();
@@ -2294,7 +2299,6 @@ void LLAppViewer::cleanupSavedSettings()
 
 	gSavedSettings.setBOOL("DebugWindowProc", gDebugWindowProc);
 		
-	gSavedSettings.setBOOL("AllowIdleAFK", gAllowIdleAFK);
 	gSavedSettings.setBOOL("AllowTapTapHoldRun", gAllowTapTapHoldRun);
 	gSavedSettings.setBOOL("ShowObjectUpdates", gShowObjectUpdates);
 	
@@ -2850,7 +2854,6 @@ void LLAppViewer::migrateCacheDirectory()
 bool LLAppViewer::initCache()
 {
 	mPurgeCache = false;
-	// Purge cache if user requested it
 	BOOL read_only = mSecondInstance ? TRUE : FALSE;
 	LLAppViewer::getTextureCache()->setReadOnly(read_only);
 

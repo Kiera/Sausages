@@ -68,6 +68,7 @@ include_directories(
     )
 
 set(viewer_SOURCE_FILES
+    cbchatcmdparser.cpp
     dofloaterhex.cpp
     dohexeditor.cpp
     hgfloatertexteditor.cpp
@@ -189,7 +190,6 @@ set(viewer_SOURCE_FILES
     llfloaterlagmeter.cpp
     llfloaterland.cpp
     llfloaterlandholdings.cpp
-    llfloaterlandmark.cpp
     llfloatermap.cpp
     slfloatermediafilter.cpp
     llfloatermemleak.cpp
@@ -541,6 +541,7 @@ set(viewer_HEADER_FILES
     CMakeLists.txt
     ViewerInstall.cmake
 
+    cbchatcmdparser.h
     dofloaterhex.h
     dohexeditor.h
     hgfloatertexteditor.h
@@ -664,7 +665,6 @@ set(viewer_HEADER_FILES
     llfloaterlagmeter.h
     llfloaterland.h
     llfloaterlandholdings.h
-    llfloaterlandmark.h
     llfloatermap.h
     slfloatermediafilter.h
     llfloatermemleak.h

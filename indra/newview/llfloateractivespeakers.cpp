@@ -88,11 +88,34 @@ LLSpeaker::LLSpeaker(const LLUUID& id, const std::string& name, const ESpeakerTy
 
 void LLSpeaker::lookupName()
 {
-	LLAvatarNameCache::get(mID, boost::bind(&LLSpeaker::onAvatarNameLookup, _1, _2, new LLHandle<LLSpeaker>(getHandle())));
+	if (LLAvatarNameCache::useDisplayNames())
+	{
+		LLAvatarNameCache::get(mID, boost::bind(&LLSpeaker::onAvatarDisplayNameLookup, _1, _2, new LLHandle<LLSpeaker>(getHandle())));
+	}
+	else
+	{
+		gCacheName->getName(mID, onAvatarNameLookup, new LLHandle<LLSpeaker>(getHandle()));
+	}
 }
 
 //static 
-void LLSpeaker::onAvatarNameLookup(const LLUUID& id, const LLAvatarName& avatar_name, void* user_data)
+void LLSpeaker::onAvatarNameLookup(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* user_data)
+{
+	LLSpeaker* speaker_ptr = ((LLHandle<LLSpeaker>*)user_data)->get();
+	delete (LLHandle<LLSpeaker>*)user_data;
+
+	if (speaker_ptr)
+	{
+		speaker_ptr->mDisplayName = first;
+		if (!is_group && (!LLAvatarName::sOmitResidentAsLastName || last != "Resident"))
+		{
+			speaker_ptr->mDisplayName += " " + last;
+		}
+	}
+}
+
+//static 
+void LLSpeaker::onAvatarDisplayNameLookup(const LLUUID& id, const LLAvatarName& avatar_name, void* user_data)
 {
 	LLSpeaker* speaker_ptr = ((LLHandle<LLSpeaker>*)user_data)->get();
 	delete (LLHandle<LLSpeaker>*)user_data;
@@ -103,7 +126,6 @@ void LLSpeaker::onAvatarNameLookup(const LLUUID& id, const LLAvatarName& avatar_
 		speaker_ptr->mDisplayName = avatar_name.getNames();
 	}
 }
-
 LLSpeakerTextModerationEvent::LLSpeakerTextModerationEvent(LLSpeaker* source)
 : LLEvent(source, "Speaker text moderation event")
 {

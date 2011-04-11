@@ -43,6 +43,7 @@
 #include "message.h"
 #include "llfocusmgr.h"
 
+#include "cbchatcmdparser.h"
 #include "llagent.h"
 #include "llbutton.h"
 #include "llcombobox.h"
@@ -342,7 +343,7 @@ LLWString LLChatBar::stripChannelNumber(const LLWString &mesg, S32* channel)
 			 && mesg[1]
 			 && ( LLStringOps::isDigit(mesg[1]) 
 				// <edit>
-				|| mesg[1] == '-' ))
+				|| (mesg[1] == '-' && mesg[2] && LLStringOps::isDigit(mesg[2])) ))
 				// </edit>
 	{
 		// This a special "/20" speak on a channel
@@ -402,24 +403,28 @@ void LLChatBar::sendChat( EChatType type )
 			stripChannelNumber(text, &channel);
 			
 			std::string utf8text = wstring_to_utf8str(text);
-			// Try to trigger a gesture, if not chat to a script.
-			std::string utf8_revised_text;
-			if (0 == channel)
-			{
-				// discard returned "found" boolean
-				gGestureManager.triggerAndReviseString(utf8text, &utf8_revised_text);
-			}
-			else
-			{
-				utf8_revised_text = utf8text;
-			}
 
-			utf8_revised_text = utf8str_trim(utf8_revised_text);
-
-			if (!utf8_revised_text.empty())
+			if(!ChatCmdParser::getInstance()->parse(utf8text))
 			{
-				// Chat with animation
-				sendChatFromViewer(utf8_revised_text, type, TRUE);
+				// Try to trigger a gesture, if not chat to a script.
+				std::string utf8_revised_text;
+				if (0 == channel)
+				{
+					// discard returned "found" boolean
+					gGestureManager.triggerAndReviseString(utf8text, &utf8_revised_text);
+				}
+				else
+				{
+					utf8_revised_text = utf8text;
+				}
+
+				utf8_revised_text = utf8str_trim(utf8_revised_text);
+
+				if (!utf8_revised_text.empty())
+				{
+					// Chat with animation
+					sendChatFromViewer(utf8_revised_text, type, TRUE);
+				}
 			}
 		}
 	}

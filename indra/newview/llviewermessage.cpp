@@ -2520,6 +2520,10 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 	{
 		if (chatter && chatter->isAvatar())
 		{
+			if (LLAvatarName::sOmitResidentAsLastName)
+			{
+				LLStringUtil::replaceString(from_name, " Resident", "");
+			}
 			if (LLAvatarNameCache::useDisplayNames())
 			{
 				LLAvatarName avatar_name;

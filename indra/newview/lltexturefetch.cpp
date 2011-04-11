@@ -148,7 +148,7 @@ public:
 	/*virtual*/ bool deleteOK(); // called from update() (WORK THREAD)
 
 	~LLTextureFetchWorker();
-	void release() { --mActiveCount; }
+	// void release() { --mActiveCount; }
 
 	S32 callbackHttpGet(const LLChannelDescriptors& channels,
 						 const LLIOPipe::buffer_ptr_t& buffer,
@@ -251,9 +251,9 @@ private:
 	S32 mDesiredSize;
 	S32 mFileSize;
 	S32 mCachedSize;
-	BOOL mLoaded;
 	e_request_state mSentRequest;
 	handle_t mDecodeHandle;
+	BOOL mLoaded;
 	BOOL mDecoded;
 	BOOL mWritten;
 	BOOL mNeedsAux;
@@ -302,7 +302,10 @@ public:
 							  const LLChannelDescriptors& channels,
 							  const LLIOPipe::buffer_ptr_t& buffer)
 	{
-		if ((gSavedSettings.getBOOL("LogTextureDownloadsToViewerLog")) || (gSavedSettings.getBOOL("LogTextureDownloadsToSimulator")))
+		static LLCachedControl<bool> log_to_viewer_log("LogTextureDownloadsToViewerLog", FALSE);
+		static LLCachedControl<bool> log_to_sim("LogTextureDownloadsToSimulator", FALSE);
+
+		if (log_to_viewer_log || log_to_sim)
 		{
 			mFetcher->mTextureInfo.setRequestStartTime(mID, mStartTime);
 			U64 timeNow = LLTimer::getTotalTime();
@@ -321,7 +324,7 @@ public:
 			if (HTTP_OK <= status &&  status < HTTP_MULTIPLE_CHOICES)
 			{
 				success = true;
-				if (HTTP_PARTIAL_CONTENT == status) // partial information (i.e. last block)
+				if (HTTP_PARTIAL_CONTENT == status) // partial information
 				{
 					partial = true;
 				}
@@ -831,7 +834,6 @@ bool LLTextureFetchWorker::doWork(S32 param)
 			{
 				// processSimulatorPackets() failed
 // 				llwarns << "processSimulatorPackets() failed to load buffer" << llendl;
-				// FIXME: Don't we need a mState change?
 				return true; // failed
 			}
 			setPriority(LLWorkerThread::PRIORITY_HIGH | mWorkPriority);
@@ -850,12 +852,14 @@ bool LLTextureFetchWorker::doWork(S32 param)
 	{
 		if(mCanUseHTTP)
 		{
-			static const S32 MAX_NUM_OF_HTTP_REQUESTS_IN_QUEUE = 32 ;
-			if (mFetcher->getNumHTTPRequests() > MAX_NUM_OF_HTTP_REQUESTS_IN_QUEUE)
+			static LLCachedControl<S32> max_num_of_http_requests_in_queue("TextureMaxHTTPRequests", 16);
+			if (mFetcher->getNumHTTPRequests() > llclamp((S32)max_num_of_http_requests_in_queue, 8, 32))
  			{
 				return false ; //wait.
 			}
-			
+#if 0		// Bad idea: makes some textures failing to load fully while marked as 0 decoded discard level...
+			mFetcher->removeFromNetworkQueue(this, false);
+#endif
 			S32 cur_size = 0;
 			if (mFormattedImage.notNull())
 			{
@@ -867,6 +871,12 @@ bool LLTextureFetchWorker::doWork(S32 param)
 					mState = DECODE_IMAGE;
 					return false;
 				}
+#if 0				// Best to keep trying, no ?...
+					else
+					{
+						return true; //abort.
+					}
+#endif
 			}
 			mRequestedSize = mDesiredSize;
 			mRequestedDiscard = mDesiredDiscard;
@@ -1175,7 +1185,7 @@ bool LLTextureFetchWorker::doWork(S32 param)
 		{
 			setPriority(LLWorkerThread::PRIORITY_LOW | mWorkPriority);
 
-			if(mDecodedDiscard<=0)
+			if (mDecodedDiscard <= 0)
 			{	
 				return true;
 			}
@@ -2238,7 +2248,9 @@ bool LLTextureFetch::receiveImagePacket(const LLHost& host, const LLUUID& id, U1
 
 	if(packet_num >= (worker->mTotalPackets - 1))
 	{
-		if ((gSavedSettings.getBOOL("LogTextureDownloadsToViewerLog")) || (gSavedSettings.getBOOL("LogTextureDownloadsToSimulator")))
+		static LLCachedControl<bool> log_to_viewer_log("LogTextureDownloadsToViewerLog", FALSE);
+		static LLCachedControl<bool> log_to_sim("LogTextureDownloadsToSimulator", FALSE);
+		if (log_to_viewer_log || log_to_sim)
 		{
 			U64 timeNow = LLTimer::getTotalTime();
 			mTextureInfo.setRequestSize(id, worker->mFileSize);

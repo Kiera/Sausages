@@ -444,6 +444,8 @@ public:
 	static LLTimer sEvaluationTimer;
 	static S8  sCameraMovingDiscardBias;
 	static F32 sDesiredDiscardBias;
+	static F32 sDesiredDiscardBiasMin;
+	static F32 sDesiredDiscardBiasMax;
 	static F32 sDesiredDiscardScale;
 	static S32 sBoundTextureMemoryInBytes;
 	static S32 sTotalTextureMemoryInBytes;

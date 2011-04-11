@@ -580,6 +580,10 @@ BOOL LLNetMap::handleToolTip( S32 x, S32 y, std::string& msg, LLRect* sticky_rec
 		std::string fullname;
 		if(mClosestAgentToCursor.notNull() && gCacheName->getFullName(mClosestAgentToCursor, fullname))
 		{
+			if (LLAvatarName::sOmitResidentAsLastName)
+			{
+				LLStringUtil::replaceString(fullname, " Resident", "");
+			}
 			if (LLAvatarNameCache::useDisplayNames())
 			{
 				LLAvatarName avatar_name;

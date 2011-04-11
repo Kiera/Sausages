@@ -1,7 +1,51 @@
 <?xml version="1.0" ?>
 <llsd>
 <map>
-  <key>RenderVolumeSAThreshold</key>
+	<key>ChatCmdEnabled</key>
+	<map>
+		<key>Comment</key>
+		<string>Defines if chat parser is enabled</string>
+		<key>Persist</key>
+		<integer>1</integer>
+		<key>Type</key>
+		<string>Boolean</string>
+		<key>Value</key>
+		<string>1</string>
+	</map>
+	<key>ChatCmdLua</key>
+	<map>
+		<key>Comment</key>
+		<string>[NOT USED]</string>
+		<key>Persist</key>
+		<integer>1</integer>
+		<key>Type</key>
+		<string>String</string>
+		<key>Value</key>
+		<string>/lua</string>
+	</map>
+	<key>ChatCmdLuaMacro</key>
+	<map>
+		<key>Comment</key>
+		<string>[NOT USED]</string>
+		<key>Persist</key>
+		<integer>1</integer>
+		<key>Type</key>
+		<string>String</string>
+		<key>Value</key>
+		<string>/macro</string>
+	</map>
+	<key>ChatCmdLuaMacroShort</key>
+	<map>
+		<key>Comment</key>
+		<string>[NOT USED]</string>
+		<key>Persist</key>
+		<integer>1</integer>
+		<key>Type</key>
+		<string>String</string>
+		<key>Value</key>
+		<string>/m</string>
+	</map>
+	<key>RenderVolumeSAThreshold</key>
     <map>
       <key>Comment</key>
       <string>The surface area at which volumes begin to be considered for being made invisible.</string>
@@ -12,7 +56,7 @@
       <key>Value</key>
       <real>50.0</real>
     </map>
-  <key>RenderSculptSAThreshold</key>
+	<key>RenderSculptSAThreshold</key>
     <map>
       <key>Comment</key>
       <string>The surface area at which sculpts begin to be considered for being made invisible.</string>
@@ -37,13 +81,13 @@
     <key>AFKTimeout</key>
     <map>
       <key>Comment</key>
-      <string>Time before automatically setting AFK (away from keyboard) mode (seconds)</string>
+      <string>Time in seconds before automatically setting AFK (away from keyboard) mode. 0 to disable.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
-      <string>F32</string>
+      <string>S32</string>
       <key>Value</key>
-      <real>300.0</real>
+      <real>300</real>
     </map>
     <key>AdvanceSnapshot</key>
     <map>
@@ -182,17 +226,6 @@
       <string>Boolean</string>
       <key>Value</key>
       <integer>0</integer>
-    </map>
-    <key>AllowIdleAFK</key>
-    <map>
-      <key>Comment</key>
-      <string>Automatically set AFK (away from keyboard) mode when idle</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>1</integer>
     </map>
     <key>AllowMultipleViewers</key>
     <map>
@@ -4146,6 +4179,22 @@
         <integer>0</integer>
       </array>
     </map>
+    <key>FloaterDebugSettingsRect</key>
+    <map>
+      <key>Comment</key>
+      <string>Rectangle for Debug Settings floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Rect</string>
+      <key>Value</key>
+      <array>
+        <integer>0</integer>
+        <integer>0</integer>
+        <integer>0</integer>
+        <integer>0</integer>
+      </array>
+    </map>
     <key>FloaterEnvRect</key>
     <map>
       <key>Comment</key>
@@ -4459,7 +4508,7 @@
     <key>FloaterLandmarkRect</key>
     <map>
       <key>Comment</key>
-      <string>Rectangle for landmark picker</string>
+      <string>Rectangle for landmark floater</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -4467,8 +4516,8 @@
       <key>Value</key>
       <array>
         <integer>0</integer>
-        <integer>290</integer>
-        <integer>310</integer>
+        <integer>440</integer>
+        <integer>495</integer>
         <integer>0</integer>
       </array>
     </map>
@@ -5731,9 +5780,53 @@
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>1</integer>
+		<integer>1</integer>
+	</map>
+	<key>TextureMaxHTTPRequests</key>
+	<map>
+		<key>Comment</key>
+		<string>Maximum number of queued HTTP requests (between 8 and 32)</string>
+		<key>Persist</key>
+		<integer>1</integer>
+		<key>Type</key>
+		<string>S32</string>
+		<key>Value</key>
+		<integer>16</integer>
+	</map>
+	<key>TextureLoadFullRes</key>
+	<map>
+		<key>Comment</key>
+		<string>If TRUE, always load textures at full resolution (discard = 0)</string>
+		<key>Persist</key>
+		<integer>1</integer>
+		<key>Type</key>
+		<string>Boolean</string>
+		<key>Value</key>
+        <integer>0</integer>
     </map>
-    <key>InBandwidth</key>
+	<key>TextureBoostAttachments</key>
+	<map>
+		<key>Comment</key>
+		<string>If TRUE, boost the importance to the camera for textures on avatars' attachments</string>
+		<key>Persist</key>
+		<integer>1</integer>
+		<key>Type</key>
+		<string>Boolean</string>
+		<key>Value</key>
+		<integer>1</integer>
+	</map>
+	<key>TextureMinAttachmentsVSize</key>
+	<map>
+		<key>Comment</key>
+		<string>Used to boost textures on avatars' attachments by pretending their virtual size can't be smaller than the square of this value</string>
+		<key>Persist</key>
+		<integer>1</integer>
+		<key>Type</key>
+		<string>S32</string>
+		<key>Value</key>
+		<integer>192</integer>
+	</map>
+	<key>InBandwidth</key>
     <map>
       <key>Comment</key>
       <string>Incoming bandwidth throttle (bps)</string>
@@ -12620,7 +12713,7 @@
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>0</integer>
+      <integer>1</integer>
     </map>
     <key>VectorizePerfTest</key>
     <map>

@@ -189,6 +189,7 @@
 #include "llstring.h"
 #include "llsurfacepatch.h"
 #include "llimview.h"
+#include "lltexturecache.h"
 #include "lltextureview.h"
 #include "lltool.h"
 #include "lltoolbar.h"
@@ -489,6 +490,7 @@ void request_friendship(const LLUUID& agent_id);
 // Tools menu
 void handle_force_unlock(void*);
 void handle_selected_texture_info(void*);
+void reload_selected_texture(void*);
 void handle_dump_image_list(void*);
 
 void handle_crash(void*);
@@ -739,6 +741,12 @@ void init_menus()
 	show_debug_menus();
 
 	gLoginMenuBarView = (LLMenuBarGL*)LLUICtrlFactory::getInstance()->buildMenu("menu_login.xml", gMenuHolder);
+	// Add the debug settings item to the login menu bar
+	menu = new LLMenuGL(CLIENT_MENU_NAME);
+	menu->append(new LLMenuItemCallGL("Debug Settings...", LLFloaterSettingsDebug::show, NULL, NULL));
+	gLoginMenuBarView->appendMenu(menu);
+	menu->updateParent(LLMenuGL::sMenuContainer);
+
 	LLRect menuBarRect = gLoginMenuBarView->getRect();
 	gLoginMenuBarView->setRect(LLRect(menuBarRect.mLeft, menuBarRect.mTop, gViewerWindow->getRootView()->getRect().getWidth() - menuBarRect.mLeft,  menuBarRect.mBottom));
 
@@ -1410,6 +1418,7 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 	menu->appendSeparator();
 	menu->append(new LLMenuItemCheckGL("Tangent Basis", menu_toggle_control, NULL, menu_check_control, (void*)"ShowTangentBasis"));
 	menu->append(new LLMenuItemCallGL("Selected Texture Info", handle_selected_texture_info, NULL, NULL, 'T', MASK_CONTROL|MASK_SHIFT|MASK_ALT));
+	menu->append(new LLMenuItemCallGL("Reload Selected Texture", reload_selected_texture, NULL, NULL, 'U', MASK_CONTROL|MASK_SHIFT));
 	//menu->append(new LLMenuItemCallGL("Dump Image List", handle_dump_image_list, NULL, NULL, 'I', MASK_CONTROL|MASK_SHIFT));
 	
 	menu->append(new LLMenuItemToggleGL("Wireframe", &gUseWireframe, 
@@ -1435,8 +1444,11 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 	item = new LLMenuItemCheckGL("Disable Textures", menu_toggle_variable, NULL, menu_check_variable, (void*)&LLViewerImage::sDontLoadVolumeTextures);
 	menu->append(item);
 	
-	item = new LLMenuItemCheckGL("HTTP Get Textures", menu_toggle_control, NULL, menu_check_control, (void*)"ImagePipelineUseHTTP");
+	item = new LLMenuItemCheckGL("Full Res Textures", menu_toggle_control, NULL, menu_check_control, (void*)"TextureLoadFullRes");
 	menu->append(item);
+	
+	item = new LLMenuItemCheckGL("Boost Attachments Textures", menu_toggle_control, NULL, menu_check_control, (void*)"TextureBoostAttachments");
+    menu->append(item);
 	
 	item = new LLMenuItemCheckGL("Run Multiple Threads", menu_toggle_control, NULL, menu_check_control, (void*)"RunMultipleThreads");
 	menu->append(item);
@@ -1474,8 +1486,6 @@ void init_debug_avatar_menu(LLMenuGL* menu)
 	menu->appendMenu(sub_menu);
 
 	sub_menu = new LLMenuGL("Character Tests");
-	sub_menu->append(new LLMenuItemToggleGL("Go Away/AFK When Idle",
-		&gAllowIdleAFK));
 
 	sub_menu->append(new LLMenuItemCallGL("Appearance To XML", 
 		&LLVOAvatar::dumpArchetypeXML));
@@ -6813,6 +6823,38 @@ void handle_selected_texture_info(void*)
 	LLChat chat(msg);
 	LLFloaterChat::addChat(chat);
 	// </edit>
+}
+
+void reload_selected_texture(void*)
+{
+	std::set<LLUUID> reloaded;
+	for (LLObjectSelection::valid_iterator iter = LLSelectMgr::getInstance()->getSelection()->valid_begin();
+		 iter != LLSelectMgr::getInstance()->getSelection()->valid_end(); iter++)
+	{
+		LLSelectNode* node = *iter;
+		LLViewerObject* object = node->getObject();
+		if (!object) continue;
+		U8 te_count = object->getNumTEs();
+		for (U8 i = 0; i < te_count; i++)
+		{
+			if (!node->isTESelected(i)) continue;
+
+			LLViewerImage* img = object->getTEImage(i);
+			if (img)
+			{
+				LLUUID uuid = img->getID();
+				if (!reloaded.count(uuid))
+				{
+					object->setTETexture(i, IMG_DEFAULT);	// to flag as texture changed
+					LLAppViewer::getTextureCache()->removeFromCache(uuid); // remove cache entry
+					img->forceToSaveRawImage(-2);	// force a reload of the raw image from network
+					img->destroyGLTexture();		// will force a reload of image in GL
+					object->setTETexture(i, uuid);	// will rebind the texture in GL
+					reloaded.insert(uuid);	// mark as reloaded
+				}
+			}
+		}
+	}
 }
 
 void handle_dump_image_list(void*)

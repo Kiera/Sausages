@@ -53,6 +53,13 @@ LLPanelNetwork::LLPanelNetwork()
 
 BOOL LLPanelNetwork::postBuild()
 {
+	BOOL http_fetch_enabled = gSavedSettings.getBOOL("ImagePipelineUseHTTP");
+	childSetValue("http_texture_fetch", http_fetch_enabled);
+	childSetCommitCallback("http_texture_fetch", onHttpTextureFetchToggled, this);
+	S32 max_requests = llclamp(gSavedSettings.getS32("TextureMaxHTTPRequests"), 8, 32);
+	childSetValue("max_http_requests", (F32)max_requests);
+	childSetEnabled("max_http_requests", http_fetch_enabled);
+
 	std::string cache_location = gDirUtilp->getExpandedFilename(LL_PATH_CACHE, "");
 	childSetText("cache_location", cache_location);
 		
@@ -103,7 +110,15 @@ LLPanelNetwork::~LLPanelNetwork()
 
 void LLPanelNetwork::apply()
 {
-	gSavedSettings.setU32("CacheSize", childGetValue("cache_size").asInteger());
+	gSavedSettings.setBOOL("ImagePipelineUseHTTP", childGetValue("http_texture_fetch"));
+	gSavedSettings.setS32("TextureMaxHTTPRequests", childGetValue("max_http_requests").asInteger());
+
+	U32 cache_size = (U32)childGetValue("cache_size").asInteger();
+	if (gSavedSettings.getU32("CacheSize") != cache_size)
+	{
+		onClickClearCache(this);
+		gSavedSettings.setU32("CacheSize", cache_size);
+	}
 	gSavedSettings.setF32("ThrottleBandwidthKBPS", childGetValue("max_bandwidth").asReal());
 	gSavedSettings.setBOOL("ConnectionPortEnabled", childGetValue("connection_port_enabled"));
 	gSavedSettings.setU32("ConnectionPort", childGetValue("connection_port").asInteger());
@@ -133,6 +148,17 @@ void LLPanelNetwork::apply()
 
 void LLPanelNetwork::cancel()
 {
+}
+
+// static
+void LLPanelNetwork::onHttpTextureFetchToggled(LLUICtrl* ctrl, void* data)
+{
+	LLPanelNetwork* self = (LLPanelNetwork*)data;
+	LLCheckBoxCtrl* check = (LLCheckBoxCtrl*)ctrl;
+	if (self && check)
+	{
+		self->childSetEnabled("max_http_requests", check->get());
+	}
 }
 
 // static

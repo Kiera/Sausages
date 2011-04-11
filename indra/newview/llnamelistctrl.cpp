@@ -469,6 +469,10 @@ bool LLNameListCtrl::getResidentName(const LLUUID& agent_id, std::string& fullna
 	std::string name;
 	if (gCacheName->getFullName(agent_id, name))
 	{
+		if (LLAvatarName::sOmitResidentAsLastName)
+		{
+			LLStringUtil::replaceString(name, " Resident", "");
+		}
 		fullname = name;
 		if (mUseDisplayNames && LLAvatarNameCache::useDisplayNames() && !gSavedSettings.getBOOL("LegacyNamesForFriends"))
 		{

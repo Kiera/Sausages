@@ -119,30 +119,17 @@ std::string LLAvatarName::getLegacyName() const
 
 std::string LLAvatarName::getNames(bool linefeed) const
 {
-	std::string name;
+	std::string name = getLegacyName();
 
-	if (mUsername.empty())
+	if (!mIsDummy && !mUsername.empty() && name != mDisplayName)
 	{
-		// ...display names are off, legacy name is in mDisplayName
-		name = mDisplayName;
-		if (sOmitResidentAsLastName)
+		if (linefeed)
 		{
-			LLStringUtil::replaceString(name, " Resident", "");
+			name = mDisplayName + "\n[" + name + "]";
 		}
-	}
-	else
-	{
-		name = getLegacyName();
-		if (name != mDisplayName)
+		else
 		{
-			if (linefeed)
-			{
-				name = mDisplayName + "\n[" + name + "]";
-			}
-			else
-			{
-				name = mDisplayName + " [" + name + "]";
-			}
+			name = mDisplayName + " [" + name + "]";
 		}
 	}
 

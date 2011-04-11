@@ -229,6 +229,10 @@ BOOL LLPanelFriends::addFriend(const LLUUID& agent_id)
 	BOOL have_name = gCacheName->getFullName(agent_id, fullname);
 	if (have_name)
 	{
+		if (LLAvatarName::sOmitResidentAsLastName)
+		{
+			LLStringUtil::replaceString(fullname, " Resident", "");
+		}
 		if (LLAvatarNameCache::useDisplayNames() && !gSavedSettings.getBOOL("LegacyNamesForFriends"))
 		{
 			LLAvatarName avatar_name;
@@ -312,6 +316,10 @@ BOOL LLPanelFriends::updateFriendItem(const LLUUID& agent_id, const LLRelationsh
 	BOOL have_name = gCacheName->getFullName(agent_id, fullname);
 	if (have_name)
 	{
+		if (LLAvatarName::sOmitResidentAsLastName)
+		{
+			LLStringUtil::replaceString(fullname, " Resident", "");
+		}
 		if (LLAvatarNameCache::useDisplayNames() && !gSavedSettings.getBOOL("LegacyNamesForFriends"))
 		{
 			LLAvatarName avatar_name;
@@ -748,6 +756,10 @@ void LLPanelFriends::onClickRemove(void* user_data)
 			std::string first, last;
 			if(gCacheName->getName(agent_id, first, last))
 			{
+				if (LLAvatarName::sOmitResidentAsLastName && last == "Resident")
+				{
+					last = "";
+				}
 				if (LLAvatarNameCache::useDisplayNames() && !gSavedSettings.getBOOL("LegacyNamesForFriends"))
 				{
 					LLAvatarName avatar_name;
@@ -831,6 +843,10 @@ void LLPanelFriends::confirmModifyRights(rights_map_t& ids, EGrantRevoke command
 			std::string first, last;
 			if(gCacheName->getName(agent_id, first, last))
 			{
+				if (LLAvatarName::sOmitResidentAsLastName && last == "Resident")
+				{
+					last = "";
+				}
 				if (LLAvatarNameCache::useDisplayNames() && !gSavedSettings.getBOOL("LegacyNamesForFriends"))
 				{
 					LLAvatarName avatar_name;

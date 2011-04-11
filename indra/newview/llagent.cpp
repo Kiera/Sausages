@@ -542,7 +542,7 @@ void LLAgent::resetView(BOOL reset_camera, BOOL change_camera)
 		}
 
 		// Hide all popup menus
-		gMenuHolder->hideMenus();
+		if (gMenuHolder) gMenuHolder->hideMenus();
 	}
 	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
 	if (change_camera && !(*sFreezeTime))

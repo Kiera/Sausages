@@ -3612,17 +3612,21 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 		if (mNameText.notNull() && firstname && lastname)
 		{
 			std::string complete_name = firstname->getString();
-			if (sRenderGroupTitles)
+			std::string last = lastname->getString();
+			if (!LLAvatarName::sOmitResidentAsLastName || last != "Resident")
 			{
-				complete_name += " ";
+				if (sRenderGroupTitles)
+				{
+					complete_name += " ";
+				}
+				else
+				{
+					// If all group titles are turned off, stack first name
+					// on a line above last name
+					complete_name += "\n";
+				}
+				complete_name += last;
 			}
-			else
-			{
-				// If all group titles are turned off, stack first name
-				// on a line above last name
-				complete_name += "\n";
-			}
-			complete_name += lastname->getString();
 
 			if (LLAvatarNameCache::useDisplayNames())
 			{

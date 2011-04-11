@@ -80,7 +80,7 @@ void LLFloaterDisplayName::onOpen()
 		std::string next_update_string;
 #ifdef LOCALIZED_TIME
 		timeToFormattedString((time_t)next_update_local_secs,
-							  gSavedSettings.getString("LongDateFormat"),
+							  gSavedSettings.getString("TimestampFormat"),
 							  next_update_string);
 #else
 		LLDate next_update_local(next_update_local_secs);

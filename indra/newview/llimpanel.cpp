@@ -1606,18 +1606,35 @@ void LLFloaterIMPanel::addHistoryLine(const std::string &utf8msg, const LLColor4
 		}
 		else
 		{
-			if (LLAvatarNameCache::useDisplayNames() && source != LLUUID::null)
+			LLUUID av_id = source;
+			if (av_id == LLUUID::null)
 			{
-				LLAvatarName avatar_name;
-				if (LLAvatarNameCache::get(source, &avatar_name))
+				std::string self_name;
+				gAgent.buildFullname(self_name);
+				if (name == self_name)
 				{
-					if (LLAvatarNameCache::useDisplayNames() == 2)
+					av_id = gAgent.getID();
+				}
+			}
+			if (LLAvatarName::sOmitResidentAsLastName)
+			{
+				LLStringUtil::replaceString(name, " Resident", "");
+			}
+			if (LLAvatarNameCache::useDisplayNames())
+			{
+				if (av_id != LLUUID::null)
+				{
+					LLAvatarName avatar_name;
+					if (LLAvatarNameCache::get(av_id, &avatar_name))
 					{
-						name = avatar_name.mDisplayName;
-					}
-					else
-					{
-						name = avatar_name.getNames();
+						if (LLAvatarNameCache::useDisplayNames() == 2)
+						{
+							name = avatar_name.mDisplayName;
+						}
+						else
+						{
+							name = avatar_name.getNames();
+						}
 					}
 				}
 			}
@@ -2072,6 +2089,10 @@ void LLFloaterIMPanel::sendMsg()
 				{
 					std::string history_echo;
 					gAgent.buildFullname(history_echo);
+					if (LLAvatarName::sOmitResidentAsLastName)
+					{
+						LLStringUtil::replaceString(history_echo, " Resident", "");
+					}
 					if (LLAvatarNameCache::useDisplayNames())
 					{
 						LLAvatarName avatar_name;

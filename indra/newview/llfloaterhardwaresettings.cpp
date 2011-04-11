@@ -101,11 +101,16 @@ void LLFloaterHardwareSettings::refreshEnabledState()
 		childSetEnabled("vbo", FALSE);
 	}
 
+	if (!LLFeatureManager::getInstance()->isFeatureAvailable("UseOcclusion"))
+	{
+		childSetEnabled("occlusion", FALSE);
+	}
+
 	// if no windlight shaders, turn off nighttime brightness, gamma, and fog distance
 	childSetEnabled("gamma", !gPipeline.canUseWindLightShaders());
 	childSetEnabled("(brightness, lower is brighter)", !gPipeline.canUseWindLightShaders());
 	childSetEnabled("fog", !gPipeline.canUseWindLightShaders());
-
+	childSetVisible("note", gPipeline.canUseWindLightShaders());
 }
 
 // static instance of it

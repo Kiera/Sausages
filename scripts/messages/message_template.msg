@@ -1383,6 +1383,10 @@ version 2.0
 		{	AgentID			LLUUID	}
 		{	KickedFromEstateID	U32	}
 	}
+	{
+		AgentInfo	Single
+		{   AgentEffectiveMaturity U32  }
+	}
 }
 
 // DataHomeLocationReply data->sim
@@ -2720,7 +2724,7 @@ version 2.0
 // end viewer to simulator section
 
 {
-       ViewerStats Low 131 NotTrusted Zerocoded
+       ViewerStats Low 131 NotTrusted Zerocoded UDPDeprecated
        {
                AgentData                       Single
                {       AgentID                 LLUUID      }
@@ -4911,6 +4915,12 @@ version 2.0
 		{	ActualArea		S32		}
 		{	Final			BOOL	}  // true if buyer should be in tier
 	}
+    {
+       RegionData Single  // included so region name shows up in transaction logs
+       {   RegionID   LLUUID }
+       {   GridX      U32    }
+       {   GridY      U32    }
+    }
 }
 
 // sim ->dataserver
@@ -5276,6 +5286,15 @@ version 2.0
 	{
 		VisualParam				Variable
 		{	ParamValue			U8	}
+	}
+	{
+		AgentAccess				Variable
+		{	AgentLegacyAccess		U8	}
+		{	AgentMaxAccess			U8	}
+	}
+	{
+		AgentInfo				Variable
+		{	Flags					U32	}
 	}
 }
 

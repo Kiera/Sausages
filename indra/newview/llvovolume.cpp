@@ -455,10 +455,9 @@ void LLVOVolume::updateTextureVirtualSize()
 
 		if (isHUDAttachment())
 		{
-			F32 area = (F32) LLViewerCamera::getInstance()->getScreenPixelArea();
-			vsize = area;
 			imagep->setBoostLevel(LLViewerImageBoostLevel::BOOST_HUD);
- 			face->setPixelArea(area); // treat as full screen
+ 			// treat as full screen
+			vsize = (F32)LLViewerCamera::getInstance()->getScreenPixelArea();
 		}
 		else
 		{
@@ -472,16 +471,48 @@ void LLVOVolume::updateTextureVirtualSize()
 					// we shouldn't have to zoom on them to get the textures
 					// fully loaded !
 					imagep->setBoostLevel(LLViewerImageBoostLevel::BOOST_HUD);
+					// ... and don't discard our attachments textures
 					imagep->dontDiscard();
 				}
 				else
 				{
-					// Others' can get their texture discarded to avoid
-					// filling up the video buffers in crowded areas...
-					imagep->setBoostLevel(LLViewerImageBoostLevel::BOOST_SELECTED);
+					// Others' can get their texture discarded to avoid filling
+					// up the video buffers in crowded areas...
+					static LLCachedControl<bool> boost_texture("TextureBoostAttachments", TRUE);
+					static LLCachedControl<S32> min_vsize_sqrt("TextureMinAttachmentsVSize", 192);
+					if (boost_texture && LLViewerImage::sDesiredDiscardBias < LLViewerImage::sDesiredDiscardBiasMax)
+					{
+						// As long as the current bias is lower than the maximum
+						// one (i.e. we are not using too much memory), and
+						// provided the TextureBoostAttachments setting is TRUE,
+						// let's boost significantly the attachments.
+						// First, raise the priority to the one of selected
+						// objects, causing the attachments to rez much faster
+						// and preventing them to get affected by the bias
+						// level (see LLViewerImage::processTextureStats() for
+						// the algorithm).
+						imagep->setBoostLevel(LLViewerImageBoostLevel::BOOST_SELECTED);
+						// And now, the importance to the camera...
+						// The problem with attachments is that they most often
+						// use very small prims with high resolution textures,
+						// and Snowglobe's algorithm considers such textures as
+						// unimportant to the camera... Let's counter this
+						// effect, using a minimum, user configurable virtual
+						// size.
+						F32 min_vsize = (F32)(min_vsize_sqrt * min_vsize_sqrt);
+						if (vsize < min_vsize)
+						{
+							vsize = min_vsize;
+						}
+					}
+					else
+					{
+						// Bias is at its maximum: only boost a little, not
+						// preventing bias to affect this texture either.
+						imagep->setBoostLevel(LLViewerImageBoostLevel::BOOST_AVATAR);
+					}
+					// boost the decode priority too (doesn't affect memory usage)
 					imagep->setAdditionalDecodePriority(1.5f);
-					vsize = (F32) LLViewerCamera::getInstance()->getScreenPixelArea();
- 					face->setPixelArea(vsize); // treat as full screen
 				}
 			}
 		}
@@ -490,6 +521,16 @@ void LLVOVolume::updateTextureVirtualSize()
 
 		if (face->mTextureMatrix != NULL)
 		{
+			// Animating textures also rez badly in Snowglobe because the
+			// actual displayed area is only a fraction (corresponding to one
+			// frame) of the animating texture. Let's fix that here:
+			if (mTextureAnimp && mTextureAnimp->mScaleS > 0.0f && mTextureAnimp->mScaleT > 0.0f)
+			{
+				// Adjust to take into account the actual frame size which is only a
+				// portion of the animating texture
+				vsize = vsize / mTextureAnimp->mScaleS / mTextureAnimp->mScaleT;
+			}
+
 			if ((vsize < MIN_TEX_ANIM_SIZE && old_size > MIN_TEX_ANIM_SIZE) ||
 				(vsize > MIN_TEX_ANIM_SIZE && old_size < MIN_TEX_ANIM_SIZE))
 			{
@@ -2012,7 +2053,7 @@ BOOL LLVOVolume::lineSegmentIntersect(const LLVector3& start, const LLVector3& e
 		if (face == -1)
 		{
 			start_face = 0;
-			end_face = volume->getNumFaces();
+			end_face = volume->getNumVolumeFaces();
 		}
 		else
 		{

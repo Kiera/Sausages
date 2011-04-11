@@ -189,7 +189,7 @@ class LLDisplayNameUpdate : public LLHTTPNode
 
 		LLSD args;
 		args["OLD_NAME"] = old_display_name;
-		args["SLID"] = av_name.mUsername;
+		args["LEGACY_NAME"] = av_name.getLegacyName();
 		args["NEW_NAME"] = av_name.mDisplayName;
 		LLNotifications::instance().add("DisplayNameUpdate", args);
 		if (agent_id == gAgent.getID())

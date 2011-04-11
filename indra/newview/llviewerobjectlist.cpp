@@ -166,12 +166,12 @@ U64 LLViewerObjectList::getIndex(const U32 local_id,
 	return (((U64)index) << 32) | (U64)local_id;
 }
 
-BOOL LLViewerObjectList::removeFromLocalIDTable(const LLViewerObject &object)
+BOOL LLViewerObjectList::removeFromLocalIDTable(const LLViewerObject* objectp)
 {
-	if(object.getRegion())
+	if (objectp && objectp->getRegion())
 	{
-		U32 local_id = object.mLocalID;
-		LLHost region_host = object.getRegion()->getHost();
+		U32 local_id = objectp->mLocalID;
+		LLHost region_host = objectp->getRegion()->getHost();
 		U32 ip = region_host.getAddress();
 		U32 port = region_host.getPort();
 		U64 ipport = (((U64)ip) << 32) | (U64)port;
@@ -188,14 +188,14 @@ BOOL LLViewerObjectList::removeFromLocalIDTable(const LLViewerObject &object)
 		}
 		
 		// Found existing entry
-		if (iter->second == object.getID())
+		if (iter->second == objectp->getID())
 		{   // Full UUIDs match, so remove the entry
 			sIndexAndLocalIDToUUID.erase(iter);
 			return TRUE;
 		}
 		// UUIDs did not match - this would zap a valid entry, so don't erase it
 		//llinfos << "Tried to erase entry where id in table (" 
-		//		<< iter->second	<< ") did not match object " << object.getID() << llendl;
+		//		<< iter->second	<< ") did not match object " << objectp->getID() << llendl;
 	}
 	
 	return FALSE ;
@@ -458,7 +458,7 @@ void LLViewerObjectList::processObjectUpdate(LLMessageSystem *mesgsys,
 			//			<< ", regionp " << (U32) regionp << ", object region " << (U32) objectp->getRegion()
 			//			<< llendl;
 			//}
-			removeFromLocalIDTable(*objectp);
+			removeFromLocalIDTable(objectp);
 			setUUIDAndLocal(fullid,
 							local_id,
 							gMessageSystem->getSenderIP(),
@@ -842,14 +842,20 @@ void LLViewerObjectList::clearDebugText()
 
 void LLViewerObjectList::cleanupReferences(LLViewerObject *objectp)
 {
-	LLMemType mt(LLMemType::MTYPE_OBJECT);
-	if (mDeadObjects.count(objectp->mID))
+	if (!objectp)
 	{
-		llinfos << "Object " << objectp->mID << " already on dead list, ignoring cleanup!" << llendl;	
+		llwarns << "NULL object pointer passed." << llendl;
 		return;
 	}
-
-	mDeadObjects.insert(std::pair<LLUUID, LLPointer<LLViewerObject> >(objectp->mID, objectp));
+	LLMemType mt(LLMemType::MTYPE_OBJECT);
+	if (mDeadObjects.find(objectp->mID) != mDeadObjects.end())
+	{
+		llinfos << "Object " << objectp->mID << " already on dead list, ignoring cleanup!" << llendl;	
+	}
+	else
+	{
+		mDeadObjects.insert(objectp->mID);
+	}
 
 	// Cleanup any references we have to this object
 	// Remove from object map so noone can look it up.
@@ -863,7 +869,7 @@ void LLViewerObjectList::cleanupReferences(LLViewerObject *objectp)
 	//				<< objectp->getRegion()->getHost().getPort() << llendl;
 	//}	
 	
-	removeFromLocalIDTable(*objectp);
+	removeFromLocalIDTable(objectp);
 
 	if (objectp->onActiveList())
 	{
@@ -1097,7 +1103,7 @@ void LLViewerObjectList::renderObjectsForMap(LLNetMap &netmap)
 	for (S32 i = 0; i < mMapObjects.count(); i++)
 	{
 		LLViewerObject* objectp = mMapObjects[i];
-		if (!objectp->getRegion() || objectp->isOrphaned() || objectp->isAttachment())
+		if (objectp->isDead() || !objectp->getRegion() || objectp->isOrphaned() || objectp->isAttachment())
 		{
 			continue;
 		}

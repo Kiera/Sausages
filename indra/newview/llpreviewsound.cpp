@@ -77,23 +77,29 @@ LLPreviewSound::LLPreviewSound(const std::string& name, const LLRect& rect, cons
 	button = getChild<LLButton>("Sound audition btn");
 	button->setSoundFlags(LLView::SILENT);
 
-	const LLInventoryItem* item = getItem();
-	
 	childSetCommitCallback("desc", LLPreview::onText, this);
-	childSetText("desc", item->getDescription());
 	childSetPrevalidate("desc", &LLLineEditor::prevalidatePrintableNotPipe);	
-	
+
+	const LLInventoryItem *item = getItem();
 	// preload the sound
-	if(item && gAudiop)
+	if(item)
 	{
-		gAudiop->preloadSound(item->getAssetUUID());
-		// <edit>
-		// that thing above doesn't actually start a sound transfer, so I will do it
-		//LLAudioSource *asp = new LLAudioSource(gAgent.getID(), gAgent.getID(), F32(1.0f), LLAudioEngine::AUDIO_TYPE_UI);
-		LLAudioSource *asp = gAgent.getAvatarObject()->getAudioSource(gAgent.getID());
-		LLAudioData *datap = gAudiop->getAudioData(item->getAssetUUID());
-		asp->addAudioData(datap, FALSE);
-		// </edit>
+		childSetText("desc", item->getDescription());
+		if(gAudiop)
+		{
+			gAudiop->preloadSound(item->getAssetUUID());
+			// <edit>
+			// that thing above doesn't actually start a sound transfer, so I will do it
+			//LLAudioSource *asp = new LLAudioSource(gAgent.getID(), gAgent.getID(), F32(1.0f), LLAudioEngine::AUDIO_TYPE_UI);
+			LLAudioSource *asp = gAgent.getAvatarObject()->getAudioSource(gAgent.getID());
+			LLAudioData *datap = gAudiop->getAudioData(item->getAssetUUID());
+			asp->addAudioData(datap, FALSE);
+			// </edit>
+		}
+	}
+	else
+	{
+		childSetText("desc", std::string("(loading...)"));
 	}
 	
 	setTitle(title);

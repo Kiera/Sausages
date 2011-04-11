@@ -1,6 +1,33 @@
 /** 
- * @file lltoolface.cpp
+ * @file qltoolalign.cpp
  * @brief A tool to align objects
+ *
+ * $LicenseInfo:firstyear=2010&license=viewergpl$
+ * 
+ * Copyright (c) 2010, Qarl Linden
+ * 
+ * Second Life Viewer Source Code
+ * The source code in this file ("Source Code") is provided by Linden Lab
+ * to you under the terms of the GNU General Public License, version 2.0
+ * ("GPL"), unless you have obtained a separate licensing agreement
+ * ("Other License"), formally executed by you and Linden Lab.  Terms of
+ * the GPL can be found in doc/GPL-license.txt in this distribution, or
+ * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
+ * 
+ * There are special exceptions to the terms and conditions of the GPL as
+ * it is applied to this Source Code. View the full text of the exception
+ * in the file doc/FLOSS-exception.txt in this software distribution, or
+ * online at
+ * http://secondlifegrid.net/programs/open_source/licensing/flossexception
+ * 
+ * By copying, modifying or distributing this software, you acknowledge
+ * that you have read and understood your obligations described above,
+ * and agree to abide by those obligations.
+ * 
+ * ALL LINDEN LAB SOURCE CODE IS PROVIDED "AS IS." LINDEN LAB MAKES NO
+ * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
+ * COMPLETENESS OR PERFORMANCE.
+ * $/LicenseInfo$
  */
 
 #include "llviewerprecompiledheaders.h"
@@ -23,23 +50,17 @@
 #include "llviewerobject.h"
 #include "llviewerwindow.h"
 
-
 const F32 MANIPULATOR_SIZE = 5.0;
 const F32 MANIPULATOR_SELECT_SIZE = 20.0;
 
-
-
 QLToolAlign::QLToolAlign()
-:	LLTool(std::string("Align"))
+:	LLToolComposite(std::string("Align"))
 {
 }
-
 
 QLToolAlign::~QLToolAlign()
 {
 }
-
-
 
 BOOL QLToolAlign::handleMouseDown(S32 x, S32 y, MASK mask)
 {
@@ -55,7 +76,40 @@ BOOL QLToolAlign::handleMouseDown(S32 x, S32 y, MASK mask)
 	return TRUE;
 }
 
+BOOL QLToolAlign::handleMouseUp(S32 x, S32 y, MASK mask)
+{
+	// first, perform normal processing in case this was a quick-click
+	handleHover(x, y, mask);
+	LLSelectMgr::getInstance()->updateSelectionCenter();
+	BOOL handled = FALSE;
+	if (hasMouseCapture())
+	{
+		handled = TRUE;
+		setMouseCapture(FALSE);
+	}
+	return handled;
+}
 
+BOOL QLToolAlign::handleDoubleClick(S32 x, S32 y, MASK mask)
+{
+	return FALSE;
+}
+
+LLTool* QLToolAlign::getOverrideTool(MASK mask)
+{
+	if (!gKeyboard->getKeyDown('A'))
+	{
+		if (mask == MASK_CONTROL)
+		{
+			return LLToolCompRotate::getInstance();
+		}
+		else if (mask == (MASK_CONTROL | MASK_SHIFT))
+		{
+			return LLToolCompScale::getInstance();
+		}
+	}
+	return LLToolComposite::getOverrideTool(mask);
+}
 
 void QLToolAlign::pickCallback(const LLPickInfo& pick_info)
 {
@@ -98,21 +152,19 @@ void QLToolAlign::pickCallback(const LLPickInfo& pick_info)
 	LLSelectMgr::getInstance()->promoteSelectionToRoot();
 }
 
-
-
 void QLToolAlign::handleSelect()
 {
 	// no parts, please
 
 	llwarns << "in select" << llendl;
 	LLSelectMgr::getInstance()->promoteSelectionToRoot();
+	LLSelectMgr::getInstance()->updateSelectionCenter();
+	gFloaterTools->setStatusText("align");
 }
-
 
 void QLToolAlign::handleDeselect()
 {
 }
-
 
 BOOL QLToolAlign::findSelectedManipulator(S32 x, S32 y)
 {
@@ -145,9 +197,8 @@ BOOL QLToolAlign::findSelectedManipulator(S32 x, S32 y)
 	}
 
 
-	LLRect world_view_rect = gViewerWindow->getVirtualWindowRect();
-	F32 half_width = (F32)world_view_rect.getWidth() / 2.f;
-	F32 half_height = (F32)world_view_rect.getHeight() / 2.f;
+	F32 half_width = (F32)gViewerWindow->getWindowWidth() / 2.f;
+	F32 half_height = (F32)gViewerWindow->getWindowHeight() / 2.f;
 	LLVector2 manip2d;
 	LLVector2 mousePos((F32)x - half_width, (F32)y - half_height);
 	LLVector2 delta;
@@ -183,7 +234,6 @@ BOOL QLToolAlign::findSelectedManipulator(S32 x, S32 y)
 	return FALSE;
 }
 
-
 BOOL QLToolAlign::handleHover(S32 x, S32 y, MASK mask)
 {
 	if (mask & MASK_SHIFT)
@@ -198,8 +248,6 @@ BOOL QLToolAlign::handleHover(S32 x, S32 y, MASK mask)
 	gViewerWindow->setCursor(UI_CURSOR_ARROW);
 	return findSelectedManipulator(x, y);
 }
-
-
 
 void setup_transforms_bbox(LLBBox bbox)
 {
@@ -220,7 +268,6 @@ void setup_transforms_bbox(LLBBox bbox)
 	LLVector3 scale = bbox.getMaxLocal() - bbox.getMinLocal();
 	gGL.scalef(scale.mV[VX], scale.mV[VY], scale.mV[VZ]);
 }
-
 
 void render_bbox(LLBBox bbox)
 {
@@ -248,8 +295,6 @@ void render_cone_bbox(LLBBox bbox)
 	gGL.popMatrix();
 }
 
-
-
 // the selection bbox isn't axis aligned, so we must construct one
 // should this be cached in the selection manager?  yes.
 LLBBox get_selection_axis_aligned_bbox()
@@ -276,11 +321,8 @@ LLBBox get_selection_axis_aligned_bbox()
 		}
 	}
 
-	
 	return axis_aligned_bbox;
 }
-
-
 
 void QLToolAlign::computeManipulatorSize()
 {
@@ -308,12 +350,10 @@ void QLToolAlign::computeManipulatorSize()
 	}
 }
 
-
 LLColor4 manipulator_color[3] = { LLColor4(0.7f, 0.0f, 0.0f, 0.5f),
 								   LLColor4(0.0f, 0.7f, 0.0f, 0.5f),
 								   LLColor4(0.0f, 0.0f, 0.7f, 0.5f) };
 								   
-
 void QLToolAlign::renderManipulators()
 {
 	computeManipulatorSize();
@@ -321,6 +361,7 @@ void QLToolAlign::renderManipulators()
 	LLVector3 bbox_scale = mBBox.getMaxLocal() - mBBox.getMinLocal();
 	
 	for (S32 axis = VX; axis <= VZ; axis++)
+	{
 		for (F32 direction = -1.0; direction <= 1.0; direction += 2.0)
 		{
 			F32 size = mManipulatorSize;
@@ -362,8 +403,8 @@ void QLToolAlign::renderManipulators()
 				render_cone_bbox(manipulator_bbox);
 			}
 		}
+	}
 }
-
 
 void QLToolAlign::render()
 {
@@ -380,8 +421,24 @@ void QLToolAlign::render()
 	LLColor4 default_normal_color(0.7f, 0.7f, 0.7f, 0.1f);
 	gGL.color4fv(default_normal_color.mV);
 
-	render_bbox(mBBox);
-	renderManipulators();
+	LLObjectSelectionHandle selection = LLSelectMgr::getInstance()->getEditSelection();
+	BOOL can_move = (selection->getObjectCount() != 0);
+	if (can_move)
+	{
+		struct f : public LLSelectedObjectFunctor
+		{
+			virtual bool apply(LLViewerObject* objectp)
+			{
+				return objectp->permMove() && (objectp->permModify() || !gSavedSettings.getBOOL("EditLinkedParts"));
+			}
+		} func;
+		can_move = selection->applyToObjects(&func);
+	}
+	if (can_move)
+	{
+		render_bbox(mBBox);
+		renderManipulators();
+	}
 }
 
 // only works for our specialized (AABB, position centered) bboxes
@@ -398,8 +455,6 @@ BOOL bbox_overlap(LLBBox bbox1, LLBBox bbox2)
 			(fabs(delta.mV[VZ]) < half_extent.mV[VZ] - FUDGE));
 }
 
-
-
 // used to sort bboxes before packing
 class BBoxCompare
 {
@@ -414,7 +469,6 @@ public:
 
 		LLVector3 corner2 = mBBoxes[object2].getCenterAgent() -
 			mDirection * mBBoxes[object2].getExtentLocal()/2.0;
-
 		
 		return mDirection * corner1.mV[mAxis] < mDirection * corner2.mV[mAxis];
 	}
@@ -423,7 +477,6 @@ public:
 	F32 mDirection;
 	std::map<LLPointer<LLViewerObject>, LLBBox >& mBBoxes;
 };
-
 
 void QLToolAlign::align()
 {
@@ -555,7 +608,6 @@ void QLToolAlign::align()
 		}
 	}
 
-	
 	// now move them
 	for (S32 i = 0; i < (S32)objects.size(); i++)
 	{
@@ -571,9 +623,6 @@ void QLToolAlign::align()
 
 		object->setPosition(new_position);
 	}
-	
-	
+
 	LLSelectMgr::getInstance()->sendMultipleUpdate(UPD_POSITION);
 }
-
-

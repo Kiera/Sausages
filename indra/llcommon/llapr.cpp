@@ -589,8 +589,16 @@ bool LLAPRFile::remove(const std::string& filename)
 
 	if (s != APR_SUCCESS)
 	{
-		ll_apr_warn_status(s);
-		LL_WARNS("APR") << " Attempting to remove filename: " << filename << LL_ENDL;
+		 // Not an issue if the file did not exist in the first place...
+#if LL_WINDOWS
+		if (s != APR_ENOENT && s != APR_OS_START_SYSERR + ERROR_FILE_NOT_FOUND)
+#else
+		if (s != APR_ENOENT)
+#endif
+		{
+			ll_apr_warn_status(s);
+			LL_WARNS("APR") << " Attempting to remove filename: " << filename << LL_ENDL;
+		}
 		return false;
 	}
 	return true;

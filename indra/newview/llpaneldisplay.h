@@ -104,6 +104,7 @@ protected:
 	LLSliderCtrl	*mCtrlSkyFactor;				// LOD for terrain
 	LLSliderCtrl	*mCtrlMaxParticle;				// Max Particle
 	LLSliderCtrl	*mCtrlPostProcess;				// Max Particle
+	LLSliderCtrl	*mCtrlNonImpostors;				// Max non-impostors
 
 	LLCheckBoxCtrl	*mCtrlBumpShiny;
 	LLCheckBoxCtrl	*mCtrlReflections;
@@ -156,6 +157,7 @@ protected:
 	S32 mReflectionDetail;
 
 	BOOL mAvatarImpostors;
+	S32 mNonImpostors;
 	BOOL mAvatarCloth;
 	S32 mAvatarMode;
 	S32 mLightingDetail;

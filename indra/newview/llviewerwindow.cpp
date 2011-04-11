@@ -1334,7 +1334,8 @@ BOOL LLViewerWindow::handleActivate(LLWindow *window, BOOL activated)
 	else
 	{
 		mActive = FALSE;
-		if (gAllowIdleAFK)
+		static LLCachedControl<S32> afk_timeout("AFKTimeout", 300);
+		if (afk_timeout > 0)
 		{
 			gAgent.setAFK();
 		}

@@ -247,8 +247,11 @@ void LLHoverView::updateText()
 			if (firstname && lastname)
 			{
 				std::string complete_name = firstname->getString();
-				complete_name += " ";
-				complete_name += lastname->getString();
+				std::string last = lastname->getString();
+				if (!LLAvatarName::sOmitResidentAsLastName || last != "Resident")
+				{
+					complete_name += " " + last;
+				}
 
 				if (LLAvatarNameCache::useDisplayNames())
 				{

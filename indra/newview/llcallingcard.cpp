@@ -596,6 +596,10 @@ void LLAvatarTracker::processChange(LLMessageSystem* msg)
 					LLSD args;
 					if(gCacheName->getName(agent_id, first, last))
 					{
+						if (LLAvatarName::sOmitResidentAsLastName && last == "Resident")
+						{
+							last = "";
+						}
 						if (LLAvatarNameCache::useDisplayNames() && !gSavedSettings.getBOOL("LegacyNamesForFriends"))
 						{
 							LLAvatarName avatar_name;
@@ -671,6 +675,10 @@ void LLAvatarTracker::processNotify(LLMessageSystem* msg, bool online)
 					std::string first, last;
 					if(gCacheName->getName(agent_id, first, last))
 					{
+						if (LLAvatarName::sOmitResidentAsLastName && last == "Resident")
+						{
+							last = "";
+						}
 						if (LLAvatarNameCache::useDisplayNames() && !gSavedSettings.getBOOL("LegacyNamesForFriends"))
 						{
 							LLAvatarName avatar_name;
