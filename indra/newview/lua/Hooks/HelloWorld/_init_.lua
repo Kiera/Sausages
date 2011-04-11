@@ -30,5 +30,4 @@ local helloworld = function ()
 	print "_________________________________________"
 	return true
 end;
-
 SetHook("OnLuaInit",helloworld)
