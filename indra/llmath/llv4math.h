@@ -92,7 +92,8 @@ typedef float	V4F32							__attribute__((vector_size(16)));
 // Only vectorize if the entire Windows build uses SSE.
 // _M_IX86_FP is set when SSE code generation is turned on, and I have
 // confirmed this in VS2003, VS2003 SP1, and VS2005. JC
-#if LL_MSVC && _M_IX86_FP
+// this is breaking on vs2005 windows 7 64bit so make a SSE2 DEFINE
+#if LL_MSVC && defined(SSE2) 
 
 #define			LL_VECTORIZE					1
 
