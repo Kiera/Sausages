@@ -196,6 +196,15 @@ BOOL LLToolPie::pickAndShowMenu(BOOL always_show)
 	BOOL touchable = (object && object->flagHandleTouch()) 
 					 || (parent && parent->flagHandleTouch());
 
+	//@hook OnClickObject(uuid,rootuuid,attachment,avatar,touchable,physical) You clicked on an object
+	if(object)
+		LUA_CALL("OnClickObject") << object->getID().asString() << 
+		(parent ? parent->getID() : LLUUID::null).asString() <<
+		object->isAttachment() <<
+		object->isAvatar() << 
+		touchable << 
+		(object->usePhysics() || (parent && !parent->isAvatar() && parent->usePhysics())) <<
+		LUA_END;
 
 	// If it's a left-click, and we have a special action, do it.
 	if (useClickAction(always_show, mask, object, parent))
