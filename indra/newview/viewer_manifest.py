@@ -248,8 +248,6 @@ class WindowsManifest(ViewerManifest):
 
         # For WebKit/Qt plugin runtimes (image format plugins)
         if self.prefix(src="../../libraries/i686-win32/lib/release/imageformats", dst="llplugin/imageformats"):
-            self.path("lfs.dll") # Lua filesystem module
-            self.path("bit.dll") # Bitwise operators
             self.path("qgif4.dll")
             self.path("qico4.dll")
             self.path("qjpeg4.dll")
@@ -772,7 +770,7 @@ class LinuxManifest(ViewerManifest):
             else:
                 installer_name += '_' + self.channel_oneword().upper()
 
-	installer_name = 'Inertia'
+        installer_name = 'Inertia'
 
         # Fix access permissions
         self.run_command("""
@@ -849,6 +847,8 @@ class Linux_i686Manifest(LinuxManifest):
             self.path("libopenjpeg.so.1.3.0", "libopenjpeg.so.1.3")
             self.path("libalut.so")
             self.path("libopenal.so", "libopenal.so.1")
+            self.path("liblua.so")
+            self.path("liblua5.1.so")
             self.end_prefix("lib")
 
             # Vivox runtimes
@@ -859,6 +859,13 @@ class Linux_i686Manifest(LinuxManifest):
                     self.path("libortp.so")
                     self.path("libvivoxsdk.so")
                     self.end_prefix("lib")
+        
+        #lua crap, ideally these would go into lib/ but LUA won't load it from there
+        #without changing LUA_CPATH and I can't be arsed right now
+        if self.prefix(src="../../libraries/i686-linux/lib_release_client", dst=""):
+            self.path("lfs.so") # Lua filesystem module
+            self.path("bit.so") # Bitwise operators
+            self.end_prefix()
 
 class Linux_x86_64Manifest(LinuxManifest):
     def construct(self):
