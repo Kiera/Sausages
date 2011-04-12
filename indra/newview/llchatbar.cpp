@@ -404,27 +404,25 @@ void LLChatBar::sendChat( EChatType type )
 			
 			std::string utf8text = wstring_to_utf8str(text);
 
-			if(!ChatCmdParser::getInstance()->parse(utf8text))
+			
+			// Try to trigger a gesture, if not chat to a script.
+			std::string utf8_revised_text;
+			if (0 == channel)
 			{
-				// Try to trigger a gesture, if not chat to a script.
-				std::string utf8_revised_text;
-				if (0 == channel)
-				{
-					// discard returned "found" boolean
-					gGestureManager.triggerAndReviseString(utf8text, &utf8_revised_text);
-				}
-				else
-				{
-					utf8_revised_text = utf8text;
-				}
+				// discard returned "found" boolean
+				gGestureManager.triggerAndReviseString(utf8text, &utf8_revised_text);
+			}
+			else
+			{
+				utf8_revised_text = utf8text;
+			}
 
-				utf8_revised_text = utf8str_trim(utf8_revised_text);
+			utf8_revised_text = utf8str_trim(utf8_revised_text);
 
-				if (!utf8_revised_text.empty())
-				{
-					// Chat with animation
-					sendChatFromViewer(utf8_revised_text, type, TRUE);
-				}
+			if (!utf8_revised_text.empty())
+			{
+				// Chat with animation
+				sendChatFromViewer(utf8_revised_text, type, TRUE);
 			}
 		}
 	}
@@ -606,6 +604,9 @@ void LLChatBar::sendChatFromViewer(const LLWString &wtext, EChatType type, BOOL 
 	{
 		utf8_text = utf8str_truncate(utf8_text, MAX_STRING - 1);
 	}
+
+	if(ChatCmdParser::getInstance()->parse(utf8_text))
+		return;
 
 	// Don't animate for chats people can't hear (chat to scripts)
 	if (animate && (channel == 0))

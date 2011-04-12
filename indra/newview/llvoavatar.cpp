@@ -7639,8 +7639,8 @@ void LLVOAvatar::updateRuthTimer(bool loading)
 
 BOOL LLVOAvatar::isFullyLoaded()
 {
-	static BOOL* sRenderUnloadedAvatar = rebind_llcontrol<BOOL>("RenderUnloadedAvatar", &gSavedSettings, true);
-	if ((*sRenderUnloadedAvatar))
+	static LLCachedControl<bool> sRenderUnloadedAvatar("RenderUnloadedAvatar", FALSE);
+	if (sRenderUnloadedAvatar)
 		return TRUE;
 	else
 		return mFullyLoaded;
