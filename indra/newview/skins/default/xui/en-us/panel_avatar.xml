@@ -198,7 +198,7 @@
 			     width="60" />
 			<button bottom_delta="0" font="SansSerif" halign="center" height="20" label="Invite to Group"
 			     label_selected="Invite to Group" left_delta="61" mouse_opaque="true"
-			     name="EmeraldGroupInvite_Button" width="100" />
+			     name="invite_to_group" width="100" />
 		</panel>
 		<panel border="true" bottom="-482" follows="left|top|right|bottom" height="466"
 		       label="Web" left="1" mouse_opaque="true" name="WebProfile" width="418">

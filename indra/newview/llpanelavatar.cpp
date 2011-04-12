@@ -51,7 +51,9 @@
 #include "llfloater.h"
 
 #include "llfloaterfriends.h"
+#include "llfloatergroups.h"
 #include "llfloatergroupinfo.h"
+#include "llfloatergroupinvite.h"
 #include "llfloaterworldmap.h"
 #include "llfloatermute.h"
 #include "llfloateravatarinfo.h"
@@ -370,6 +372,7 @@ BOOL LLPanelAvatarSecondLife::postBuild(void)
 	childSetAction("Add Friend...", LLPanelAvatar::onClickAddFriend, getPanelAvatar());
 	childSetAction("Pay...", LLPanelAvatar::onClickPay, getPanelAvatar());
 	childSetAction("Mute", LLPanelAvatar::onClickMute, getPanelAvatar() );	
+	childSetAction("invite_to_group", LLPanelAvatar::onClickInviteToGroup, getPanelAvatar() );
 
 	childSetAction("Offer Teleport...", LLPanelAvatar::onClickOfferTeleport, 
 		getPanelAvatar() );
@@ -1606,7 +1609,28 @@ void LLPanelAvatar::onClickMute(void *userdata)
 		}
 	}
 }
-
+//-----------------------------------------------------------------------------
+// onClickInviteToGroup()
+//-----------------------------------------------------------------------------
+void callback_invite_to_group(LLUUID group_id, void *user_data);
+void LLPanelAvatar::onClickInviteToGroup(void *userdata)
+{
+	LLPanelAvatar* self = (LLPanelAvatar*) userdata;
+	
+	LLUUID agent_id = self->getAvatarID();
+	LLViewerObject* dest = gObjectList.findObject(agent_id);
+	if(dest && dest->isAvatar())
+	{
+		LLFloaterGroupPicker* widget;
+		widget = LLFloaterGroupPicker::showInstance(LLSD(gAgent.getID()));
+		if (widget)
+		{
+			widget->center();
+			widget->setPowersMask(GP_MEMBER_INVITE);
+			widget->setSelectCallback(callback_invite_to_group, (void *)&agent_id);
+		}
+	}
+}
 
 // static
 void LLPanelAvatar::onClickOfferTeleport(void *userdata)
