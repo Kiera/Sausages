@@ -655,8 +655,8 @@ void LLWorld::updateParticles()
 
 void LLWorld::updateClouds(const F32 dt)
 {
-	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
-	if ((*sFreezeTime) ||
+	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
+	if (sFreezeTime ||
 		!gSavedSettings.getBOOL("SkyUseClassicClouds"))
 	{
 		// don't move clouds in snapshot mode

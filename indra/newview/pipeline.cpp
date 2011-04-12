@@ -1123,8 +1123,8 @@ void LLPipeline::resetFrameStats()
 //external functions for asynchronous updating
 void LLPipeline::updateMoveDampedAsync(LLDrawable* drawablep)
 {
-	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
-	if ((*sFreezeTime))
+	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
+	if (sFreezeTime)
 	{
 		return;
 	}
@@ -1154,8 +1154,8 @@ void LLPipeline::updateMoveDampedAsync(LLDrawable* drawablep)
 
 void LLPipeline::updateMoveNormalAsync(LLDrawable* drawablep)
 {
-	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
-	if ((*sFreezeTime))
+	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
+	if (sFreezeTime)
 	{
 		return;
 	}
@@ -1208,9 +1208,9 @@ void LLPipeline::updateMove()
 	LLFastTimer t(LLFastTimer::FTM_UPDATE_MOVE);
 	LLMemType mt(LLMemType::MTYPE_PIPELINE);
 
-	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
 
-	if ((*sFreezeTime))
+	if (sFreezeTime)
 	{
 		return;
 	}
@@ -4928,8 +4928,8 @@ void LLPipeline::resetVertexBuffers(LLDrawable* drawable)
 
 void LLPipeline::resetVertexBuffers()
 {
-	static BOOL* sRenderObjectBump = rebind_llcontrol<BOOL>("RenderObjectBump", &gSavedSettings, true);
-	sRenderBump = (*sRenderObjectBump);
+	static LLCachedControl<bool> sRenderObjectBump("RenderObjectBump", FALSE);
+	sRenderBump = sRenderObjectBump;
 
 	for (LLWorld::region_list_t::const_iterator iter = LLWorld::getInstance()->getRegionList().begin(); 
 			iter != LLWorld::getInstance()->getRegionList().end(); ++iter)

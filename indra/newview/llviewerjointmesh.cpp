@@ -563,8 +563,8 @@ U32 LLViewerJointMesh::drawShape( F32 pixelArea, BOOL first_pass, BOOL is_dummy)
 		{
 			// This warning will always trigger if you've hacked the avatar to show as incomplete.
 			// Ignore the warning if that's the case.
-			static BOOL* sRenderUnloadedAvatar = rebind_llcontrol<BOOL>("RenderUnloadedAvatar", &gSavedSettings, true);
-			if (!(sRenderUnloadedAvatar))
+			static LLCachedControl<bool> sRenderUnloadedAvatar("RenderUnloadedAvatar", FALSE);
+			if (!sRenderUnloadedAvatar)
 			{
 				static std::set<S32> mesh_ids;
 				if (mesh_ids.count(mMeshID) == 0)

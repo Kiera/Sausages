@@ -15,23 +15,23 @@ ChatCmdParser::ChatCmdParser()
 }
 
 BOOL ChatCmdParser::parse(const std::string& input){
-	static BOOL* sChatCmdEnabled = rebind_llcontrol<BOOL>("ChatCmdEnabled", &gSavedSettings, 1);
-	if(!(*sChatCmdEnabled))
+	static LLCachedControl<bool> sChatCmdEnabled("ChatCmdEnabled", TRUE);
+	if(!sChatCmdEnabled)
 		return FALSE;
 	//setup gSavedSetting statics here
-	static std::string* sChatCmdLua = rebind_llcontrol<std::string>("ChatCmdLua", &gSavedSettings, 1);
-	static std::string* sChatCmdLuaMacro = rebind_llcontrol<std::string>("ChatCmdLuaMacro", &gSavedSettings, 1);
-	static std::string* sChatCmdLuaMacroShort = rebind_llcontrol<std::string>("ChatCmdLuaMacroShort", &gSavedSettings, 1);
+	static LLCachedControl<std::string> sChatCmdLua("ChatCmdLua", "/lua");
+	static LLCachedControl<std::string> sChatCmdLuaMacro("ChatCmdLuaMacro", "/macro");
+	static LLCachedControl<std::string> sChatCmdLuaMacroShort("ChatCmdLuaMacroShort", "/m");
 	std::istringstream stream(input);
 	std::string cmd;
 	if(stream >> cmd)
 	{
-		if(cmd == (*sChatCmdLua))
+		if(cmd.compare(sChatCmdLua) == 0)
 		{
 			FLLua::callCommand(input.substr(cmd.length()));
 			return TRUE;
 		}
-		else if(cmd == (*sChatCmdLuaMacroShort) || cmd == (*sChatCmdLuaMacro))
+		else if(cmd.compare(sChatCmdLuaMacroShort) == 0 || cmd.compare(sChatCmdLuaMacro) == 0)
 		{
 			FLLua::callCommand(input);
 			return TRUE;
