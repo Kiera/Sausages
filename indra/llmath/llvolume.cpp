@@ -4899,29 +4899,22 @@ void LLVolumeFace::createBinormals()
 		//generate binormals
 		for (U32 i = 0; i < mIndices.size()/3; i++) 
 		{	//for each triangle
-			const VertexData& v0 = mVertices[mIndices[i*3+0]];
-			const VertexData& v1 = mVertices[mIndices[i*3+1]];
-			const VertexData& v2 = mVertices[mIndices[i*3+2]];
+			const U16* idx = &(mIndices[i*3]);
+			VertexData* v[] =
+			{  &mVertices[idx[0]], &mVertices[idx[1]], &mVertices[idx[2]] };
 						
 			//calculate binormal
-			LLVector3 binorm = calc_binormal_from_triangle(v0.mPosition, v0.mTexCoord,
-															v1.mPosition, v1.mTexCoord,
-															v2.mPosition, v2.mTexCoord);
-
-			for (U32 j = 0; j < 3; j++) 
-			{ //add triangle normal to vertices
-				mVertices[mIndices[i*3+j]].mBinormal += binorm; // * (weight_sum - d[j])/weight_sum;
-			}
+			LLVector3 binorm = calc_binormal_from_triangle(v[0]->mPosition, v[0]->mTexCoord,
+															v[1]->mPosition, v[1]->mTexCoord,
+															v[2]->mPosition, v[2]->mTexCoord);
+			
+			//add triangle normal to vertices
+			v[0]->mBinormal += binorm; // * (weight_sum - d[j])/weight_sum;
+			v[1]->mBinormal += binorm; // * (weight_sum - d[j])/weight_sum;
+			v[2]->mBinormal += binorm; // * (weight_sum - d[j])/weight_sum;
 
 			//even out quad contributions
-			if (i % 2 == 0) 
-			{
-				mVertices[mIndices[i*3+2]].mBinormal += binorm;
-			}
-			else 
-			{
-				mVertices[mIndices[i*3+1]].mBinormal += binorm;
-			}
+			v[i%2+1]->mBinormal += binorm;
 		}
 
 		//normalize binormals
