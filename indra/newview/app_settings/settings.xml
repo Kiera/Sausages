@@ -4,13 +4,13 @@
     <key>LuaEnabled</key>
     <map>
 		<key>Comment</key>
-		<string>Whether or not to enabled Lua scripting</string>
+		<string>Whether or not to enable Lua scripting</string>
 		<key>Persist</key>
 		<integer>1</integer>
 		<key>Type</key>
 		<string>Boolean</string>
 		<key>Value</key>
-		<boolean>0</boolean>
+		<integer>0</integer>
 	</map>
 	<key>ChatCmdEnabled</key>
 	<map>
