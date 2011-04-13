@@ -10,7 +10,7 @@
 		<key>Type</key>
 		<string>Boolean</string>
 		<key>Value</key>
-		<string>0</string>
+		<boolean>0</boolean>
 	</map>
 	<key>ChatCmdEnabled</key>
 	<map>
