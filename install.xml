@@ -60,6 +60,13 @@
             <key>url</key>
             <uri>http://dl.dropbox.com/u/16962345/lua-5.1.4-windows-20110408.tar.bz2</uri>
           </map>
+          <key>linux</key>
+          <map>
+            <key>md5sum</key>
+            <string>ef75769f6b1ae8c74d2d945fc88d2ad1</string>
+            <key>url</key>
+            <uri>http://dl.dropbox.com/u/16962345/lua-5.1.4-linux32-20100411.tar.bz2</uri>
+          </map>
         </map>
       </map>
       <key>SDL</key>

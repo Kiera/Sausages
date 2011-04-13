@@ -1813,8 +1813,8 @@ S32 LLTextureFetch::update(U32 max_time_ms)
 {
 	{
 		mNetworkQueueMutex.lock() ;
-		static LLCachedControl<F32> sThrottleBandwidthKBPS("ThrottleBandwidthKBPS", 500.f);
-		mMaxBandwidth = sThrottleBandwidthKBPS;
+		static LLCachedControl<F64> sThrottleBandwidthKBPS("ThrottleBandwidthKBPS", 500.f);
+		mMaxBandwidth = (F32)sThrottleBandwidthKBPS;
 
 		gImageList.sTextureBits += mHTTPTextureBits;
 		mHTTPTextureBits = 0 ;
