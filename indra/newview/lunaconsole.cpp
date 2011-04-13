@@ -112,7 +112,8 @@ void LLFloaterLuaConsole::onClickReset(void *data)
 {
     LLFloaterLuaConsole *self = (LLFloaterLuaConsole *)data;
 
-	FLLua::init();
+	if(FLLua::sLuaEnabled)
+		FLLua::init();
 
     LLLineEditor *editor = self->getChild<LLLineEditor>("Lua Editor", TRUE);
 

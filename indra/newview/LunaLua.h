@@ -38,6 +38,7 @@ extern "C" {
 #include "llviewerimage.h"
 #include "llviewerregion.h"
 #include "llviewerobject.h"
+#include "llviewercontrol.h"
 #include <boost/preprocessor.hpp>
 
 
@@ -117,6 +118,8 @@ public:
 
 	// Called from main thread
 	static void execClientEvent(HookRequest *hook);
+
+	static bool sLuaEnabled;
 	
 	/*
 	The concept of CriticalSections in this implementation is to ensure thread safe shared memory accessing.

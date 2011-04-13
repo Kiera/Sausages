@@ -132,6 +132,7 @@ HookRequest& HookRequest::operator<<(LLViewerObject *in)
 // Lua Interpreter
 ///////////////////////////////////////////////
 FLLua* FLLua::sInstance = NULL;
+bool FLLua::sLuaEnabled = false;
 
 //Constructor
 FLLua::FLLua() : 

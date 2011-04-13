@@ -858,8 +858,11 @@ bool LLAppViewer::init()
 
 	LLViewerJoystick::getInstance()->init(false);
 
+	FLLua::sLuaEnabled = gSavedSettings.getBOOL("LuaEnabled");
+
 	// Luna Lua Engine startup!
-	FLLua::init();
+	if(FLLua::sLuaEnabled)
+		FLLua::init();
 	return true;
 }
 
@@ -1058,7 +1061,8 @@ bool LLAppViewer::mainLoop()
 					}
 
 					//llinfos << "LUA:IN" << llendl;
-					FLLua::execClientEvents();
+					if(FLLua::sLuaEnabled)
+						FLLua::execClientEvents();
 					//llinfos << "LUA:OUT" << llendl;
 
 					F64 frame_time = frameTimer.getElapsedTimeF64();

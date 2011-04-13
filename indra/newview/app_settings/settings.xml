@@ -1,6 +1,17 @@
 <?xml version="1.0" ?>
 <llsd>
 <map>
+    <key>LuaEnabled</key>
+    <map>
+		<key>Comment</key>
+		<string>Whether or not to enabled Lua scripting</string>
+		<key>Persist</key>
+		<integer>1</integer>
+		<key>Type</key>
+		<string>Boolean</string>
+		<key>Value</key>
+		<string>0</string>
+	</map>
 	<key>ChatCmdEnabled</key>
 	<map>
 		<key>Comment</key>
