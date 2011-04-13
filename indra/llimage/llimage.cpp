@@ -139,7 +139,7 @@ BOOL LLImageBase::sSizeOverride = FALSE;
 // virtual
 void LLImageBase::deleteData()
 {
-	delete[] mData;
+	delete[] mData;  
 	mData = NULL;
 	mDataSize = 0;
 }
