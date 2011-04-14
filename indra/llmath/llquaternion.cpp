@@ -647,90 +647,42 @@ LLQuaternion lerp(F32 t, const LLQuaternion &p, const LLQuaternion &q)
 	return r;
 }
 
-inline float ReciprocalSqrt( float x ) {
-	long i;
-	float y, r;
-	y = x * 0.5f;
-	i = *(long *)( &x );
-	i = 0x5f3759df - ( i >> 1 );
-	r = *(float *)( &i );
-	r = r * ( 1.5f - r * r * y );
-	return r;
-}
-inline float SinZeroHalfPI( float a ) {
-	float s, t;
-	s = a * a;
-	t = -2.39e-08f;
-	t *= s;
-	t += 2.7526e-06f;
-	t *= s;
-	t += -1.98409e-04f;
-	t *= s;
-	t += 8.3333315e-03f;
-	t *= s;
-	t += -1.666666664e-01f;
-	t *= s;
-	t += 1.0f;
-	t *= a;
-	return t;
-}
-#define M_PI 3.141592653589793238462643f
-inline float ATanPositive( float y, float x ) {
-	float a, d, s, t;
-	if ( y > x ) {
-		a = -x / y;
-		d = M_PI / 2;
-	} else {
-		a = y / x;
-		d = 0.0f;
-	}
-	s = a * a;
-	t = 0.0028662257f;
-	t *= s;
-	t += -0.0161657367f;
-	t *= s;
-	t += 0.0429096138f;
-	t *= s;
-	t += -0.0752896400f;
-	t *= s;
-	t += 0.1065626393f;
-	t *= s;
-	t += -0.1420889944f;
-	t *= s;
-	t += 0.1999355085f;
-	t *= s;
-	t += -0.3333314528f;
-	t *= s;
-	t += 1.0f;
-	t *= a;
-	t += d;
-	return t;
-}
+
 // spherical linear interpolation
 LLQuaternion slerp( F32 u, const LLQuaternion &a, const LLQuaternion &b )
 {
 	// cosine theta = dot product of a and b
 	F32 cos_t = a.mQ[0]*b.mQ[0] + a.mQ[1]*b.mQ[1] + a.mQ[2]*b.mQ[2] + a.mQ[3]*b.mQ[3];
-	F32 abs_cos_t = fabs(cos_t);
+	
+	// if b is on opposite hemisphere from a, use -a instead
+	int bflip;
+ 	if (cos_t < 0.0f)
+	{
+		cos_t = -cos_t;
+		bflip = TRUE;
+	}
+	else
+		bflip = FALSE;
 
 	// if B is (within precision limits) the same as A,
 	// just linear interpolate between A and B.
 	F32 alpha;	// interpolant
 	F32 beta;		// 1 - interpolant
-	if ((1.0f - cos_t) < 0.00001f)
+	if (1.0f - cos_t < 0.00001f)
 	{
 		beta = 1.0f - u;
 		alpha = u;
  	}
 	else
 	{
-		F32 sin_t_sqr = 1.0f - abs_cos_t * abs_cos_t;
-		F32 sin_t = ReciprocalSqrt( sin_t_sqr );
-		F32 omega = ATanPositive( sin_t_sqr * sin_t, abs_cos_t );
- 		beta = SinZeroHalfPI((1.0f - u) * omega) * sin_t;
- 		alpha = SinZeroHalfPI(u*omega) * sin_t;
+ 		F32 theta = acosf(cos_t);
+ 		F32 sin_t = sinf(theta);
+ 		beta = sinf(theta - u*theta) / sin_t;
+ 		alpha = sinf(u*theta) / sin_t;
  	}
-	alpha = ( cos_t >= 0.0f ) ? alpha : -alpha;
+
+	if (bflip)
+		beta = -beta;
 
 	// interpolate
 	LLQuaternion ret;
