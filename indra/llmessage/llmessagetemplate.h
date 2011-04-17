@@ -402,7 +402,7 @@ public:
 			mConnectionMap.erase(mConnectionMap.begin(),mConnectionMap.end());
 		}
 		//we want to make sure if we set to NULL it will not add a null entry to the signal.
-		if(handler_func == NULL)
+		if(handler_func != NULL)
 		{
 			addHandlerFunc(handler_func,user_data);
 		}
