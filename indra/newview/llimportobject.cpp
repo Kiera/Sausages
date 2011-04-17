@@ -582,7 +582,7 @@ void LLXmlImport::rez_supply()
 			gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
 			gMessageSystem->addU8Fast(_PREHASH_PCode, 9);
 			gMessageSystem->addU8Fast(_PREHASH_Material, LL_MCODE_WOOD);
-			gMessageSystem->addU32Fast(_PREHASH_AddFlags, 0);
+			gMessageSystem->addU32Fast(_PREHASH_AddFlags, FLAGS_CREATE_SELECTED);
 			gMessageSystem->addU8Fast(_PREHASH_PathCurve, 16);
 			gMessageSystem->addU8Fast(_PREHASH_ProfileCurve, 1);
 			gMessageSystem->addU16Fast(_PREHASH_PathBegin, 0);
@@ -1035,7 +1035,8 @@ void LLXmlImport::onUpdatePrim(LLViewerObject* object)
 	//if (object != NULL)
 	//	if (object->mID != sExpectedUpdate)
 	//		return;
-	if(sPrimIndex + 1 >= (int)sPrims.size())
+	sExpectedUpdate == LLUUID::null;
+	if(sPrimIndex >= (int)sPrims.size())
 	{
 		// Link time
 		int packet_len = 0;
