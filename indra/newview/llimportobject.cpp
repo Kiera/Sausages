@@ -1004,7 +1004,7 @@ void LLXmlImport::onNewPrim(LLViewerObject* object)
 	}
 
 	//Description
-	if(from->mPrimDescription != "")
+	if(from->mPrimDescription != "" || from->importIsAttachment)
 	{
 		gMessageSystem->newMessageFast(_PREHASH_ObjectDescription);
 		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
