@@ -1035,7 +1035,7 @@ void LLXmlImport::onUpdatePrim(LLViewerObject* object)
 	//if (object != NULL)
 	//	if (object->mID != sExpectedUpdate)
 	//		return;
-	sExpectedUpdate == LLUUID::null;
+	sExpectedUpdate = LLUUID::null;
 	if(sPrimIndex >= (int)sPrims.size())
 	{
 		// Link time
