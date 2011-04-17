@@ -116,6 +116,10 @@ LLScrollListIcon::LLScrollListIcon(LLUIImagePtr icon, S32 width)
 
 LLScrollListIcon::LLScrollListIcon(const LLSD& value, S32 width)
 	: LLScrollListCell(width),
+	// <edit>
+	mCallback(NULL),
+	mUserData(NULL),
+	// </edit>
 	mColor(LLColor4::white)
 {
 	setValue(value);
@@ -177,7 +181,7 @@ void LLScrollListIcon::setClickCallback(bool (*callback)(void*), void* user_data
 
 BOOL LLScrollListIcon::handleClick()
 {
-	if((*mCallback) != NULL) 
+	if(mCallback) 
 		return mCallback(mUserData);
 	return FALSE;
 }

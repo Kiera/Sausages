@@ -5,6 +5,7 @@
  */
 
 #include "llviewerprecompiledheaders.h"
+#include "roles_constants.h"
 #include "llimportobject.h"
 #include "llsdserialize.h"
 #include "llsdutil.h"
@@ -22,12 +23,15 @@
 #include "llassetuploadresponders.h"
 #include "lleconomy.h"
 #include "llfloaterperms.h"
+#include "llparcel.h"
+#include "llviewerparcelmgr.h"
 #include "llviewerregion.h"
 #include "llviewerobjectlist.h"
 
 // static vars
 bool LLXmlImport::sImportInProgress = false;
 bool LLXmlImport::sImportHasAttachments = false;
+LLUUID LLXmlImport::sExpectedUpdate;
 LLUUID LLXmlImport::sFolderID;
 LLViewerObject* LLXmlImport::sSupplyParams;
 int LLXmlImport::sPrimsNeeded;
@@ -557,7 +561,24 @@ void LLXmlImport::rez_supply()
 			gMessageSystem->nextBlockFast(_PREHASH_AgentData);
 			gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
 			gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-			gMessageSystem->addUUIDFast(_PREHASH_GroupID, gAgent.getGroupID());
+			LLUUID group_id = gAgent.getGroupID();
+			LLParcel *parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
+			if (gSavedSettings.getBOOL("RezWithLandGroup"))
+			{
+				if (gAgent.isInGroup(parcel->getGroupID()))
+				{
+					group_id = parcel->getGroupID();
+				}
+				else if (gAgent.isInGroup(parcel->getOwnerID()))
+				{
+					group_id = parcel->getOwnerID();
+				}
+			}
+			else if (gAgent.hasPowerInGroup(parcel->getGroupID(), GP_LAND_ALLOW_CREATE) && !parcel->getIsGroupOwned())
+			{
+				group_id = parcel->getGroupID();
+			}
+			gMessageSystem->addUUIDFast(_PREHASH_GroupID, group_id);
 			gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
 			gMessageSystem->addU8Fast(_PREHASH_PCode, 9);
 			gMessageSystem->addU8Fast(_PREHASH_Material, LL_MCODE_WOOD);
@@ -1004,7 +1025,17 @@ void LLXmlImport::onNewPrim(LLViewerObject* object)
 		gMessageSystem->sendReliable(gAgent.getRegionHost());
 	}
 
-	if(currPrimIndex + 1 >= (int)sPrims.size())
+	sExpectedUpdate = object->getID();
+}
+void LLXmlImport::onUpdatePrim(LLViewerObject* object)
+{
+	//checked before calling this function
+	//if(!sImportInProgress)
+	//	return;
+	//if (object != NULL)
+	//	if (object->mID != sExpectedUpdate)
+	//		return;
+	if(sPrimIndex + 1 >= (int)sPrims.size())
 	{
 		// Link time
 		int packet_len = 0;
@@ -1085,6 +1116,7 @@ void LLXmlImport::onNewPrim(LLViewerObject* object)
 			}
 			sAttachmentsDone = 0;
 			new LLLinkTimer(roots);
+			return;
 		}
 	}
 	LLFloaterImportProgress::update();

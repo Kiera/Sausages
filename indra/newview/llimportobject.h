@@ -86,6 +86,7 @@ class LLXmlImport
 public:
 	static void import(LLXmlImportOptions* import_options);
 	static void onNewPrim(LLViewerObject* object);
+	static void onUpdatePrim(LLViewerObject* object);
 	static void onNewItem(LLViewerInventoryItem* item);
 	static void onNewAttachment(LLViewerObject* object);
 	static void Cancel(void* user_data);
@@ -95,6 +96,7 @@ public:
 
 	static bool sImportInProgress;
 	static bool sImportHasAttachments;
+	static LLUUID sExpectedUpdate;
 	static LLUUID sFolderID;
 	static LLViewerObject* sSupplyParams;
 	static int sPrimsNeeded;
