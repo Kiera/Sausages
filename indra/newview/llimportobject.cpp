@@ -41,6 +41,7 @@ std::map<U8, bool> LLXmlImport::sPt2watch;
 std::map<U8, LLVector3> LLXmlImport::sPt2attachpos;
 std::map<U8, LLQuaternion> LLXmlImport::sPt2attachrot;
 std::map<U32, std::queue<U32> > LLXmlImport::sLinkSets;
+std::map<U8, std::string> LLXmlImport::sDescriptions;
 int LLXmlImport::sPrimIndex = 0;
 int LLXmlImport::sAttachmentsDone = 0;
 std::map<std::string, U32> LLXmlImport::sId2localid;
@@ -691,6 +692,7 @@ void LLXmlImport::import(LLXmlImportOptions* import_options)
 	sId2attachpt.clear();
 	sPt2attachpos.clear();
 	sPt2attachrot.clear();
+	sDescriptions.clear();
 	// Go ahead and add roots first
 	std::vector<LLImportObject*>::iterator root_iter = sXmlImportOptions->mRootObjects.begin();
 	std::vector<LLImportObject*>::iterator root_end = sXmlImportOptions->mRootObjects.end();
@@ -879,18 +881,6 @@ void LLXmlImport::onNewPrim(LLViewerObject* object)
 		sId2localid[from->mId] = object->getLocalID();
 		sRootpositions[object->getLocalID()] = from->getPosition();
 		sRootrotations[object->getLocalID()] = from->getRotation();
-		// If it's an attachment, set description
-		if(from->importIsAttachment)
-		{
-			gMessageSystem->newMessageFast(_PREHASH_ObjectDescription);
-			gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-			gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-			gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-			gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-			gMessageSystem->addU32Fast(_PREHASH_LocalID, object->getLocalID());
-			gMessageSystem->addStringFast(_PREHASH_Description, from->mId);
-			gMessageSystem->sendReliable(gAgent.getRegionHost());
-		}
 	}
 	else
 	{
@@ -1022,7 +1012,16 @@ void LLXmlImport::onNewPrim(LLViewerObject* object)
 		gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
 		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
 		gMessageSystem->addU32Fast(_PREHASH_LocalID, object->getLocalID());
-		gMessageSystem->addStringFast(_PREHASH_Description, from->mPrimDescription);
+		//set attachment tracking system
+		if(from->importIsAttachment)
+		{
+			sDescriptions[sId2attachpt[from->mId]] = from->mPrimDescription;
+			gMessageSystem->addStringFast(_PREHASH_Description, from->mId);
+		}
+		else
+		{	
+			gMessageSystem->addStringFast(_PREHASH_Description, from->mPrimDescription);
+		}
 		gMessageSystem->sendReliable(gAgent.getRegionHost());
 	}
 
@@ -1156,7 +1155,7 @@ void LLXmlImport::onNewItem(LLViewerInventoryItem* item)
 	if(attachpt)
 	{
 		// clear description, part 1
-		item->setDescription(std::string("(No Description)"));
+		item->setDescription(sDescriptions[attachpt]);
 		item->updateServer(FALSE);
 
 		// Attach it
@@ -1193,7 +1192,7 @@ void LLXmlImport::onNewAttachment(LLViewerObject* object)
 		gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
 		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
 		gMessageSystem->addU32Fast(_PREHASH_LocalID, object->getLocalID());
-		gMessageSystem->addStringFast(_PREHASH_Description, "");
+		gMessageSystem->addStringFast(_PREHASH_Description, sDescriptions[attachpt]);
 		gMessageSystem->sendReliable(gAgent.getRegionHost());
 
 		// position and rotation
