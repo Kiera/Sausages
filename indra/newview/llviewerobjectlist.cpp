@@ -265,7 +265,22 @@ void LLViewerObjectList::processUpdateCore(LLViewerObject* objectp,
 	// (from gPipeline.addObject)
 	// so that the drawable parent is set properly
 	findOrphans(objectp, msg->getSenderIP(), msg->getSenderPort());
-	
+
+	// <edit>
+	if (just_created 
+		&& update_type != OUT_TERSE_IMPROVED)
+	{
+		LLViewerObject* parent = (LLViewerObject*)objectp->getParent();
+		if(parent)
+		{
+			if(parent->getID() == gAgent.getID())
+			{
+				LLXmlImport::onNewAttachment(objectp);
+			}
+		}
+	}
+	//</edit>
+
 	// If we're just wandering around, don't create new objects selected.
 	if (just_created 
 		&& update_type != OUT_TERSE_IMPROVED 
@@ -284,24 +299,13 @@ void LLViewerObjectList::processUpdateCore(LLViewerObject* objectp,
 		gViewerWindow->getWindow()->setCursor( UI_CURSOR_ARROW );
 
 		// <edit>
-		if(just_created && LLXmlImport::sImportInProgress)
+		if(LLXmlImport::sImportInProgress)
 		{
-			if(objectp)
+			if( objectp->permYouOwner()
+				&& (objectp->getPCode() == LLXmlImport::sSupplyParams->getPCode())
+				&& (objectp->getScale() == LLXmlImport::sSupplyParams->getScale()))
 			{
-				LLViewerObject* parent = (LLViewerObject*)objectp->getParent();
-				if(parent)
-				{
-					if(parent->getID() == gAgent.getID())
-					{
-						LLXmlImport::onNewAttachment(objectp);
-					}
-				}
-				else if( objectp->permYouOwner()
-					&& (objectp->getPCode() == LLXmlImport::sSupplyParams->getPCode())
-					&& (objectp->getScale() == LLXmlImport::sSupplyParams->getScale()))
-				{
-					LLXmlImport::onNewPrim(objectp);
-				}
+				LLXmlImport::onNewPrim(objectp);
 			}
 		}
 		// </edit>
