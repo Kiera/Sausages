@@ -554,6 +554,24 @@ void LLXmlImport::rez_supply()
 	if(sImportInProgress && sXmlImportOptions && (sPrimsNeeded > 0))
 	{
 		sPrimsNeeded--;
+		//group
+		LLUUID group_id = gAgent.getGroupID();
+		LLParcel *parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
+		if (gSavedSettings.getBOOL("RezWithLandGroup"))
+		{
+			if (gAgent.isInGroup(parcel->getGroupID()))
+			{
+				group_id = parcel->getGroupID();
+			}
+			else if (gAgent.isInGroup(parcel->getOwnerID()))
+			{
+				group_id = parcel->getOwnerID();
+			}
+		}
+		else if (gAgent.hasPowerInGroup(parcel->getGroupID(), GP_LAND_ALLOW_CREATE) && !parcel->getIsGroupOwned())
+		{
+			group_id = parcel->getGroupID();
+		}
 		// Need moar prims
 		if(sXmlImportOptions->mSupplier == NULL)
 		{
@@ -561,23 +579,6 @@ void LLXmlImport::rez_supply()
 			gMessageSystem->nextBlockFast(_PREHASH_AgentData);
 			gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
 			gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-			LLUUID group_id = gAgent.getGroupID();
-			LLParcel *parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
-			if (gSavedSettings.getBOOL("RezWithLandGroup"))
-			{
-				if (gAgent.isInGroup(parcel->getGroupID()))
-				{
-					group_id = parcel->getGroupID();
-				}
-				else if (gAgent.isInGroup(parcel->getOwnerID()))
-				{
-					group_id = parcel->getOwnerID();
-				}
-			}
-			else if (gAgent.hasPowerInGroup(parcel->getGroupID(), GP_LAND_ALLOW_CREATE) && !parcel->getIsGroupOwned())
-			{
-				group_id = parcel->getGroupID();
-			}
 			gMessageSystem->addUUIDFast(_PREHASH_GroupID, group_id);
 			gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
 			gMessageSystem->addU8Fast(_PREHASH_PCode, 9);
@@ -620,14 +621,14 @@ void LLXmlImport::rez_supply()
 			gMessageSystem->nextBlockFast(_PREHASH_AgentData);
 			gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
 			gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-			gMessageSystem->addUUIDFast(_PREHASH_GroupID, gAgent.getGroupID());
+			gMessageSystem->addUUIDFast(_PREHASH_GroupID, group_id);
 			gMessageSystem->nextBlockFast(_PREHASH_SharedData);
 			
 			LLVector3 rezpos = gAgent.getPositionAgent() + LLVector3(0.0f, 0.0f, 2.0f);
 			rezpos -= sSupplyParams->getPositionRegion();
 			
 			gMessageSystem->addVector3Fast(_PREHASH_Offset, rezpos);
-			gMessageSystem->addU32Fast(_PREHASH_DuplicateFlags, 0);
+			gMessageSystem->addU32Fast(_PREHASH_DuplicateFlags, FLAGS_CREATE_SELECTED);
 			gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
 			gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, sXmlImportOptions->mSupplier->getLocalID());
 			gMessageSystem->sendReliable(gAgent.getRegionHost());
