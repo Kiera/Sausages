@@ -176,6 +176,7 @@ public:
 		FTM_REFRESH,
 		FTM_SORT,
 		FTM_PICK,
+		FTM_THREADS,
 		
 		// Temp
 		FTM_TEMP1,

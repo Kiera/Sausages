@@ -38,12 +38,13 @@
 class LLVOWLSky : public LLStaticViewerObject {
 private:
 	static const F32 DISTANCE_TO_STARS;
-
+public:
 	// anything less than 3 makes it impossible to create a closed dome.
 	static const U32 MIN_SKY_DETAIL;
 	// anything bigger than about 180 will cause getStripsNumVerts() to exceed 65535.
 	static const U32 MAX_SKY_DETAIL;
 
+private:
 	inline static U32 getNumStacks(void);
 	inline static U32 getNumSlices(void);
 	inline static U32 getFanNumVerts(void);
@@ -97,6 +98,9 @@ private:
 
 	// helper function for updating the stars geometry.
 	BOOL updateStarGeometry(LLDrawable *drawable);
+
+public:
+	static U32 sWLSkyDetail;
 
 private:
 	LLPointer<LLVertexBuffer>					mFanVerts;

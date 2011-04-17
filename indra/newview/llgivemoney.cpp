@@ -314,7 +314,7 @@ void LLFloaterPay::processPayPriceReply(LLMessageSystem* msg, void **userdata)
 
 		self->reshape( self->getRect().getWidth() + padding_required, self->getRect().getHeight(), FALSE );
 	}
-	msg->setHandlerFunc("PayPriceReply",NULL,NULL);
+	msg->delHandlerFunc("PayPriceReply", processPayPriceReply);
 }
 
 // static
@@ -341,7 +341,7 @@ void LLFloaterPay::payViaObject(money_callback callback, const LLUUID& object_id
 	msg->nextBlockFast(_PREHASH_ObjectData);
 	msg->addUUIDFast(_PREHASH_ObjectID, object_id);
 	msg->sendReliable(target_region);
-	msg->setHandlerFuncFast(_PREHASH_PayPriceReply, processPayPriceReply,(void **)floater);
+	msg->addHandlerFuncFast(_PREHASH_PayPriceReply, processPayPriceReply,(void **)floater);
 	
 	LLUUID owner_id;
 	BOOL is_group = FALSE;

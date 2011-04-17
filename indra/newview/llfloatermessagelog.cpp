@@ -796,7 +796,7 @@ void LLFloaterMessageLog::onCommitMessageLog(LLUICtrl* ctrl, void* user_data)
 	}
 }
 // static
-BOOL LLFloaterMessageLog::onClickCloseCircuit(void* user_data)
+bool LLFloaterMessageLog::onClickCloseCircuit(void* user_data)
 {
 	LLNetListItem* itemp = (LLNetListItem*)user_data;
 	LLCircuitData* cdp = (LLCircuitData*)itemp->mCircuitData;

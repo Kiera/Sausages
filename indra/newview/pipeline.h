@@ -403,6 +403,8 @@ public:
 
 	S32						 mNumVisibleFaces;
 
+	static bool				sFreezeTime;
+
 	static S32				sCompiles;
 
 	static BOOL				sShowHUDAttachments;

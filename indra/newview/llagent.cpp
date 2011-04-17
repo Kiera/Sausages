@@ -544,8 +544,8 @@ void LLAgent::resetView(BOOL reset_camera, BOOL change_camera)
 		// Hide all popup menus
 		if (gMenuHolder) gMenuHolder->hideMenus();
 	}
-	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
-	if (change_camera && !sFreezeTime)
+	
+	if (change_camera && !LLPipeline::sFreezeTime)
 	{
 		changeCameraToDefault();
 		
@@ -569,7 +569,7 @@ void LLAgent::resetView(BOOL reset_camera, BOOL change_camera)
 	}
 
 
-	if (reset_camera && !sFreezeTime)
+	if (reset_camera && !LLPipeline::sFreezeTime)
 	{
 		if (!gViewerWindow->getLeftMouseDown() && cameraThirdPerson())
 		{
@@ -1959,9 +1959,8 @@ void LLAgent::cameraOrbitIn(const F32 meters)
 		
 		mCameraZoomFraction = (mTargetCameraDistance - meters) / camera_offset_dist;
 
-		static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
-
-		if (!sFreezeTime && mCameraZoomFraction < MIN_ZOOM_FRACTION && meters > 0.f)
+		
+		if (!LLPipeline::sFreezeTime && mCameraZoomFraction < MIN_ZOOM_FRACTION && meters > 0.f)
 		{
 			// No need to animate, camera is already there.
 			changeCameraToMouselook(FALSE);
@@ -6403,9 +6402,9 @@ void LLAgent::setTeleportState(ETeleportState state)
 {
 	mTeleportState = state;
 
-	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
+	
 
-	if (mTeleportState > TELEPORT_NONE && sFreezeTime)
+	if (mTeleportState > TELEPORT_NONE && LLPipeline::sFreezeTime)
 	{
 		LLFloaterSnapshot::hide(0);
 	}

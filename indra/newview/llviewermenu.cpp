@@ -802,6 +802,11 @@ void init_client_menu(LLMenuGL* menu)
 											NULL,
 											&menu_check_control,
 											(void*)"Nimble"));
+		sub->append(new LLMenuItemCheckGL( "Spoof Mouselook Mode",
+											&menu_toggle_control,
+											NULL,
+											&menu_check_control,
+											(void*)"SpoofMouseLook"));
 		sub->append(new LLMenuItemCheckGL( "ReSit",
 											&menu_toggle_control,
 											NULL,
@@ -1183,7 +1188,7 @@ void init_debug_ui_menu(LLMenuGL* menu)
 	menu->append(new LLMenuItemCallGL( "Dump Focus Holder", &handle_dump_focus, NULL, NULL, 'F', MASK_ALT | MASK_CONTROL));
 	menu->append(new LLMenuItemCallGL( "Print Selected Object Info",	&print_object_info, NULL, NULL, 'P', MASK_CONTROL|MASK_SHIFT ));
 	menu->append(new LLMenuItemCallGL( "Print Agent Info",			&print_agent_nvpairs, NULL, NULL, 'P', MASK_SHIFT ));
-	menu->append(new LLMenuItemCallGL( "Memory Stats",  &output_statistics, NULL, NULL, 'M', MASK_SHIFT | MASK_ALT | MASK_CONTROL));
+	menu->append(new LLMenuItemCallGL( "Memory Stats",  &output_statistics));
 	menu->append(new LLMenuItemCheckGL("Double-Click Auto-Pilot", 
 		menu_toggle_control, NULL, menu_check_control, 
 		(void*)"DoubleClickAutoPilot"));
@@ -7269,9 +7274,7 @@ class LLViewEnableMouselook : public view_listener_t
 		// You can't go directly from customize avatar to mouselook.
 		// TODO: write code with appropriate dialogs to handle this transition.
 		
-		static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
-		
-		bool new_value = (CAMERA_MODE_CUSTOMIZE_AVATAR != gAgent.getCameraMode() && !sFreezeTime);
+		bool new_value = (CAMERA_MODE_CUSTOMIZE_AVATAR != gAgent.getCameraMode() && !LLPipeline::sFreezeTime);
 		gMenuHolder->findControl(userdata["control"].asString())->setValue(new_value);
 		return true;
 	}

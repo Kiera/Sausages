@@ -3306,12 +3306,19 @@ void send_agent_update(BOOL force_send, BOOL send_reliable)
 	// trigger a control event.
 	U32 control_flags = gAgent.getControlFlags();
 
-	// <edit>
-	if(gSavedSettings.getBOOL("Nimble"))
+	// Griefer flags here
+	static LLCachedControl<bool> spoof_mouse_look("SpoofMouseLook", FALSE);
+	if (spoof_mouse_look)
+ 	{
+ 		// Let's the scripts believe we are in mouse-look even when not
+ 		control_flags |= AGENT_CONTROL_MOUSELOOK;
+ 	}
+	static LLCachedControl<bool> nimble("Nimble", FALSE);
+	if(nimble)
 	{
 		control_flags |= AGENT_CONTROL_FINISH_ANIM;
 	}
-	// </edit>
+
 
 	MASK	key_mask = gKeyboard->currentMask(TRUE);
 	if (key_mask & MASK_ALT || key_mask & MASK_CONTROL)

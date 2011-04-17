@@ -60,7 +60,7 @@ public:
 	static void onCommitNetList(LLUICtrl* ctrl, void* user_data);
 	static void onCommitMessageLog(LLUICtrl* ctrl, void* user_data);
 	static void onCommitFilter(LLUICtrl* ctrl, void* user_data);
-	static BOOL onClickCloseCircuit(void* user_data);
+	static bool onClickCloseCircuit(void* user_data);
 	static bool onConfirmCloseCircuit(const LLSD& notification, const LLSD& response );
 	static bool onConfirmRemoveRegion(const LLSD& notification, const LLSD& response );
 	static void onClickFilterApply(void* user_data);

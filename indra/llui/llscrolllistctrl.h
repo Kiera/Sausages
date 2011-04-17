@@ -167,7 +167,7 @@ public:
 	virtual BOOL	isText()const { return FALSE; }
 	virtual void	setValue(const LLSD& value);
 	// <edit>
-	void setClickCallback(BOOL (*callback)(void*), void* user_data);
+	void setClickCallback(bool (*callback)(void*), void* user_data);
 	virtual BOOL handleClick();
 	// </edit>
 
@@ -175,7 +175,7 @@ private:
 	LLUIImagePtr mIcon;
 	LLColor4 mColor;
 	// <edit>
-	BOOL (*mCallback)(void*);
+	bool (*mCallback)(void*);
 	void* mUserData;
 	// </edit>
 };

@@ -169,7 +169,7 @@ S32	LLScrollListIcon::getWidth() const
 }
 
 // <edit>
-void LLScrollListIcon::setClickCallback(BOOL (*callback)(void*), void* user_data)
+void LLScrollListIcon::setClickCallback(bool (*callback)(void*), void* user_data)
 {
 	mCallback = callback;
 	mUserData = user_data;
@@ -177,7 +177,8 @@ void LLScrollListIcon::setClickCallback(BOOL (*callback)(void*), void* user_data
 
 BOOL LLScrollListIcon::handleClick()
 {
-	if(mCallback) return mCallback(mUserData);
+	if((*mCallback) != NULL) 
+		return mCallback(mUserData);
 	return FALSE;
 }
 // </edit>

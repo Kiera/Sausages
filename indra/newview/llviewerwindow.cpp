@@ -300,7 +300,8 @@ public:
 		U32 ypos = 64;
 		const U32 y_inc = 20;
 
-		if (gSavedSettings.getBOOL("DebugShowTime"))
+		static LLCachedControl<BOOL> debug_show_time("DebugShowTime", FALSE);
+		if (debug_show_time)
 		{
 			const U32 y_inc2 = 15;
 			for (std::map<S32,LLFrameTimer>::reverse_iterator iter = gDebugTimers.rbegin();
@@ -408,7 +409,8 @@ public:
 			ypos += y_inc;
 		}*/
 		
-		if (gSavedSettings.getBOOL("DebugShowRenderInfo"))
+		static LLCachedControl<BOOL> debug_show_render_info("DebugShowRenderInfo", FALSE);
+		if (debug_show_render_info)
 		{
 			if (gPipeline.getUseVertexShaders() == 0)
 			{
@@ -476,7 +478,9 @@ public:
 				LLVertexBuffer::sSetCount = LLImageGL::sUniqueCount = 
 				gPipeline.mNumVisibleNodes = LLPipeline::sVisibleLightCount = 0;
 		}
-		if (gSavedSettings.getBOOL("DebugShowRenderMatrices"))
+
+		static LLCachedControl<BOOL> debug_show_render_matrices("DebugShowRenderMatrices", FALSE);
+		if (debug_show_render_matrices)
 		{
 			addText(xpos, ypos, llformat("%.4f    .%4f    %.4f    %.4f", gGLProjection[12], gGLProjection[13], gGLProjection[14], gGLProjection[15]));
 			ypos += y_inc;
@@ -509,7 +513,9 @@ public:
 			addText(xpos, ypos, "View Matrix");
 			ypos += y_inc;
 		}
-		if (gSavedSettings.getBOOL("DebugShowColor"))
+
+		static LLCachedControl<BOOL> debug_show_color("DebugShowColor", FALSE);
+		if (debug_show_color)
 		{
 			U8 color[4];
 			LLCoordGL coord = gViewerWindow->getCurrentMouse();
@@ -3023,8 +3029,8 @@ BOOL LLViewerWindow::handlePerFrameHover()
 			mToolTip->setVisible( tooltip_vis );
 		}
 	}		
-	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
-	if (tool && tool != gToolNull  && tool != LLToolCompInspect::getInstance() && tool != LLToolDragAndDrop::getInstance() && !sFreezeTime)
+
+	if (tool && tool != gToolNull  && tool != LLToolCompInspect::getInstance() && tool != LLToolDragAndDrop::getInstance() && !LLPipeline::sFreezeTime)
 	{ 
 		LLMouseHandler *captor = gFocusMgr.getMouseCapture();
 		// With the null, inspect, or drag and drop tool, don't muck

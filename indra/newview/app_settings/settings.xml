@@ -5438,17 +5438,6 @@
         <integer>29</integer>
       </array>
     </map>
-    <key>FreezeTime</key>
-    <map>
-      <key>Comment</key>
-      <string />
-      <key>Persist</key>
-      <integer>0</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>0</integer>
-    </map>
     <key>FullScreen</key>
     <map>
       <key>Comment</key>
@@ -6973,6 +6962,17 @@
     <map>
       <key>Comment</key>
       <string />
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>SpoofMouseLook</key>
+    <map>
+      <key>Comment</key>
+      <string>Pretend to be in mouselook mode, even when not (to fool annoying scripts)</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -9378,7 +9378,7 @@
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>0</integer>
+      <integer>1</integer>
     </map>
     <key>SafeMode</key>
     <map>

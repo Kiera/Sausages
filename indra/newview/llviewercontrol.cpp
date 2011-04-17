@@ -312,8 +312,9 @@ static bool handleRenderUseVBOChanged(const LLSD& newvalue)
 	return true;
 }
 
-static bool handleWLSkyDetailChanged(const LLSD&)
+static bool handleWLSkyDetailChanged(const LLSD& newvalue)
 {
+	LLVOWLSky::sWLSkyDetail = llclamp((U32)newvalue.asInteger(), LLVOWLSky::MIN_SKY_DETAIL, LLVOWLSky::MAX_SKY_DETAIL);
 	if (gSky.mVOWLSkyp.notNull())
 	{
 		gSky.mVOWLSkyp->updateGeometry(gSky.mVOWLSkyp->mDrawable);
@@ -332,6 +333,8 @@ static bool handleRenderLightingDetailChanged(const LLSD& newvalue)
 
 static bool handleResetVertexBuffersChanged(const LLSD&)
 {
+	LLPipeline::sRenderBump = gSavedSettings.getBOOL("RenderObjectBump");
+	LLPipeline::sTextureBindTest = gSavedSettings.getBOOL("RenderDebugTextureBind");
 	if (gPipeline.isInit())
 	{
 		gPipeline.resetVertexBuffers();

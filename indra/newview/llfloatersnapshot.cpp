@@ -67,6 +67,7 @@
 #include "lltoolfocus.h"
 #include "lltoolmgr.h"
 #include "llworld.h"
+#include "pipeline.h"	// LLPipeline::sFreezeTime
 
 #include "llgl.h"
 #include "llglheaders.h"
@@ -733,8 +734,8 @@ BOOL LLSnapshotLivePreview::onIdle( void* snapshot_preview )
 
 	LLVector3 new_camera_pos = LLViewerCamera::getInstance()->getOrigin();
 	LLQuaternion new_camera_rot = LLViewerCamera::getInstance()->getQuaternion();
-	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
-	if (sFreezeTime && 
+	
+	if (LLPipeline::sFreezeTime && 
 		(new_camera_pos != previewp->mCameraPos || dot(new_camera_rot, previewp->mCameraRot) < 0.995f))
 	{
 		previewp->mCameraPos = new_camera_pos;
@@ -1192,7 +1193,7 @@ void LLFloaterSnapshot::Impl::updateLayout(LLFloaterSnapshot* floaterp)
 		}
 
 		// freeze everything else
-		gSavedSettings.setBOOL("FreezeTime", TRUE);
+		LLPipeline::sFreezeTime = true;
 
 		if (LLToolMgr::getInstance()->getCurrentToolset() != gCameraToolset)
 		{
@@ -1214,7 +1215,7 @@ void LLFloaterSnapshot::Impl::updateLayout(LLFloaterSnapshot* floaterp)
 		sInstance->impl.mAvatarPauseHandles.clear();
 
 		// thaw everything else
-		gSavedSettings.setBOOL("FreezeTime", FALSE);
+		LLPipeline::sFreezeTime = false;
 
 		// restore last tool (e.g. pie menu, etc)
 		if (sInstance->impl.mLastToolset)
@@ -1972,7 +1973,7 @@ LLFloaterSnapshot::~LLFloaterSnapshot()
 	}
 
 	//unfreeze everything else
-	gSavedSettings.setBOOL("FreezeTime", FALSE);
+	LLPipeline::sFreezeTime = false;
 
 	if (impl.mLastToolset)
 	{
@@ -2160,8 +2161,8 @@ LLSnapshotFloaterView::~LLSnapshotFloaterView()
 BOOL LLSnapshotFloaterView::handleKey(KEY key, MASK mask, BOOL called_from_parent)
 {
 	// use default handler when not in freeze-frame mode
-	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
-	if(!sFreezeTime)
+	
+	if(!LLPipeline::sFreezeTime)
 	{
 		return LLFloaterView::handleKey(key, mask, called_from_parent);
 	}
@@ -2182,8 +2183,8 @@ BOOL LLSnapshotFloaterView::handleKey(KEY key, MASK mask, BOOL called_from_paren
 BOOL LLSnapshotFloaterView::handleMouseDown(S32 x, S32 y, MASK mask)
 {
 	// use default handler when not in freeze-frame mode
-	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
-	if(!sFreezeTime)
+	
+	if(!LLPipeline::sFreezeTime)
 	{
 		return LLFloaterView::handleMouseDown(x, y, mask);
 	}
@@ -2198,8 +2199,8 @@ BOOL LLSnapshotFloaterView::handleMouseDown(S32 x, S32 y, MASK mask)
 BOOL LLSnapshotFloaterView::handleMouseUp(S32 x, S32 y, MASK mask)
 {
 	// use default handler when not in freeze-frame mode
-	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
-	if(!sFreezeTime)
+	
+	if(!LLPipeline::sFreezeTime)
 	{
 		return LLFloaterView::handleMouseUp(x, y, mask);
 	}
@@ -2214,8 +2215,8 @@ BOOL LLSnapshotFloaterView::handleMouseUp(S32 x, S32 y, MASK mask)
 BOOL LLSnapshotFloaterView::handleHover(S32 x, S32 y, MASK mask)
 {
 	// use default handler when not in freeze-frame mode
-	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
-	if(!sFreezeTime)
+	
+	if(!LLPipeline::sFreezeTime)
 	{
 		return LLFloaterView::handleHover(x, y, mask);
 	}	

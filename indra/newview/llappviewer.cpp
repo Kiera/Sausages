@@ -144,6 +144,7 @@
 #include "llstatusbar.h"
 #include "llsurface.h"
 #include "llvosky.h"
+#include "llvowlsky.h"
 #include "llvotree.h"
 #include "llvoavatar.h"
 #include "llfolderview.h"
@@ -404,6 +405,7 @@ static void settings_to_globals()
 	LLVOAvatar::sLODFactor				= gSavedSettings.getF32("RenderAvatarLODFactor");
 	LLVOAvatar::sMaxVisible				= gSavedSettings.getS32("RenderAvatarMaxVisible");
 	LLVOAvatar::sVisibleInFirstPerson	= gSavedSettings.getBOOL("FirstPersonAvatarVisible");
+	LLVOWLSky::sWLSkyDetail				= llclamp(gSavedSettings.getU32("WLSkyDetail"), LLVOWLSky::MIN_SKY_DETAIL, LLVOWLSky::MAX_SKY_DETAIL);
 	// clamp auto-open time to some minimum usable value
 	LLFolderView::sAutoOpenTime			= llmax(0.25f, gSavedSettings.getF32("FolderAutoOpenDelay"));
 	LLToolBar::sInventoryAutoOpenTime	= gSavedSettings.getF32("InventoryAutoOpenDelay");
@@ -1003,7 +1005,6 @@ bool LLAppViewer::mainLoop()
 			// Sleep and run background threads
 			{
 				LLFastTimer t2(LLFastTimer::FTM_SLEEP);
-				bool run_multiple_threads = gSavedSettings.getBOOL("RunMultipleThreads");
 
 				// yield some time to the os based on command line option
 				if(mYieldTime >= 0)
@@ -1012,12 +1013,11 @@ bool LLAppViewer::mainLoop()
 				}
 
 				// yield cooperatively when not running as foreground window
-				if (   gNoRender
-						|| !gViewerWindow->mWindow->getVisible()
-						|| !gFocusMgr.getAppHasFocus())
+				if (gNoRender || !gViewerWindow->mWindow->getVisible()|| !gFocusMgr.getAppHasFocus())
 				{
 					// Sleep if we're not rendering, or the window is minimized.
-					S32 milliseconds_to_sleep = llclamp(gSavedSettings.getS32("BackgroundYieldTime"), 0, 1000);
+					static LLCachedControl<S32> background_yield_time("BackgroundYieldTime", 40);
+					S32 milliseconds_to_sleep = llclamp((S32)background_yield_time, 0, 1000);
 					// don't sleep when BackgroundYieldTime set to 0, since this will still yield to other threads
 					// of equal priority on Windows
 					if (milliseconds_to_sleep > 0)
@@ -1034,63 +1034,66 @@ bool LLAppViewer::mainLoop()
 					ms_sleep(rand() % 200);
 				}
 
-				if (gPeriodicSlowFrame
-					&& (gFrameCount % 10 == 0))
-				{
-					llinfos << "Periodic slow frame - sleeping 500 ms" << llendl;
-					ms_sleep(500);
+ 				if (gPeriodicSlowFrame && gFrameCount % 10 == 0)
+  				{
+  					llinfos << "Periodic slow frame - sleeping 500 ms" << llendl;
+  					ms_sleep(500);
+  				}
+  
+ 				static const F64 FRAME_SLOW_THRESHOLD = 0.5; // 2 frames per seconds
+ 				static LLCachedControl<BOOL> run_multiple_threads("RunMultipleThreads", TRUE);
+ 				const F64 max_idle_time = run_multiple_threads ? 0.0 : llmin(.05 * gFrameTimeSeconds, 0.005); // 5ms a second
+  				idleTimer.reset();
+ 				bool is_slow = (frameTimer.getElapsedTimeF64() > FRAME_SLOW_THRESHOLD);
+ 				S32 work_pending = 0;
+ 				S32 io_pending = 0;
+ 				while (!is_slow)
+  				{
+ 					{
+ 						LLFastTimer t3(LLFastTimer::FTM_THREADS);
+ 
+ 	 					work_pending = LLAppViewer::getTextureCache()->update(1); // unpauses the texture cache thread
+  						work_pending += LLAppViewer::getImageDecodeThread()->update(1); // unpauses the image thread
+  						//work_pending += LLAppViewer::getTextureFetch()->update(1); /* unlikely to ever reach 0 in 5ms... */
+  						LLAppViewer::getTextureFetch()->update(1); // unpauses the texture fetch thread
+ 
+ 						io_pending = LLVFSThread::updateClass(1);
+ 						io_pending += LLLFSThread::updateClass(1);
+ 					}
+  					if (io_pending > 1000)
+  					{
+ 						ms_sleep(llmin(io_pending/100,100)); // give the fs some time to catch up
+  					}
+  
+ 					if (!work_pending || run_multiple_threads || idleTimer.getElapsedTimeF64() >= max_idle_time)
+  					{
+  						break;
+  					}
+  				}
+ 				// Pause threads only when RunMultipleThreads is FALSE.
+ 				if (!run_multiple_threads)
+ 				{
+ 					// Pause texture fetching threads if nothing to process
+ 					if (!work_pending)
+ 					{
+ 						LLAppViewer::getTextureCache()->pause();
+ 						LLAppViewer::getImageDecodeThread()->pause();
+ 						//LLAppViewer::getTextureFetch()->pause(); /* Don't pause the fetch (IO) thread */
+ 					}
+ 				 	// Pause file threads if nothing to process
+ 					if (!io_pending)
+ 					{
+						LLVFSThread::sLocal->pause();
+						LLLFSThread::sLocal->pause();
+					}
 				}
 
-
-				const F64 min_frame_time = 0.0; //(.0333 - .0010); // max video frame rate = 30 fps
-				const F64 min_idle_time = 0.0; //(.0010); // min idle time = 1 ms
-				const F64 max_idle_time = run_multiple_threads ? min_idle_time : llmin(.005*10.0*gFrameTimeSeconds, 0.005); // 5 ms a second
-				idleTimer.reset();
-				while(1)
-				{
-					S32 work_pending = 0;
-					S32 io_pending = 0;
- 					work_pending += LLAppViewer::getTextureCache()->update(1); // unpauses the texture cache thread
- 					work_pending += LLAppViewer::getImageDecodeThread()->update(1); // unpauses the image thread
- 					work_pending += LLAppViewer::getTextureFetch()->update(1); // unpauses the texture fetch thread
-					io_pending += LLVFSThread::updateClass(1);
-					io_pending += LLLFSThread::updateClass(1);
-					if (io_pending > 1000)
-					{
-						ms_sleep(llmin(io_pending/100,100)); // give the vfs some time to catch up
-					}
-
-					//llinfos << "LUA:IN" << llendl;
-					if(FLLua::sLuaEnabled)
-						FLLua::execClientEvents();
-					//llinfos << "LUA:OUT" << llendl;
-
-					F64 frame_time = frameTimer.getElapsedTimeF64();
-					F64 idle_time = idleTimer.getElapsedTimeF64();
-					if (frame_time >= min_frame_time &&
-						idle_time >= min_idle_time &&
-						(!work_pending || idle_time >= max_idle_time))
-					{
-						break;
-					}
-				}
 				if ((LLStartUp::getStartupState() >= STATE_CLEANUP) &&
 					(frameTimer.getElapsedTimeF64() > FRAME_STALL_THRESHOLD))
 				{
 					gFrameStalls++;
 				}
 				frameTimer.reset();
-
-				 // Prevent the worker threads from running while rendering.
-				// if (LLThread::processorCount()==1) //pause() should only be required when on a single processor client...
-				if (run_multiple_threads == FALSE)
-				{
-					LLAppViewer::getTextureCache()->pause();
-					LLAppViewer::getImageDecodeThread()->pause();
-					// LLAppViewer::getTextureFetch()->pause(); // Don't pause the fetch (IO) thread
-				}
-				//LLVFSThread::sLocal->pause(); // Prevent the VFS thread from running while rendering.
-				//LLLFSThread::sLocal->pause(); // Prevent the LFS thread from running while rendering.
 
 				resumeMainloopTimeout();
 	

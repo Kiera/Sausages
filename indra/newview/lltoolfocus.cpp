@@ -56,6 +56,7 @@
 #include "llviewerwindow.h"
 #include "llvoavatar.h"
 #include "llmorphview.h"
+#include "pipeline.h"	// LLPipeline::sFreezeTime
 
 // Globals
 BOOL gCameraBtnZoom = TRUE;
@@ -216,12 +217,10 @@ void LLToolCamera::pickCallback(const LLPickInfo& pick_info)
 			gAgent.setFocusGlobal(pick_info);
 		}
 
-		static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
-
 		if (!(pick_info.mKeyMask & MASK_ALT) &&
 			gAgent.cameraThirdPerson() &&
 			gViewerWindow->getLeftMouseDown() && 
-			!sFreezeTime &&
+			!LLPipeline::sFreezeTime &&
 			(hit_obj == gAgent.getAvatarObject() || 
 				(hit_obj && hit_obj->isAttachment() && LLVOAvatar::findAvatarFromAttachment(hit_obj)->isSelf())))
 		{

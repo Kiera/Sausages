@@ -223,6 +223,8 @@ void display_update_camera();
 
 S32		LLPipeline::sCompiles = 0;
 
+bool	LLPipeline::sFreezeTime = false;
+
 BOOL	LLPipeline::sPickAvatar = TRUE;
 BOOL	LLPipeline::sDynamicLOD = TRUE;
 BOOL	LLPipeline::sShowHUDAttachments = TRUE;
@@ -327,6 +329,7 @@ void LLPipeline::init()
 
 	sDynamicLOD = gSavedSettings.getBOOL("RenderDynamicLOD");
 	sRenderBump = gSavedSettings.getBOOL("RenderObjectBump");
+	sTextureBindTest = gSavedSettings.getBOOL("RenderDebugTextureBind");
 	sRenderAttachedLights = gSavedSettings.getBOOL("RenderAttachedLights");
 	sRenderAttachedParticles = gSavedSettings.getBOOL("RenderAttachedParticles");
 
@@ -475,7 +478,9 @@ void LLPipeline::resizeScreenTexture()
 		GLuint resX = gViewerWindow->getWindowDisplayWidth();
 		GLuint resY = gViewerWindow->getWindowDisplayHeight();
 	
-		U32 res_mod = gSavedSettings.getU32("RenderResolutionDivisor");
+		static LLCachedControl<S32> render_resolution_divisor("RenderResolutionDivisor", 1);
+		U32 res_mod = (U32)render_resolution_divisor;
+
 		if (res_mod > 1 && res_mod < resX && res_mod < resY)
 		{
 			resX /= res_mod;
@@ -1021,7 +1026,8 @@ U32 LLPipeline::addObject(LLViewerObject *vobj)
 		return 0;
 	}
 
-	if (gSavedSettings.getBOOL("RenderDelayCreation"))
+	static LLCachedControl<BOOL> render_delay_creation("RenderDelayCreation", FALSE);
+	if (render_delay_creation)
 	{
 		mCreateQ.push_back(vobj);
 	}
@@ -1084,7 +1090,8 @@ void LLPipeline::createObject(LLViewerObject* vobj)
 
 	markRebuild(drawablep, LLDrawable::REBUILD_ALL, TRUE);
 
-	if (drawablep->getVOVolume() && gSavedSettings.getBOOL("RenderAnimateRes"))
+	static LLCachedControl<BOOL> render_animate_res("RenderAnimateRes", FALSE);
+	if (render_animate_res && drawablep->getVOVolume())
 	{
 		// fun animated res
 		drawablep->updateXform(TRUE);
@@ -1123,8 +1130,7 @@ void LLPipeline::resetFrameStats()
 //external functions for asynchronous updating
 void LLPipeline::updateMoveDampedAsync(LLDrawable* drawablep)
 {
-	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
-	if (sFreezeTime)
+	if (LLPipeline::sFreezeTime)
 	{
 		return;
 	}
@@ -1154,7 +1160,6 @@ void LLPipeline::updateMoveDampedAsync(LLDrawable* drawablep)
 
 void LLPipeline::updateMoveNormalAsync(LLDrawable* drawablep)
 {
-	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
 	if (sFreezeTime)
 	{
 		return;
@@ -1207,8 +1212,6 @@ void LLPipeline::updateMove()
 {
 	LLFastTimer t(LLFastTimer::FTM_UPDATE_MOVE);
 	LLMemType mt(LLMemType::MTYPE_PIPELINE);
-
-	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
 
 	if (sFreezeTime)
 	{
@@ -4971,8 +4974,6 @@ void LLPipeline::resetVertexBuffers()
 	}
 
 	LLVertexBuffer::unbind();
-
-	LLPipeline::sTextureBindTest = gSavedSettings.getBOOL("RenderDebugTextureBind");
 }
 
 void LLPipeline::renderObjects(U32 type, U32 mask, BOOL texture)
@@ -5082,7 +5083,8 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	U32 res_mod = gSavedSettings.getU32("RenderResolutionDivisor");
+	static LLCachedControl<S32> render_resolution_divisor("RenderResolutionDivisor", 1);
+	U32 res_mod = (U32)render_resolution_divisor;
 
 	LLVector2 tc1(0,0);
 	LLVector2 tc2((F32) gViewerWindow->getWindowDisplayWidth()*2,
@@ -5176,11 +5178,16 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		}
 		
 		gGlowExtractProgram.bind();
-		F32 minLum = llmax(gSavedSettings.getF32("RenderGlowMinLuminance"), 0.0f);
-		F32 maxAlpha = gSavedSettings.getF32("RenderGlowMaxExtractAlpha");		
-		F32 warmthAmount = gSavedSettings.getF32("RenderGlowWarmthAmount");	
-		LLVector3 lumWeights = gSavedSettings.getVector3("RenderGlowLumWeights");
-		LLVector3 warmthWeights = gSavedSettings.getVector3("RenderGlowWarmthWeights");
+		static LLCachedControl<F64> render_glow_min_luminance("RenderGlowMinLuminance", 2.5f);
+		F32 minLum = llmax((F32)render_glow_min_luminance, 0.0f);
+		static LLCachedControl<F64> render_glow_max_extract_alpha("RenderGlowMaxExtractAlpha", 0.065f);
+		F32 maxAlpha = (F32)render_glow_max_extract_alpha;
+		static LLCachedControl<F64> render_glow_warmth_amount("RenderGlowWarmthAmount", 0.0f);
+		F32 warmthAmount = (F32)render_glow_warmth_amount;
+		static LLCachedControl<LLVector3> render_glow_lum_weights("RenderGlowLumWeights", LLVector3(0.299f, 0.587f, 0.114f));
+		LLVector3 lumWeights = render_glow_lum_weights;
+		static LLCachedControl<LLVector3> render_glow_warmth_weights("RenderGlowWarmthWeights", LLVector3(1.0f, 0.5f, 0.7f));
+		LLVector3 warmthWeights = render_glow_warmth_weights;
 		gGlowExtractProgram.uniform1f("minLuminance", minLum);
 		gGlowExtractProgram.uniform1f("maxExtractAlpha", maxAlpha);
 		gGlowExtractProgram.uniform3f("lumWeights", lumWeights.mV[0], lumWeights.mV[1], lumWeights.mV[2]);
@@ -5221,22 +5228,25 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
 
 	// power of two between 1 and 1024
-	U32 glowResPow = gSavedSettings.getS32("RenderGlowResolutionPow");
+	static LLCachedControl<S32> render_glow_resolution_pow("RenderGlowResolutionPow", 9);
+	U32 glowResPow = (U32)render_glow_resolution_pow;
 	const U32 glow_res = llmax(1, 
 		llmin(1024, 1 << glowResPow));
 
-	S32 kernel = gSavedSettings.getS32("RenderGlowIterations")*2;
-	F32 delta = gSavedSettings.getF32("RenderGlowWidth") / glow_res;
+	static LLCachedControl<S32> render_glow_iterations("RenderGlowIterations", 2);
+	S32 kernel = render_glow_iterations * 2;
+	static LLCachedControl<F64> render_glow_width("RenderGlowWidth", 1.3f);
+	F32 delta = (F32)render_glow_width / glow_res;
 	// Use half the glow width if we have the res set to less than 9 so that it looks
 	// almost the same in either case.
 	if (glowResPow < 9)
 	{
 		delta *= 0.5f;
 	}
-	F32 strength = gSavedSettings.getF32("RenderGlowStrength");
 
+	static LLCachedControl<F64> render_glow_strength("RenderGlowStrength", 0.35f);
 	gGlowProgram.bind();
-	gGlowProgram.uniform1f("glowStrength", strength);
+	gGlowProgram.uniform1f("glowStrength", (F32)render_glow_strength);
 
 	for (S32 i = 0; i < kernel; i++)
 	{
@@ -5477,18 +5487,24 @@ void LLPipeline::bindDeferredShader(LLGLSLShader& shader, U32 light_index)
 	}
 
 	shader.uniform4fv("shadow_clip", 1, mSunClipPlanes.mV);
-	shader.uniform1f("sun_wash", gSavedSettings.getF32("RenderDeferredSunWash"));
-	shader.uniform1f("shadow_noise", gSavedSettings.getF32("RenderShadowNoise"));
-	shader.uniform1f("blur_size", gSavedSettings.getF32("RenderShadowBlurSize"));
+	static LLCachedControl<F64> render_deferred_sun_wash("RenderDeferredSunWash", 0.5f);
+	shader.uniform1f("sun_wash", (F32)render_deferred_sun_wash);
+	static LLCachedControl<F64> render_shadow_noise("RenderShadowNoise", -0.0001f);
+	shader.uniform1f("shadow_noise", (F32)render_shadow_noise);
+	static LLCachedControl<F64> render_shadow_blur_size("RenderShadowBlurSize", 0.7f);
+	shader.uniform1f("blur_size", (F32)render_shadow_blur_size);
 
-	shader.uniform1f("ssao_radius", gSavedSettings.getF32("RenderSSAOScale"));
-	shader.uniform1f("ssao_max_radius", gSavedSettings.getU32("RenderSSAOMaxScale"));
+	static LLCachedControl<F64> render_ssao_scale("RenderSSAOScale", 500.0f);
+	shader.uniform1f("ssao_radius", (F32)render_ssao_scale);
+	static LLCachedControl<S32> render_ssao_max_scale("RenderSSAOMaxScale", 60);
+	shader.uniform1f("ssao_max_radius", (U32)render_ssao_max_scale);
 
-	F32 ssao_factor = gSavedSettings.getF32("RenderSSAOFactor");
-	shader.uniform1f("ssao_factor", ssao_factor);
+	static LLCachedControl<F64> ssao_factor("RenderSSAOFactor", 0.3f);
+	shader.uniform1f("ssao_factor", (F32)ssao_factor);
 	shader.uniform1f("ssao_factor_inv", 1.0/ssao_factor);
 
-	LLVector3 ssao_effect = gSavedSettings.getVector3("RenderSSAOEffect");
+	static LLCachedControl<LLVector3> render_ssao_effect("RenderSSAOEffect", LLVector3(0.4f, 1.0f, 0.0f));
+	LLVector3 ssao_effect = render_ssao_effect;
 	F32 matrix_diag = (ssao_effect[0] + 2.0*ssao_effect[1])/3.0;
 	F32 matrix_nondiag = (ssao_effect[0] - ssao_effect[1])/3.0;
 	// This matrix scales (proj of color onto <1/rt(3),1/rt(3),1/rt(3)>) by
@@ -5500,7 +5516,8 @@ void LLPipeline::bindDeferredShader(LLGLSLShader& shader, U32 light_index)
 
 	shader.uniform2f("screen_res", mDeferredScreen.getWidth(), mDeferredScreen.getHeight());
 	shader.uniform1f("near_clip", LLViewerCamera::getInstance()->getNear()*2.f);
-	shader.uniform1f("alpha_soften", gSavedSettings.getF32("RenderDeferredAlphaSoften"));
+	static LLCachedControl<F64> render_deferred_alpha_soften("RenderDeferredAlphaSoften", 0.75f);
+	shader.uniform1f("alpha_soften", (F32)render_deferred_alpha_soften);
 }
 
 void LLPipeline::renderDeferredLighting()
@@ -5607,9 +5624,11 @@ void LLPipeline::renderDeferredLighting()
 
 	LLVector3 gauss[32]; // xweight, yweight, offset
 
-	LLVector3 go = gSavedSettings.getVector3("RenderShadowGaussian");
-	U32 kern_length = llclamp(gSavedSettings.getU32("RenderShadowBlurSamples"), (U32) 1, (U32) 16)*2 - 1;
-	F32 blur_size = gSavedSettings.getF32("RenderShadowBlurSize");
+	static LLCachedControl<LLVector3> render_shadow_gaussian("RenderShadowGaussian", LLVector3(2.0f, 2.0f, 0.0f));
+	LLVector3 go = render_shadow_gaussian;
+	static LLCachedControl<S32> render_shadow_blur_samples("RenderShadowBlurSamples", 5);
+	U32 kern_length = llclamp((U32)render_shadow_blur_samples, (U32) 1, (U32) 16) * 2 - 1;
+	static LLCachedControl<F64> blur_size("RenderShadowBlurSize", 0.7f);
 
 	// sample symmetrically with the middle sample falling exactly on 0.0
 	F32 x = -(kern_length/2.0f) + 0.5f;
@@ -5633,7 +5652,7 @@ void LLPipeline::renderDeferredLighting()
 	gDeferredBlurLightProgram.uniform3fv("kern[0]", kern_length, gauss[0].mV);
 	gDeferredBlurLightProgram.uniform3fv("kern", kern_length, gauss[0].mV);
 	gDeferredBlurLightProgram.uniform1i("kern_length", kern_length);
-	gDeferredBlurLightProgram.uniform1f("kern_scale", blur_size * (kern_length/2.f - 0.5f));
+	gDeferredBlurLightProgram.uniform1f("kern_scale", (F32)blur_size * (kern_length/2.f - 0.5f));
 
 	{
 		LLGLDisable blend(GL_BLEND);
@@ -5653,7 +5672,7 @@ void LLPipeline::renderDeferredLighting()
 	gDeferredBlurLightProgram.uniform3fv("kern[0]", kern_length, gauss[0].mV);
 	gDeferredBlurLightProgram.uniform3fv("kern", kern_length, gauss[0].mV);
 	gDeferredBlurLightProgram.uniform1i("kern_length", kern_length);
-	gDeferredBlurLightProgram.uniform1f("kern_scale", blur_size * (kern_length/2.f - 0.5f));
+	gDeferredBlurLightProgram.uniform1f("kern_scale", (F32)blur_size * (kern_length/2.f - 0.5f));
 
 	{
 		LLGLDisable blend(GL_BLEND);
@@ -6001,10 +6020,11 @@ void LLPipeline::generateWaterReflection(LLCamera& camera_in)
 				                     (1<<LLPipeline::RENDER_TYPE_SKY) |
 				                     (1<<LLPipeline::RENDER_TYPE_CLOUDS));
 
-				if (gSavedSettings.getBOOL("RenderWaterReflections"))
+				static LLCachedControl<BOOL> render_water_reflections("RenderWaterReflections", FALSE);
+				if (render_water_reflections)
 				{ //mask out selected geometry based on reflection detail
 
-					S32 detail = gSavedSettings.getS32("RenderReflectionDetail");
+					static LLCachedControl<S32> detail("RenderReflectionDetail", 2);
 					if (detail < 3)
 					{
 						mRenderTypeMask &= ~(1 << LLPipeline::RENDER_TYPE_PARTICLES);
@@ -6187,7 +6207,7 @@ void LLPipeline::generateSunShadow(LLCamera& camera)
 
 	//temporary hack to disable shadows but keep local lights
 	static BOOL clear = TRUE;
-	BOOL gen_shadow = gSavedSettings.getBOOL("RenderDeferredSunShadow");
+	static LLCachedControl<BOOL> gen_shadow("RenderDeferredSunShadow", TRUE);
 	if (!gen_shadow)
 	{
 		if (clear)
@@ -6220,7 +6240,8 @@ void LLPipeline::generateSunShadow(LLCamera& camera)
 	LLVector3 up;
 
 	//clip contains parallel split distances for 3 splits
-	LLVector3 clip = gSavedSettings.getVector3("RenderShadowClipPlanes");
+	static LLCachedControl<LLVector3> render_shadow_clip_planes("RenderShadowClipPlanes", LLVector3(4.0f, 8.0f, 24.0f));
+	LLVector3 clip = render_shadow_clip_planes;
 
 	//far clip on last split is minimum of camera view distance and 128
 	mSunClipPlanes = LLVector4(clip, clip.mV[2] * clip.mV[2]/clip.mV[1]);
@@ -6237,7 +6258,8 @@ void LLPipeline::generateSunShadow(LLCamera& camera)
 	F32 dist[] = { 0.1f, mSunClipPlanes.mV[0], mSunClipPlanes.mV[1], mSunClipPlanes.mV[2], mSunClipPlanes.mV[3] };
 
 	//currently used for amount to extrude frusta corners for constructing shadow frusta
-	LLVector3 n = gSavedSettings.getVector3("RenderShadowNearDist");
+	static LLCachedControl<LLVector3> render_shadow_near_dist("RenderShadowNearDist", LLVector3(256.0f, 256.0f, 256.0f));
+	LLVector3 n = render_shadow_near_dist;
 	F32 nearDist[] = { n.mV[0], n.mV[1], n.mV[2], n.mV[2] };
 
 	for (S32 j = 0; j < 4; j++)
@@ -6503,7 +6525,8 @@ void LLPipeline::generateSunShadow(LLCamera& camera)
 		mSunShadow[j].flush();
 	}
 
-	if (!gSavedSettings.getBOOL("CameraOffset"))
+	static LLCachedControl<BOOL> camera_offset("CameraOffset", FALSE);
+	if (!camera_offset)
 	{
 		glh_set_current_modelview(saved_view);
 		glh_set_current_projection(saved_proj);

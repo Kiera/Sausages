@@ -727,9 +727,7 @@ void LLViewerObjectList::update(LLAgent &agent, LLWorld &world)
 		}
 	}
 
-	static LLCachedControl<bool> sFreezeTime("FreezeTime", FALSE);
-
-	if (sFreezeTime)
+	if (LLPipeline::sFreezeTime)
 	{
 		for (std::vector<LLViewerObject*>::iterator iter = idle_list.begin();
 			iter != idle_list.end(); iter++)

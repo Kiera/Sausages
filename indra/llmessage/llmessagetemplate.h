@@ -401,7 +401,11 @@ public:
 			mMessageSignal.disconnect_all_slots();
 			mConnectionMap.erase(mConnectionMap.begin(),mConnectionMap.end());
 		}
-		addHandlerFunc(handler_func,user_data);
+		//we want to make sure if we set to NULL it will not add a null entry to the signal.
+		if(handler_func == NULL)
+		{
+			addHandlerFunc(handler_func,user_data);
+		}
 	}
 
 	void addHandlerFunc(message_handler_func_t handler_func, void **user_data)

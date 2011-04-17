@@ -1027,7 +1027,8 @@ void LLVOSky::calcAtmospherics(void)
 
 	// Since WL scales everything by 2, there should always be at least a 2:1 brightness ratio
 	// between sunlight and point lights in windlight to normalize point lights.
-	F32 sun_dynamic_range = llmax(gSavedSettings.getF32("RenderSunDynamicRange"), 0.0001f);
+	static LLCachedControl<F64> render_sun_dynamic_range("RenderSunDynamicRange", 1.0f);
+	F32 sun_dynamic_range = llmax((F32)render_sun_dynamic_range, 0.0001f);
 	LLWLParamManager::instance()->mSceneLightStrength = 2.0f * (1.0f + sun_dynamic_range * dp);
 
 	mSunDiffuse = vary_SunlightColor;
@@ -2115,13 +2116,14 @@ void LLVOSky::updateFog(const F32 distance)
 		F32 depth = water_height - camera_height;
 		
 		// get the water param manager variables
-		float water_fog_density = LLWaterParamManager::instance()->getFogDensity();
+		F32 water_fog_density = LLWaterParamManager::instance()->getFogDensity();
 		LLColor4 water_fog_color = LLDrawPoolWater::sWaterFogColor.mV;
 		
 		// adjust the color based on depth.  We're doing linear approximations
-		float depth_scale = gSavedSettings.getF32("WaterGLFogDepthScale");
-		float depth_modifier = 1.0f - llmin(llmax(depth / depth_scale, 0.01f), 
-			gSavedSettings.getF32("WaterGLFogDepthFloor"));
+		static LLCachedControl<F64> water_gl_fog_depth_scale("WaterGLFogDepthScale", 50.0f);
+		static LLCachedControl<F64> water_gl_fog_depth_floor("WaterGLFogDepthFloor", 0.25f);
+		F32 depth_scale = (F32)water_gl_fog_depth_scale;
+		F32 depth_modifier = 1.0f - llmin(llmax(depth / depth_scale, 0.01f), (F32)water_gl_fog_depth_floor);
 
 		LLColor4 fogCol = water_fog_color * depth_modifier;
 		fogCol.setAlpha(1);
@@ -2131,7 +2133,8 @@ void LLVOSky::updateFog(const F32 distance)
 		mGLFogCol = fogCol;
 
 		// set the density based on what the shaders use
-		fog_density = water_fog_density * gSavedSettings.getF32("WaterGLFogDensityScale");
+		static LLCachedControl<F64> water_gl_fog_density_scale("WaterGLFogDensityScale", 0.02f);
+		fog_density = water_fog_density * (F32)water_gl_fog_density_scale;
 		glFogi(GL_FOG_MODE, GL_EXP2);
 	}
 
