@@ -9,6 +9,7 @@
 #include "llimportobject.h"
 #include "llsdserialize.h"
 #include "llsdutil.h"
+#include "llselectmgr.h"
 #include "llviewerobject.h"
 #include "llagent.h"
 #include "llchat.h"
@@ -40,7 +41,7 @@ std::map<std::string, U8> LLXmlImport::sId2attachpt;
 std::map<U8, bool> LLXmlImport::sPt2watch;
 std::map<U8, LLVector3> LLXmlImport::sPt2attachpos;
 std::map<U8, LLQuaternion> LLXmlImport::sPt2attachrot;
-std::map<U32, std::queue<U32> > LLXmlImport::sLinkSets;
+std::map<U32, std::vector<LLViewerObject*> > LLXmlImport::sLinkSets;
 std::map<U8, std::string> LLXmlImport::sDescriptions;
 int LLXmlImport::sPrimIndex = 0;
 int LLXmlImport::sAttachmentsDone = 0;
@@ -55,7 +56,7 @@ int LLXmlImport::sUploadedAssets = 0;
 class LLLinkTimer : public LLEventTimer
 {
 public: 
-	LLLinkTimer(std::vector<LLUUID> roots) : LLEventTimer(0.1f)
+	LLLinkTimer(std::vector<LLUUID> roots) : LLEventTimer(0.05f)
 	{
 		mOptions = LLXmlImport::sXmlImportOptions;
 		mRoots = roots;
@@ -706,6 +707,7 @@ void LLXmlImport::import(LLXmlImportOptions* import_options)
 			sPt2watch[(*root_iter)->importAttachPoint] = true;
 			sPt2attachpos[(*root_iter)->importAttachPoint] = (*root_iter)->importAttachPos;
 			sPt2attachrot[(*root_iter)->importAttachPoint] = (*root_iter)->importAttachRot;
+			sDescriptions[(*root_iter)->importAttachPoint] = (*root_iter)->mPrimDescription;
 		}
 	}
 	// Then add children, nearest first
@@ -853,8 +855,6 @@ void LLXmlImport::finish_init()
 // static
 void LLXmlImport::onNewPrim(LLViewerObject* object)
 {
-	
-	
 	int currPrimIndex = sPrimIndex++;
 	
 	if(currPrimIndex >= (int)sPrims.size())
@@ -867,8 +867,11 @@ void LLXmlImport::onNewPrim(LLViewerObject* object)
 		}
 	}
 	
-	LLImportObject* from = sPrims[currPrimIndex];
+	sExpectedUpdate = object->getID();
+	LLSelectMgr::getInstance()->selectObjectAndFamily(object);
 
+	LLImportObject* from = sPrims[currPrimIndex];
+	
 	// Flags
 	// trying this first in case it helps when supply is physical...
 	U32 flags = from->mFlags;
@@ -881,6 +884,7 @@ void LLXmlImport::onNewPrim(LLViewerObject* object)
 		sId2localid[from->mId] = object->getLocalID();
 		sRootpositions[object->getLocalID()] = from->getPosition();
 		sRootrotations[object->getLocalID()] = from->getRotation();
+		sLinkSets[object->getLocalID()].push_back(object);
 	}
 	else
 	{
@@ -888,13 +892,12 @@ void LLXmlImport::onNewPrim(LLViewerObject* object)
 		U32 parentlocalid = sId2localid[from->mParentId];
 		from->setPosition((from->getPosition() * sRootrotations[parentlocalid]) + sRootpositions[parentlocalid]);
 		from->setRotation(from->getRotation() * sRootrotations[parentlocalid]);
-		sLinkSets[parentlocalid].push(object->getLocalID()); //this is here so we dont get 1 prim objects into the linkset queue
+		sLinkSets[parentlocalid].push_back(object); //this is here so we dont get 1 prim objects into the linkset queue
 		
 	}
 	// Volume params
 	LLVolumeParams params = from->getVolume()->getParams();
 	object->setVolume(params, 0, false);
-	object->sendShapeUpdate();
 	// Extra params
 	if(from->isFlexible())
 	{
@@ -947,85 +950,35 @@ void LLXmlImport::onNewPrim(LLViewerObject* object)
 			te.setID(sTextureReplace[te.getID()]);
 		object->setTE(i, te);
 	}
-	object->sendTEUpdate();
-	// Flag update is already coming from somewhere
-	//object->updateFlags();
 
 	// Transforms
 	object->setScale(from->getScale(), FALSE);
 	object->setRotation(from->getRotation(), FALSE);
 	object->setPosition(from->getPosition(), FALSE);
 
-	U8 data[256];
-	S32 offset = 0;
-	// Position and rotation
-	gMessageSystem->newMessageFast(_PREHASH_MultipleObjectUpdate);
-	gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-	gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-	gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-	gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-	gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, object->getLocalID());
-	gMessageSystem->addU8Fast(_PREHASH_Type, 3);
-	htonmemcpy(&data[offset], &(object->getPosition().mV), MVT_LLVector3, 12);
-	offset += 12;
-	LLQuaternion quat = object->getRotation();
-	LLVector3 vec = quat.packToVector3();
-	htonmemcpy(&data[offset], &(vec.mV), MVT_LLQuaternion, 12); 
-	offset += 12;
-	gMessageSystem->addBinaryDataFast(_PREHASH_Data, data, offset);
-	gMessageSystem->sendReliable(gAgent.getRegionHost());
-	// Position and scale
-	offset = 0;
-	gMessageSystem->newMessageFast(_PREHASH_MultipleObjectUpdate);
-	gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-	gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-	gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-	gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-	gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, object->getLocalID());
-	gMessageSystem->addU8Fast(_PREHASH_Type, 5);
-	htonmemcpy(&data[offset], &(object->getPosition().mV), MVT_LLVector3, 12); 
-	offset += 12;
-	htonmemcpy(&data[offset], &(object->getScale().mV), MVT_LLVector3, 12); 
-	offset += 12;
-	gMessageSystem->addBinaryDataFast(_PREHASH_Data, data, offset);
-	gMessageSystem->sendReliable(gAgent.getRegionHost());
-
 	// Name
 	if(from->mPrimName != "")
 	{
-		gMessageSystem->newMessageFast(_PREHASH_ObjectName);
-		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-		gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-		gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-		gMessageSystem->addU32Fast(_PREHASH_LocalID, object->getLocalID());
-		gMessageSystem->addStringFast(_PREHASH_Name, from->mPrimName);
-		gMessageSystem->sendReliable(gAgent.getRegionHost());
+		LLSelectMgr::getInstance()->selectionSetObjectName(from->mPrimName);
 	}
 
 	//Description
-	if(from->mPrimDescription != "" || from->importIsAttachment)
+	if(from->importIsAttachment) //special description tracker
 	{
-		gMessageSystem->newMessageFast(_PREHASH_ObjectDescription);
-		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-		gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-		gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-		gMessageSystem->addU32Fast(_PREHASH_LocalID, object->getLocalID());
-		//set attachment tracking system
-		if(from->importIsAttachment)
-		{
-			sDescriptions[sId2attachpt[from->mId]] = from->mPrimDescription;
-			gMessageSystem->addStringFast(_PREHASH_Description, from->mId);
-		}
-		else
-		{	
-			gMessageSystem->addStringFast(_PREHASH_Description, from->mPrimDescription);
-		}
-		gMessageSystem->sendReliable(gAgent.getRegionHost());
+		LLSelectMgr::getInstance()->selectionSetObjectDescription(from->mId);
+	}
+	else if(from->mPrimDescription != "")
+	{	
+		LLSelectMgr::getInstance()->selectionSetObjectDescription(from->mPrimDescription);
 	}
 
-	sExpectedUpdate = object->getID();
+	//using this because sendMultipleUpdate breaks rotations?
+	object->sendRotationUpdate();
+	object->sendTEUpdate();	
+	object->sendShapeUpdate();
+	LLSelectMgr::getInstance()->sendMultipleUpdate(UPD_SCALE | UPD_POSITION);
+
+	LLSelectMgr::getInstance()->deselectAll();
 }
 void LLXmlImport::onUpdatePrim(LLViewerObject* object)
 {
@@ -1039,39 +992,12 @@ void LLXmlImport::onUpdatePrim(LLViewerObject* object)
 	if(sPrimIndex >= (int)sPrims.size())
 	{
 		// Link time
-		int packet_len = 0;
-		for(std::map<U32, std::queue<U32> >::iterator itr = sLinkSets.begin();itr != sLinkSets.end();++itr)
+		for(std::map<U32, std::vector<LLViewerObject*> >::iterator itr = sLinkSets.begin();itr != sLinkSets.end();++itr)
 		{
-			std::queue<U32> linkset = (*itr).second;
-			gMessageSystem->newMessageFast(_PREHASH_ObjectLink);
-			gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-			gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-			gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-			gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-			gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, (*itr).first);//this is the parent prim
-			while(!linkset.empty())
-			{
-				if(packet_len == 254) //if we have 255 objects, using 254 because root counts as 1 too
-				{
-					gMessageSystem->sendReliable(gAgent.getRegionHost());
-					packet_len = 0;
-					gMessageSystem->newMessageFast(_PREHASH_ObjectLink);
-					gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-					gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-					gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-					gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-					gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, (*itr).first);//this is the parent prim
-				}
-				gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-				gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, linkset.front());
-				linkset.pop();
-				packet_len++;
-			}
-			if(packet_len) //send if it hasnt been yet
-			{
-				gMessageSystem->sendReliable(gAgent.getRegionHost());
-				packet_len = 0;
-			}
+			std::vector<LLViewerObject*> linkset = (*itr).second;
+			LLSelectMgr::getInstance()->deselectAll();
+			LLSelectMgr::getInstance()->selectObjectAndFamily(linkset, true);
+			LLSelectMgr::getInstance()->sendLink(); 
 		}
 
 		// stop the throttle
@@ -1106,7 +1032,7 @@ void LLXmlImport::onUpdatePrim(LLViewerObject* object)
 			U32 port = gAgent.getRegionHost().getPort();
 			std::vector<LLUUID> roots;
 			roots.resize(sLinkSets.size());
-			for(std::map<U32, std::queue<U32> >::iterator itr = sLinkSets.begin();itr != sLinkSets.end();++itr)
+			for(std::map<U32, std::vector<LLViewerObject*> >::iterator itr = sLinkSets.begin();itr != sLinkSets.end();++itr)
 			{
 				LLUUID id = LLUUID::null;
 				LLViewerObjectList::getUUIDFromLocal(id,itr->first,ip,port);
@@ -1185,53 +1111,17 @@ void LLXmlImport::onNewAttachment(LLViewerObject* object)
 	U8 attachpt = (U8)object->getAttachmentPoint();
 	if(sPt2watch[attachpt])
 	{
+		LLSelectMgr::getInstance()->selectObjectAndFamily(object);
+
 		// clear description, part 2
-		gMessageSystem->newMessageFast(_PREHASH_ObjectDescription);
-		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-		gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-		gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-		gMessageSystem->addU32Fast(_PREHASH_LocalID, object->getLocalID());
-		gMessageSystem->addStringFast(_PREHASH_Description, sDescriptions[attachpt]);
-		gMessageSystem->sendReliable(gAgent.getRegionHost());
+		LLSelectMgr::getInstance()->selectionSetObjectDescription(sDescriptions[attachpt]);
 
 		// position and rotation
-		LLVector3 pos = sPt2attachpos[attachpt];
-		U8 data[256];
-		S32 offset = 0;
-		gMessageSystem->newMessageFast(_PREHASH_MultipleObjectUpdate);
-		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-		gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-		gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-		gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, object->getLocalID());
-		gMessageSystem->addU8Fast(_PREHASH_Type, 11); // link set this time
-		htonmemcpy(&data[offset], &(pos.mV), MVT_LLVector3, 12);
-		offset += 12;
-		LLQuaternion quat = sPt2attachrot[attachpt];
-		LLVector3 vec = quat.packToVector3();
-		htonmemcpy(&data[offset], &(vec.mV), MVT_LLQuaternion, 12); 
-		offset += 12;
-		gMessageSystem->addBinaryDataFast(_PREHASH_Data, data, offset);
-		gMessageSystem->sendReliable(gAgent.getRegionHost());
-
-		// Select and deselect to make it send an update
-		gMessageSystem->newMessageFast(_PREHASH_ObjectSelect);
-		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-		gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-		gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-		gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, object->getLocalID());
-		gMessageSystem->sendReliable(gAgent.getRegionHost());
-
-		gMessageSystem->newMessageFast(_PREHASH_ObjectDeselect);
-		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
-		gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-		gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
-		gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, object->getLocalID());
-		gMessageSystem->sendReliable(gAgent.getRegionHost());
-
+		object->setRotation(sPt2attachrot[attachpt], FALSE);
+		object->setPosition(sPt2attachpos[attachpt], FALSE);
+		LLSelectMgr::getInstance()->sendMultipleUpdate(UPD_POSITION | UPD_ROTATION);
+		
+		LLSelectMgr::getInstance()->deselectAll();
 		// Done?
 		sAttachmentsDone++;
 		if(sAttachmentsDone >= (int)sPt2attachpos.size())
