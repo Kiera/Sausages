@@ -267,8 +267,8 @@ void LLViewerObjectList::processUpdateCore(LLViewerObject* objectp,
 	findOrphans(objectp, msg->getSenderIP(), msg->getSenderPort());
 
 	// <edit>
-	if (just_created 
-		&& LLXmlImport::sImportInProgress
+	if (LLXmlImport::sImportInProgress 
+		&& just_created
 		&& update_type != OUT_TERSE_IMPROVED)
 	{
 		LLViewerObject* parent = (LLViewerObject*)objectp->getParent();
