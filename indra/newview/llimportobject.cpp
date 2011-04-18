@@ -967,9 +967,12 @@ void LLXmlImport::onNewPrim(LLViewerObject* object)
 	{
 		LLSelectMgr::getInstance()->selectionSetObjectDescription(from->mId);
 	}
-	else if(from->mPrimDescription != "")
+	else
 	{	
-		LLSelectMgr::getInstance()->selectionSetObjectDescription(from->mPrimDescription);
+		std::string desc = from->mPrimDescription;
+		if(desc.empty())
+			desc = "(No Description)";
+		LLSelectMgr::getInstance()->selectionSetObjectDescription(desc);
 	}
 
 	//using this because sendMultipleUpdate breaks rotations?
@@ -1114,7 +1117,10 @@ void LLXmlImport::onNewAttachment(LLViewerObject* object)
 		LLSelectMgr::getInstance()->selectObjectAndFamily(object);
 
 		// clear description, part 2
-		LLSelectMgr::getInstance()->selectionSetObjectDescription(sDescriptions[attachpt]);
+		std::string desc = sDescriptions[attachpt];
+		if(desc.empty())
+			desc = "(No Description)";
+		LLSelectMgr::getInstance()->selectionSetObjectDescription(desc);
 
 		// position and rotation
 		object->setRotation(sPt2attachrot[attachpt], FALSE);
