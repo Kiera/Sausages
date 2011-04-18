@@ -35,6 +35,7 @@
 
 #include "llviewermessage.h"
 
+#include <time.h>
 #include <deque>
 
 #include "llaudioengine.h" 
@@ -5597,7 +5598,7 @@ void process_script_dialog(LLMessageSystem* msg, void**)
 		llwarns << "Too many script dialog buttons - omitting some" << llendl;
 		button_count = SCRIPT_DIALOG_MAX_BUTTONS;
 	}
-
+	
 	LLNotificationForm form;
 	std::string firstbutton;
 	msg->getString("Buttons", "ButtonLabel", firstbutton, 0);
@@ -5630,6 +5631,55 @@ void process_script_dialog(LLMessageSystem* msg, void**)
 	// <edit>
 	args["CHANNEL"] = chat_channel;
 	// </edit>
+
+	// Ignore dialogs coming from muted objects or pertaining to muted
+	// residents.
+	LLViewerObject* objectp = gObjectList.findObject(object_id);
+	if (!objectp || !objectp->permYouOwner())	// Do not apply to objects we own
+	{
+		// Check for mutes by object id and by name
+		BOOL muted = LLMuteList::getInstance()->isMuted(object_id, title);
+		if (!muted)
+		{
+			// Check for mutes by group or owner name: since we don't know the
+			// group/owner id, we use the listed names in the mutes list.
+			std::string name;
+			if (first_name.empty())
+			{
+				name = last_name;
+				name += LLMute::GROUP_SUFFIX;
+			}
+			else
+			{
+				name = first_name + " " + last_name;
+				name += LLMute::AGENT_SUFFIX;
+			}
+			std::vector<LLMute> mutes = LLMuteList::getInstance()->getMutes();
+			std::vector<LLMute>::iterator it;
+			for (it = mutes.begin(); it != mutes.end(); ++it)
+			{
+				if (name == it->getDisplayName())
+				{
+					muted = TRUE;
+					break;
+				}
+			}
+		}
+		if (muted)
+		{
+			static clock_t last_warning = 0;
+			// Do not spam the log with such messages...
+			if (clock() - last_warning > 5 * CLOCKS_PER_SEC)
+			{
+				llwarns << "Muting scripted object dialog(s) from: "
+						<< first_name << " " << last_name << "'s "
+						<< title << llendl;
+				last_warning = clock();
+			}
+			return;
+		}
+	}
+
 	LLNotificationPtr notification;
 	if (!first_name.empty())
 	{

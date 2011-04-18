@@ -111,10 +111,10 @@ static LLDispatchEmptyMuteList sDispatchEmptyMuteList;
 //-----------------------------------------------------------------------------
 // LLMute()
 //-----------------------------------------------------------------------------
-const char BY_NAME_SUFFIX[] = " (by name)";
-const char AGENT_SUFFIX[] = " (resident)";
-const char OBJECT_SUFFIX[] = " (object)";
-const char GROUP_SUFFIX[] = " (group)";
+char LLMute::BY_NAME_SUFFIX[] = " (by name)";
+char LLMute::AGENT_SUFFIX[] = " (resident)";
+char LLMute::OBJECT_SUFFIX[] = " (object)";
+char LLMute::GROUP_SUFFIX[] = " (group)";
 
 
 LLMute::LLMute(const LLUUID& id, const std::string& name, EType type, U32 flags)

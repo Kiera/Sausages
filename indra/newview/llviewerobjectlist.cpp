@@ -268,6 +268,7 @@ void LLViewerObjectList::processUpdateCore(LLViewerObject* objectp,
 
 	// <edit>
 	if (just_created 
+		&& LLXmlImport::sImportInProgress
 		&& update_type != OUT_TERSE_IMPROVED)
 	{
 		LLViewerObject* parent = (LLViewerObject*)objectp->getParent();
