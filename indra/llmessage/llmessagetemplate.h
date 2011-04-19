@@ -272,7 +272,8 @@ enum EMsgDeprecation
 	MD_NOTDEPRECATED,
 	MD_UDPDEPRECATED,
 	MD_UDPBLACKLISTED,
-	MD_DEPRECATED
+	//apparently XCode uses MD_DEPRECATED in its own libraries somewhere, keep it happy
+	MD_DEPRECATEDALL
 };
 
 // <edit> VWR-2546

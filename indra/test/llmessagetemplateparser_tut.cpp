@@ -288,7 +288,7 @@ namespace tut
 		ensure_equals("trust is trusted", message->mTrust, MT_TRUST);
 		ensure_equals("message number", message->mMessageNumber, (U32)34);
 		ensure_equals("message encoding is unencoded", message->mEncoding, ME_UNENCODED);
-		ensure_equals("message deprecation is deprecated", message->mDeprecation, MD_DEPRECATED);
+		ensure_equals("message deprecation is deprecated", message->mDeprecation, MD_DEPRECATEDALL);
 
 		delete message;
 	}
